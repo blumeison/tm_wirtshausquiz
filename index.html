@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wirtshausquiz – Demnächst</title>
+  <meta name="description" content="Das Wirtshausquiz von Team Michelhausen – demnächst verfügbar." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="overlay"></div>
+
+  <main class="content">
+    <p class="kicker">Team Michelhausen präsentiert</p>
+    <h1 class="title">Wirtshaus&shy;quiz</h1>
+    <p class="tagline">Bier, Wissen &amp; gute Gesellschaft.</p>
+
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Demnächst verfügbar
+    </div>
+
+    <p class="subtext">
+      Wir basteln gerade am großen Quizabend. Bald könnt ihr euch hier
+      anmelden und mitraten. Bleibt dran!
+    </p>
+
+    <form class="notify" onsubmit="return false;" aria-label="Benachrichtigung">
+      <input
+        type="email"
+        class="notify-input"
+        placeholder="Deine E-Mail-Adresse"
+        aria-label="E-Mail-Adresse"
+        disabled
+      />
+      <button type="submit" class="notify-btn" disabled>Benachrichtigen</button>
+    </form>
+    <p class="notify-hint">Registrierung folgt in Kürze.</p>
+  </main>
+
+  <footer class="footer">
+    <span class="footer-mark">🍺</span>
+    Team&nbsp;Michelhausen &middot; <span id="year"></span>
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
