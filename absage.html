@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>(function(){try{var s=localStorage.getItem('tm-theme');if(s==='light'||s==='dark')document.documentElement.setAttribute('data-theme',s);}catch(e){}})();</script>
+  <title>Anmeldung stornieren – Wirtshausquiz</title>
+  <meta name="description" content="Anmeldung zum Wirtshausquiz stornieren.">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="stylesheet" href="tokens.css">
+  <style>.is-hidden{display:none!important;}</style>
+</head>
+<body>
+  <a class="tm-skip" href="#main">Zum Inhalt springen</a>
+
+  <header class="tm-nav">
+    <div class="tm-container tm-nav__inner">
+      <a class="tm-nav__brand" href="/" aria-label="Wirtshausquiz Startseite">
+        <span class="tm-logo">
+          <img class="tm-logo__color" src="logo.png"       alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+          <img class="tm-logo__white" src="logo-white.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+        </span>
+      </a>
+      <a class="tm-btn tm-btn--ghost" href="/">Zur Quizseite</a>
+    </div>
+  </header>
+
+  <main id="main" class="tm-section tm-section--tint">
+    <div class="tm-container tm-container--narrow">
+      <div class="tm-card" style="padding:2.5rem;">
+
+        <p id="wq-loading" class="tm-text-muted">Anmeldung wird gesucht …</p>
+
+        <div id="wq-error" class="is-hidden">
+          <div class="tm-stack">
+            <p class="tm-eyebrow">Hoppala</p>
+            <h1 class="tm-mt-0" style="font-size:var(--tm-fs-2xl);">Das hat nicht geklappt</h1>
+            <p id="wq-error-text" class="tm-text-muted"></p>
+            <p class="tm-text-muted"><small>Schreib uns an
+              <a href="mailto:quiz@team-michelhausen.at">quiz@team-michelhausen.at</a>,
+              dann erledigen wir das von Hand.</small></p>
+          </div>
+        </div>
+
+        <div id="wq-confirm" class="is-hidden">
+          <div class="tm-stack">
+            <p class="tm-eyebrow">Anmeldung stornieren</p>
+            <h1 class="tm-mt-0" style="font-size:var(--tm-fs-2xl);">Wollt ihr wirklich absagen?</h1>
+            <p class="tm-text-muted" id="wq-confirm-text"></p>
+            <p class="tm-text-muted"><small>Danach ist der Platz weg. Wenn ihr es euch anders
+              überlegt, müsst ihr euch neu anmelden — dann allerdings hinten auf der Liste.</small></p>
+          </div>
+          <p id="wq-cancel-error" class="tm-alert tm-alert--danger" hidden></p>
+          <div style="display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.5rem;">
+            <button class="tm-btn tm-btn--primary tm-btn--lg" type="button" id="wq-do-cancel">Ja, Anmeldung stornieren</button>
+            <a class="tm-btn tm-btn--ghost tm-btn--lg" href="/">Nein, wir kommen</a>
+          </div>
+        </div>
+
+        <div id="wq-done" class="is-hidden">
+          <div class="tm-stack">
+            <p class="tm-eyebrow">Erledigt</p>
+            <h1 class="tm-mt-0" style="font-size:var(--tm-fs-2xl);">Anmeldung storniert</h1>
+            <p id="wq-done-text" class="tm-text-muted"></p>
+            <p class="tm-text-muted">Schade — vielleicht beim nächsten Mal. Danke, dass ihr
+              Bescheid gesagt habt: Jetzt rückt ein Team von der Warteliste nach.</p>
+            <p><a class="tm-btn tm-btn--ghost" href="/">Zur Quizseite</a></p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="tm-footer">
+    <hr class="tm-flag" aria-hidden="true">
+    <div class="tm-container">
+      <div class="tm-footer__legal" style="padding-top:1.5rem;border-top:none;">
+        <span>© <span id="tm-year">2026</span> SPÖ &amp; Unabhängige – Team Michelhausen.</span>
+        <span><a href="https://team-michelhausen.at/impressum/">Impressum</a> ·
+              <a href="https://team-michelhausen.at/datenschutz/">Datenschutz</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  (function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    $('tm-year').textContent = new Date().getFullYear();
+
+    function show(id) { $(id).classList.remove('is-hidden'); }
+    function hide(id) { $(id).classList.add('is-hidden'); }
+
+    function fail(msg) {
+      hide('wq-loading'); hide('wq-confirm');
+      $('wq-error-text').textContent = msg;
+      show('wq-error');
+    }
+
+    var token = (new URLSearchParams(window.location.search)).get('t') || '';
+    if (!/^[a-f0-9]{32}$/.test(token)) {
+      fail('Der Link ist unvollständig. Bitte kopiere ihn ganz aus der Bestätigungsmail — er ist recht lang.');
+      return;
+    }
+
+    fetch('api/cancel.php?t=' + encodeURIComponent(token), { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || !d.ok) {
+          fail((d && d.error) ? d.error : 'Zu diesem Link finden wir keine Anmeldung.');
+          return;
+        }
+        hide('wq-loading');
+        if (d.cancelled) {
+          $('wq-done-text').textContent = '„' + d.teamName + '“ war bereits abgemeldet.';
+          show('wq-done');
+          return;
+        }
+        $('wq-confirm-text').textContent = '„' + d.teamName + '“ ist mit ' + d.size
+          + ' Personen für ' + d.event.dateLong + ' im ' + d.event.venue + ' angemeldet.';
+        show('wq-confirm');
+      })
+      .catch(function () { fail('Keine Verbindung zum Server. Bitte versuch es später nochmal.'); });
+
+    $('wq-do-cancel').addEventListener('click', function () {
+      var btn = this, err = $('wq-cancel-error');
+      err.hidden = true;
+      btn.disabled = true;
+      btn.textContent = 'Wird storniert …';
+
+      fetch('api/cancel.php?t=' + encodeURIComponent(token), {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.ok) {
+            err.textContent = (d && d.error) ? d.error : 'Das hat nicht geklappt. Bitte nochmal versuchen.';
+            err.hidden = false;
+            btn.disabled = false;
+            btn.textContent = 'Ja, Anmeldung stornieren';
+            return;
+          }
+          hide('wq-confirm');
+          $('wq-done-text').textContent = '„' + d.teamName + '“ ist abgemeldet.';
+          show('wq-done');
+        })
+        .catch(function () {
+          err.textContent = 'Keine Verbindung zum Server. Bitte versuch es später nochmal.';
+          err.hidden = false;
+          btn.disabled = false;
+          btn.textContent = 'Ja, Anmeldung stornieren';
+        });
+    });
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+# Wirtshausquiz · push-to-deploy to netcup/Plesk over FTPS (lftp)
+# Static pages + PHP API -> quiz.team-michelhausen.at
+# Requires repo secrets: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD
+#
+# Why lftp (not SamKirkland/FTP-Deploy-Action): netcup/Plesk FTPS resets the
+# passive data socket with that action (ECONNRESET). lftp handles FTPS reliably.
+name: Deploy
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SERVER_DIR: ./quiz.team-michelhausen.at/httpdocs/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Stage deployable files
+        # Ship the site only. .git/.github/.claude/docs never reach the server.
+        run: |
+          mkdir _site
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.claude' \
+            --exclude='_site' \
+            --exclude='docs' \
+            --exclude='tools' \
+            --exclude='data' \
+            --exclude='README.md' \
+            --exclude='.gitignore' \
+            ./ _site/
+
+      - name: Install lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y lftp
+
+      - name: Deploy via FTPS (lftp mirror)
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        # -x '^uploads/' keeps --delete away from question media that is written
+        # on the server and exists nowhere in the repo. Without it the next push
+        # wipes every uploaded image, audio and video file.
+        # data/ lives outside httpdocs and is therefore out of reach anyway.
+        run: |
+          lftp -c "
+            set ftp:ssl-force true;
+            set ftp:ssl-protect-data true;
+            set ssl:verify-certificate no;
+            set ftp:passive-mode true;
+            set net:max-retries 3;
+            set net:timeout 20;
+            open -u \"$FTP_USERNAME\",\"$FTP_PASSWORD\" \"$FTP_SERVER\";
+            mirror -R --delete --verbose -x '^uploads/' _site/ \"$SERVER_DIR\";
+          "

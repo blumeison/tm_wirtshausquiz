@@ -1,0 +1,23 @@
+# Wirtshausquiz — caching and access rules
+# HTML pages: always revalidate (conditional GET with ETag — fast, no stale content)
+<FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+    Header unset Pragma
+</FilesMatch>
+
+# CSS and JS: 7-day cache (busted via ?v= query string in HTML)
+<FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=604800"
+</FilesMatch>
+
+# Images: 30-day cache (rarely change)
+<FilesMatch "\.(png|jpg|jpeg|gif|svg|webp|ico)$">
+    Header set Cache-Control "public, max-age=2592000"
+</FilesMatch>
+
+# Library code is never a page. Nothing here should be requested directly.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^api/phpmailer/ - [F,L]
+    RewriteRule ^api/(lib|config|mail_templates)\.php$ - [F,L]
+</IfModule>

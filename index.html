@@ -1,53 +1,477 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de-AT">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wirtshausquiz – Demnächst</title>
-  <meta name="description" content="Das Wirtshausquiz von Team Michelhausen – demnächst verfügbar." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>(function(){try{var s=localStorage.getItem('tm-theme');if(s==='light'||s==='dark')document.documentElement.setAttribute('data-theme',s);}catch(e){}})();</script>
+  <title>Wirtshausquiz – Team Michelhausen</title>
+  <meta name="description" content="Wirtshausquiz am Freitag, 16. Oktober 2026 im Gasthaus Burchhart in Atzelsdorf. Teams von 3 bis 6 Personen, Anmeldung kostenlos.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="stylesheet" href="tokens.css">
+
+  <meta property="og:title" content="Wirtshausquiz – Team Michelhausen">
+  <meta property="og:description" content="Freitag, 16. Oktober 2026 im Gasthaus Burchhart, Atzelsdorf. Stellt ein Team auf und meldet euch an.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://quiz.team-michelhausen.at/">
+  <meta property="og:locale" content="de_AT">
+
+  <style>
+    /* Page-specific bits. Everything else comes from tokens.css. */
+    .wq-facts { display: grid; gap: var(--tm-space-4); margin: 0; }
+    @media (min-width: 700px) { .wq-facts { grid-template-columns: repeat(3, 1fr); } }
+    .wq-fact { background: var(--tm-surface); border: 1px solid var(--tm-border);
+               border-radius: var(--tm-radius); padding: var(--tm-space-5); }
+    .wq-fact dt { font: 600 .72rem/1.4 var(--tm-font-body); letter-spacing: .12em;
+                  text-transform: uppercase; color: var(--tm-red); margin-bottom: .4rem; }
+    .wq-fact dd { margin: 0; font-size: var(--tm-fs-lg); line-height: 1.45; }
+    .wq-fact dd small { display: block; font-size: var(--tm-fs-sm); color: var(--tm-text-muted); margin-top: .25rem; }
+
+    .wq-status { display: inline-flex; align-items: center; gap: .55rem;
+                 background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35);
+                 color: #fff; border-radius: var(--tm-radius-pill);
+                 padding: .45rem 1rem; font-size: var(--tm-fs-sm); }
+    .wq-dot { width: .55rem; height: .55rem; border-radius: 50%; background: #7fe07a; flex: none; }
+    .wq-dot--warn { background: var(--tm-yellow); }
+    .wq-dot--full { background: #ffb3ba; }
+
+    .wq-steps { counter-reset: step; display: grid; gap: var(--tm-space-4); padding: 0; margin: 0; list-style: none; }
+    .wq-steps li { counter-increment: step; display: grid; grid-template-columns: 2.25rem 1fr;
+                   gap: var(--tm-space-4); align-items: start; }
+    .wq-steps li::before { content: counter(step); display: grid; place-items: center;
+                           width: 2.25rem; height: 2.25rem; border-radius: 50%;
+                           background: var(--tm-red-soft); color: var(--tm-red);
+                           font: 500 .95rem/1 var(--tm-font-body); }
+    .wq-steps strong { display: block; margin-bottom: .15rem; }
+
+    .wq-promo { display: none; }
+    .wq-promo.is-on { display: block; }
+
+    .wq-err { color: var(--tm-red); font-size: var(--tm-fs-sm); margin: .35rem 0 0; }
+    .tm-input.is-bad, .tm-select.is-bad, .tm-textarea.is-bad { border-color: var(--tm-red); }
+    .wq-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+    .wq-done { display: none; }
+    .wq-done.is-on { display: block; }
+    .is-hidden { display: none !important; }
+
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  </style>
 </head>
 <body>
-  <div class="overlay"></div>
+  <a class="tm-skip" href="#main">Zum Inhalt springen</a>
 
-  <main class="content">
-    <p class="kicker">Team Michelhausen präsentiert</p>
-    <h1 class="title">Wirtshaus&shy;quiz</h1>
-    <p class="tagline">Bier, Wissen &amp; gute Gesellschaft.</p>
-
-    <div class="badge">
-      <span class="badge-dot"></span>
-      Demnächst verfügbar
+  <header class="tm-nav">
+    <div class="tm-container tm-nav__inner">
+      <a class="tm-nav__brand" href="https://team-michelhausen.at/" aria-label="Team Michelhausen Startseite">
+        <span class="tm-logo">
+          <img class="tm-logo__color" src="logo.png"       alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+          <img class="tm-logo__white" src="logo-white.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+        </span>
+      </a>
+      <nav aria-label="Hauptmenü">
+        <ul class="tm-nav__links">
+          <li><a href="#ablauf">Ablauf</a></li>
+          <li><a href="#fragen">Häufige Fragen</a></li>
+        </ul>
+      </nav>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <button class="tm-theme-toggle" type="button" aria-label="Hell/Dunkel umschalten" onclick="tmToggleTheme()">
+          <svg class="tm-ico-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="tm-ico-sun"  width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        </button>
+        <a class="tm-btn tm-btn--primary" href="#anmelden">Team anmelden</a>
+      </div>
     </div>
+  </header>
+  <script>function tmToggleTheme(){var el=document.documentElement;var c=el.getAttribute('data-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');var n=c==='dark'?'light':'dark';el.setAttribute('data-theme',n);try{localStorage.setItem('tm-theme',n);}catch(e){}}</script>
 
-    <p class="subtext">
-      Wir basteln gerade am großen Quizabend. Bald könnt ihr euch hier
-      anmelden und mitraten. Bleibt dran!
-    </p>
+  <main id="main">
 
-    <form class="notify" onsubmit="return false;" aria-label="Benachrichtigung">
-      <input
-        type="email"
-        class="notify-input"
-        placeholder="Deine E-Mail-Adresse"
-        aria-label="E-Mail-Adresse"
-        disabled
-      />
-      <button type="submit" class="notify-btn" disabled>Benachrichtigen</button>
-    </form>
-    <p class="notify-hint">Registrierung folgt in Kürze.</p>
+    <section class="tm-hero tm-hero--red">
+      <span class="tm-swoosh" aria-hidden="true"></span>
+      <div class="tm-container tm-stack">
+        <p class="tm-eyebrow">Team Michelhausen lädt ein</p>
+        <h1>Wirtshausquiz</h1>
+        <p class="tm-hero__lead">
+          Vier Runden, ein Tisch voller Leute, die's besser wissen wollen.
+          Am <strong>Freitag, 16. Oktober</strong> beim Burchhart in Atzelsdorf.
+          Stellt ein Team auf — der Rest ergibt sich.
+        </p>
+        <p id="wq-status-wrap" class="is-hidden" style="margin:0;">
+          <span class="wq-status"><span class="wq-dot" id="wq-dot"></span><span id="wq-status">Plätze werden geladen …</span></span>
+        </p>
+        <div class="tm-hero__actions">
+          <a class="tm-btn tm-btn--light tm-btn--lg" href="#anmelden">Team anmelden</a>
+          <a class="tm-btn tm-btn--ghost tm-btn--lg" style="border-color:#fff;color:#fff;" href="#ablauf">Wie läuft das ab?</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="tm-section">
+      <div class="tm-container">
+        <dl class="wq-facts">
+          <div class="wq-fact">
+            <dt>Wann</dt>
+            <dd>Freitag, 16. Oktober 2026
+              <small>Einlass ab 17:30 Uhr, Quizstart 18:30 Uhr, Ende gegen 21:45 Uhr</small></dd>
+          </div>
+          <div class="wq-fact">
+            <dt>Wo</dt>
+            <dd>Gasthaus Burchhart
+              <small>„Zur Veste Liechtenstein“, Liechtensteingasse 2, 3451 Atzelsdorf ·
+                <a href="https://www.google.com/maps/search/?api=1&amp;query=Gasthaus+Burchhart+Liechtensteingasse+2+3451+Atzelsdorf" target="_blank" rel="noopener">Karte</a></small></dd>
+          </div>
+          <div class="wq-fact">
+            <dt>Wer</dt>
+            <dd>Teams mit 3 bis 6 Personen
+              <small>Die Teilnahme ist kostenlos. Wer allein kommt, wird einem Team zugeteilt.</small></dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <section id="ablauf" class="tm-section tm-section--mint">
+      <div class="tm-container tm-container--narrow">
+        <div class="tm-stack" style="margin-bottom:2.5rem;">
+          <p class="tm-eyebrow">Für alle, die noch nie bei einem Quiz waren</p>
+          <h2>So läuft der Abend ab</h2>
+          <p class="tm-text-muted">Kurz gesagt: Es ist einfacher, als es klingt. Du brauchst
+            kein Spezialwissen und nichts vorzubereiten.</p>
+        </div>
+
+        <ol class="wq-steps">
+          <li>
+            <div><strong>Ankommen und essen</strong>
+              Ab 17:30 Uhr ist offen und die Küche hat auf. Kommt früher, esst in Ruhe —
+              um 18:30 Uhr geht's los.</div>
+          </li>
+          <li>
+            <div><strong>Vier Runden, Zettel und Stift</strong>
+              Jede Runde hat ein Thema und rund acht Fragen. Ihr beratet euch am Tisch und
+              schreibt eure Antwort auf. Handys bleiben in der Tasche — das ist die einzige Regel.</div>
+          </li>
+          <li>
+            <div><strong>Nicht nur Fragen</strong>
+              Es gibt Bilder, Musik zum Erraten, Schätzfragen und eine Karte, auf der ihr
+              einen Ort markieren müsst. Für jede Runde gibt's einen Joker, der die Punkte verdoppelt.</div>
+          </li>
+          <li>
+            <div><strong>Die Masterfrage</strong>
+              Am Ende jeder Runde kommt die Masterfrage. Ihre Lösung steckt in den Antworten
+              davor versteckt — wer gut aufgepasst hat, kommt drauf. Dafür gibt's die meisten Punkte.</div>
+          </li>
+          <li>
+            <div><strong>Auswertung und Siegerehrung</strong>
+              Gegen 21:45 Uhr steht fest, wer's am besten wusste. Danach bleibt, wer mag.</div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="anmelden" class="tm-section">
+      <div class="tm-container tm-container--narrow">
+
+        <div id="wq-promo" class="wq-promo tm-alert tm-alert--warning" style="margin-bottom:2rem;">
+          <strong id="wq-promo-label">Die ersten 5 Teams bekommen die erste Runde aufs Haus.</strong>
+          <span id="wq-promo-left"></span>
+        </div>
+
+        <div class="tm-card" style="padding:2.5rem;">
+
+          <div id="wq-form-wrap">
+            <div class="tm-stack" style="margin-bottom:2rem;">
+              <p class="tm-eyebrow">Anmeldung</p>
+              <h2 class="tm-mt-0">Meldet euer Team an</h2>
+              <p class="tm-text-muted">Eine Anmeldung pro Team, gemacht von einer Person.
+                Du bekommst sofort eine Bestätigung per E-Mail.</p>
+            </div>
+
+            <form id="wq-form" novalidate>
+              <div class="tm-field">
+                <label class="tm-label" for="teamName">Teamname</label>
+                <input class="tm-input" id="teamName" name="teamName" type="text" maxlength="60" required
+                       placeholder="z. B. Die Quizverstörten" autocomplete="off">
+                <p class="tm-hint">Der halbe Spaß. Er steht am Quizabend auf der Leinwand.</p>
+                <p class="wq-err" data-err="teamName" hidden></p>
+              </div>
+
+              <div class="tm-grid tm-grid--2">
+                <div class="tm-field">
+                  <label class="tm-label" for="captainName">Dein Name</label>
+                  <input class="tm-input" id="captainName" name="captainName" type="text" maxlength="60" required
+                         autocomplete="name">
+                  <p class="wq-err" data-err="captainName" hidden></p>
+                </div>
+                <div class="tm-field">
+                  <label class="tm-label" for="size">Wie viele seid ihr?</label>
+                  <select class="tm-select" id="size" name="size" required>
+                    <option value="">Bitte wählen …</option>
+                    <option value="3">3 Personen</option>
+                    <option value="4">4 Personen</option>
+                    <option value="5">5 Personen</option>
+                    <option value="6">6 Personen</option>
+                  </select>
+                  <p class="wq-err" data-err="size" hidden></p>
+                </div>
+              </div>
+
+              <div class="tm-grid tm-grid--2">
+                <div class="tm-field">
+                  <label class="tm-label" for="email">E-Mail</label>
+                  <input class="tm-input" id="email" name="email" type="email" maxlength="190" required
+                         autocomplete="email">
+                  <p class="tm-hint">Hierhin geht die Bestätigung.</p>
+                  <p class="wq-err" data-err="email" hidden></p>
+                </div>
+                <div class="tm-field">
+                  <label class="tm-label" for="phone">Handynummer <span class="tm-text-muted">(optional)</span></label>
+                  <input class="tm-input" id="phone" name="phone" type="tel" maxlength="40" autocomplete="tel">
+                  <p class="tm-hint">Falls am Quiztag noch was dazwischenkommt.</p>
+                  <p class="wq-err" data-err="phone" hidden></p>
+                </div>
+              </div>
+
+              <div class="tm-field">
+                <label class="tm-check">
+                  <input type="checkbox" id="lookingForPlayers" name="lookingForPlayers">
+                  <span>Wir suchen noch Mitspieler — teilt uns gern jemanden zu.</span>
+                </label>
+              </div>
+
+              <div class="tm-field">
+                <label class="tm-label" for="note">Anmerkung <span class="tm-text-muted">(optional)</span></label>
+                <textarea class="tm-textarea" id="note" name="note" maxlength="500"
+                          placeholder="Barrierefreier Zugang, Allergien, Kinderwagen …"></textarea>
+              </div>
+
+              <div class="tm-field">
+                <label class="tm-check">
+                  <input type="checkbox" id="consent" name="consent" required>
+                  <span>Ich bin einverstanden, dass die Daten für diesen Quizabend gespeichert werden.
+                        Näheres in der <a href="https://team-michelhausen.at/datenschutz/" target="_blank" rel="noopener">Datenschutzerklärung</a>.</span>
+                </label>
+                <p class="wq-err" data-err="consent" hidden></p>
+              </div>
+
+              <div class="wq-hp" aria-hidden="true">
+                <label for="website">Website</label>
+                <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+              </div>
+
+              <p id="wq-form-error" class="tm-alert tm-alert--danger" hidden></p>
+
+              <button class="tm-btn tm-btn--primary tm-btn--block tm-btn--lg" type="submit" id="wq-submit">
+                Team anmelden
+              </button>
+              <p class="tm-hint tm-center" style="margin-top:.75rem;">Kostenlos. Absagen jederzeit über den Link in der Bestätigungsmail.</p>
+            </form>
+          </div>
+
+          <div id="wq-done" class="wq-done tm-center tm-stack">
+            <div style="font-size:3rem;line-height:1;">🍺</div>
+            <h2 class="tm-mt-0" id="wq-done-title">Passt, ihr seid dabei!</h2>
+            <p id="wq-done-text" class="tm-text-muted"></p>
+            <p id="wq-done-promo" class="tm-alert tm-alert--warning" hidden></p>
+            <p class="tm-text-muted"><small id="wq-done-mail"></small></p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section id="fragen" class="tm-section tm-section--tint">
+      <div class="tm-container tm-container--narrow">
+        <div class="tm-stack" style="margin-bottom:2rem;">
+          <p class="tm-eyebrow">Häufige Fragen</p>
+          <h2>Das werden wir oft gefragt</h2>
+        </div>
+
+        <div class="tm-stack">
+          <div class="tm-card">
+            <h3 class="tm-mt-0">Was kostet die Teilnahme?</h3>
+            <p class="tm-text-muted tm-mt-0">Nichts. Essen und Getränke zahlt ihr wie sonst
+              auch beim Wirt.</p>
+          </div>
+          <div class="tm-card">
+            <h3 class="tm-mt-0">Ich hab kein Team — kann ich trotzdem kommen?</h3>
+            <p class="tm-text-muted tm-mt-0">Ja. Melde dich einfach an und setz das Hakerl
+              „Wir suchen noch Mitspieler“. Wir setzen dich vor Ort zu einem Team dazu.</p>
+          </div>
+          <div class="tm-card">
+            <h3 class="tm-mt-0">Muss man besonders gescheit sein?</h3>
+            <p class="tm-text-muted tm-mt-0">Nein. Die Fragen sind bewusst gemischt —
+              Musik, Sport, Michelhausen, Alltagswissen. In jedem Team weiß irgendwer irgendwas.</p>
+          </div>
+          <div class="tm-card">
+            <h3 class="tm-mt-0">Wir sind zu siebt. Geht das?</h3>
+            <p class="tm-text-muted tm-mt-0">Sechs ist die Obergrenze, sonst wird's am Tisch
+              zu laut und zu leicht. Macht lieber zwei Teams draus — das ist ohnehin lustiger.</p>
+          </div>
+          <div class="tm-card">
+            <h3 class="tm-mt-0">Können wir noch absagen?</h3>
+            <p class="tm-text-muted tm-mt-0">Jederzeit, über den Link in der Bestätigungsmail.
+              Bitte macht das auch — dann rückt ein Team von der Warteliste nach.</p>
+          </div>
+        </div>
+
+        <p class="tm-center tm-text-muted" style="margin-top:2rem;">
+          <small>Noch eine Frage? Schreib an
+            <a href="mailto:quiz@team-michelhausen.at">quiz@team-michelhausen.at</a></small>
+        </p>
+      </div>
+    </section>
+
   </main>
 
-  <footer class="footer">
-    <span class="footer-mark">🍺</span>
-    Team&nbsp;Michelhausen &middot; <span id="year"></span>
+  <footer class="tm-footer">
+    <hr class="tm-flag" aria-hidden="true">
+    <div class="tm-container">
+      <div class="tm-footer__legal" style="padding-top:1.5rem;border-top:none;">
+        <span>© <span id="tm-year">2026</span> SPÖ &amp; Unabhängige – Team Michelhausen.
+              Für den Inhalt verantwortlich: Gerald Fröhlich.</span>
+        <span><a href="https://team-michelhausen.at/impressum/">Impressum</a> ·
+              <a href="https://team-michelhausen.at/datenschutz/">Datenschutz</a></span>
+      </div>
+    </div>
   </footer>
 
   <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
+  (function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    var year = $('tm-year'); if (year) { year.textContent = new Date().getFullYear(); }
+
+    // ---- Live counters ------------------------------------------------------
+    function renderCounters(d) {
+      var c = d.counters, p = d.promo;
+      var wrap = $('wq-status-wrap'), dot = $('wq-dot'), txt = $('wq-status');
+
+      if (c.full) {
+        dot.className = 'wq-dot wq-dot--full';
+        txt.textContent = 'Ausgebucht — Warteliste ebenfalls voll';
+      } else if (c.spotsLeft === 0) {
+        dot.className = 'wq-dot wq-dot--warn';
+        txt.textContent = 'Alle Plätze vergeben — Anmeldung auf die Warteliste möglich';
+      } else if (c.spotsLeft <= 4) {
+        dot.className = 'wq-dot wq-dot--warn';
+        txt.textContent = 'Nur noch ' + c.spotsLeft + (c.spotsLeft === 1 ? ' Platz' : ' Plätze') + ' frei';
+      } else {
+        dot.className = 'wq-dot';
+        txt.textContent = c.spotsLeft + ' von ' + c.capacity + ' Plätzen frei';
+      }
+      wrap.classList.remove('is-hidden');
+
+      if (p && p.enabled) {
+        $('wq-promo-label').textContent = p.label;
+        $('wq-promo-left').textContent = p.left > 0
+          ? ' Noch ' + p.left + ' von ' + p.teams + ' zu haben.'
+          : ' Die Freirunden sind vergeben — angemeldet werden kann weiterhin.';
+        $('wq-promo').classList.add('is-on');
+      }
+    }
+
+    fetch('api/counters.php', { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (d && d.ok) { renderCounters(d); } })
+      .catch(function () { /* the page works without the counters */ });
+
+    // ---- Signup -------------------------------------------------------------
+    var form = $('wq-form'), submit = $('wq-submit'), formError = $('wq-form-error');
+
+    function clearErrors() {
+      formError.hidden = true;
+      formError.textContent = '';
+      var nodes = form.querySelectorAll('[data-err]');
+      for (var i = 0; i < nodes.length; i++) { nodes[i].hidden = true; nodes[i].textContent = ''; }
+      var bad = form.querySelectorAll('.is-bad');
+      for (var j = 0; j < bad.length; j++) { bad[j].classList.remove('is-bad'); }
+    }
+
+    function showFieldErrors(fields) {
+      var first = null;
+      for (var key in fields) {
+        if (!Object.prototype.hasOwnProperty.call(fields, key)) { continue; }
+        var msg = form.querySelector('[data-err="' + key + '"]');
+        if (msg) { msg.textContent = fields[key]; msg.hidden = false; }
+        var input = $(key);
+        if (input) {
+          input.classList.add('is-bad');
+          if (!first) { first = input; }
+        }
+      }
+      if (first) { first.focus(); first.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    }
+
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      clearErrors();
+
+      var payload = {
+        teamName: $('teamName').value,
+        captainName: $('captainName').value,
+        email: $('email').value,
+        phone: $('phone').value,
+        size: parseInt($('size').value, 10) || 0,
+        lookingForPlayers: $('lookingForPlayers').checked,
+        note: $('note').value,
+        consent: $('consent').checked,
+        website: $('website').value
+      };
+
+      submit.disabled = true;
+      submit.textContent = 'Wird gesendet …';
+
+      fetch('api/register.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json().then(function (d) { return { status: r.status, body: d }; }); })
+        .then(function (res) {
+          var d = res.body;
+          if (d && d.ok) {
+            $('wq-form-wrap').style.display = 'none';
+            var done = $('wq-done');
+            if (d.slot === 'WAITLIST') {
+              $('wq-done-title').textContent = 'Ihr steht auf der Warteliste';
+              $('wq-done-text').textContent = '„' + d.teamName + '“ ist notiert. Der Abend ist zwar voll, '
+                + 'aber es sagen erfahrungsgemäß noch Teams ab — wir melden uns, sobald ein Platz frei wird.';
+            } else {
+              $('wq-done-title').textContent = 'Passt, ihr seid dabei!';
+              $('wq-done-text').textContent = '„' + d.teamName + '“ ist angemeldet. '
+                + 'Wir sehen uns am 16. Oktober beim Burchhart.';
+            }
+            if (d.promoRank > 0) {
+              var pr = $('wq-done-promo');
+              pr.textContent = '🍺 Freirunde gesichert — ihr wart Team Nummer ' + d.promoRank
+                + '. Die erste Runde geht an eurem Tisch aufs Haus.';
+              pr.hidden = false;
+            }
+            $('wq-done-mail').textContent = d.mailSent
+              ? 'Die Bestätigung ist unterwegs. Schaut auch im Spam-Ordner nach.'
+              : 'Die Bestätigungsmail konnten wir gerade nicht zustellen — eure Anmeldung ist aber gespeichert.';
+            done.classList.add('is-on');
+            done.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            return;
+          }
+
+          if (d && d.fields) {
+            showFieldErrors(d.fields);
+          }
+          formError.textContent = (d && d.error) ? d.error : 'Das hat leider nicht geklappt. Bitte versucht es nochmal.';
+          formError.hidden = false;
+          submit.disabled = false;
+          submit.textContent = 'Team anmelden';
+        })
+        .catch(function () {
+          formError.textContent = 'Keine Verbindung zum Server. Bitte prüft eure Internetverbindung und versucht es nochmal.';
+          formError.hidden = false;
+          submit.disabled = false;
+          submit.textContent = 'Team anmelden';
+        });
+    });
+  })();
   </script>
 </body>
 </html>

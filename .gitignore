@@ -1,0 +1,7 @@
+.claude/
+_site/
+data/
+node_modules/
+assets/netcup.config.json
+.DS_Store
+Thumbs.db

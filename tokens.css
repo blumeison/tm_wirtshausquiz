@@ -1,0 +1,341 @@
+/* ============================================================
+   Team Michelhausen – Corporate Design System
+   tokens.css  ·  Single source of truth for the brand.
+   Brand: SPÖ & Unabhängige – Team Michelhausen  ·  "Gemma's an!"
+
+   Light + Dark theme. Theme resolves in this order:
+     1. <html data-theme="light|dark">  (explicit, set by toggle)
+     2. prefers-color-scheme            (system default)
+   Add the no-flash <script> from templates/partials.html in <head>.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;700&display=swap');
+
+/* ============================================================
+   1. BRAND CONSTANTS  (identical in every theme)
+   ============================================================ */
+:root {
+  /* Brand colors */
+  --tm-red:        #e51324;   /* MainColor – primary signal/action */
+  --tm-red-dark:   #b80f1c;   /* hover / pressed */
+  --tm-red-bright: #ff4d5e;   /* lightened red for text/links on dark */
+  --tm-coral:      #fe6d60;   /* secondary warm accent */
+
+  /* Accent trio (logo figures) – tags, charts, illustration, flag-bar */
+  --tm-green:      #3aaa35;
+  --tm-yellow:     #ffcc00;
+  --tm-magenta:    #e6007e;
+
+  /* Fixed brand neutrals (used where a constant value is required) */
+  --tm-red-base:   #e51324;
+  --tm-ink-fixed:  #3f3f3e;
+
+  /* Typography */
+  --tm-font-head:  'Patua One', Georgia, 'Times New Roman', serif;
+  --tm-font-body:  'Rubik', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --tm-fs-xs: .78rem; --tm-fs-sm: .875rem; --tm-fs-base: 1rem; --tm-fs-lg: 1.175rem;
+  --tm-fs-xl: 1.5rem; --tm-fs-2xl: 2rem; --tm-fs-3xl: 2.75rem; --tm-fs-4xl: 3.5rem;
+  --tm-lh-tight: 1.15; --tm-lh-base: 1.6;
+
+  /* Spacing */
+  --tm-space-1: .25rem; --tm-space-2: .5rem; --tm-space-3: .75rem; --tm-space-4: 1rem;
+  --tm-space-5: 1.5rem; --tm-space-6: 2rem; --tm-space-7: 3rem; --tm-space-8: 4.5rem; --tm-space-9: 6rem;
+
+  /* Radius / layout / motion */
+  --tm-radius-sm: 6px; --tm-radius: 12px; --tm-radius-lg: 20px; --tm-radius-pill: 999px;
+  --tm-container: 1140px; --tm-container-narrow: 720px;
+  --tm-transition: 160ms ease;
+
+  /* Brand bar: SPÖ red leads (CI), then the "& Unabhängige" accent trio.
+     Red sits FIRST and takes the largest share. */
+  --tm-flag-gradient: linear-gradient(90deg,
+    var(--tm-red)     0    45%,
+    var(--tm-green)   45%  63.3%,
+    var(--tm-yellow)  63.3% 81.6%,
+    var(--tm-magenta) 81.6% 100%);
+}
+
+/* ============================================================
+   2. THEME TOKENS  ·  LIGHT (default)
+   ============================================================ */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --tm-bg:          #ffffff;   /* page background */
+  --tm-surface:     #ffffff;   /* cards, navbar */
+  --tm-surface-2:   #f4f5f6;   /* alt sections (cloud) */
+  --tm-tint:        #dce8e3;   /* mint accent section */
+  --tm-tint-text:   #2c4a40;   /* text on mint */
+
+  --tm-text:        #3f3f3e;   /* primary text (ink) */
+  --tm-text-soft:   #6b6b6a;   /* secondary text */
+  --tm-text-on-brand:#ffffff;  /* text on red/hero */
+
+  --tm-border:      #e3e6e8;   /* hairline */
+  --tm-link:        var(--tm-red);
+  --tm-red-soft:    #fce8ea;   /* tinted red surface / focus ring */
+
+  /* inverted "ink" contrast block (tm-section--ink) */
+  --tm-invert-bg:   #3f3f3e;
+  --tm-invert-text: #ffffff;
+  /* footer */
+  --tm-footer-bg:   #3f3f3e;
+
+  --tm-nav-bg:      rgba(255,255,255,.92);
+  --tm-shadow-sm: 0 1px 3px rgba(28,28,27,.08);
+  --tm-shadow:    0 6px 24px rgba(28,28,27,.10);
+  --tm-shadow-lg: 0 18px 48px rgba(28,28,27,.16);
+
+  --tm-logo-color: block;      /* logo swap helpers */
+  --tm-logo-white: none;
+}
+
+/* ============================================================
+   3. THEME TOKENS  ·  DARK
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --tm-bg:          #161618;
+    --tm-surface:     #1f1f22;
+    --tm-surface-2:   #25252a;
+    --tm-tint:        #1b2b29;
+    --tm-tint-text:   #cfe3dc;
+
+    --tm-text:        #ededee;
+    --tm-text-soft:   #a6a6ad;
+    --tm-text-on-brand:#ffffff;
+
+    --tm-border:      #34343c;
+    --tm-link:        var(--tm-red-bright);
+    --tm-red-soft:    rgba(229,19,36,.20);
+
+    --tm-invert-bg:   #0e0e10;
+    --tm-invert-text: #ffffff;
+    --tm-footer-bg:   #0e0e10;
+
+    --tm-nav-bg:      rgba(22,22,24,.82);
+    --tm-shadow-sm: 0 1px 3px rgba(0,0,0,.5);
+    --tm-shadow:    0 6px 24px rgba(0,0,0,.55);
+    --tm-shadow-lg: 0 18px 48px rgba(0,0,0,.6);
+
+    --tm-logo-color: none;
+    --tm-logo-white: block;
+  }
+}
+
+/* explicit dark via toggle (wins over everything) */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --tm-bg:#161618; --tm-surface:#1f1f22; --tm-surface-2:#25252a;
+  --tm-tint:#1b2b29; --tm-tint-text:#cfe3dc;
+  --tm-text:#ededee; --tm-text-soft:#a6a6ad; --tm-text-on-brand:#ffffff;
+  --tm-border:#34343c; --tm-link:var(--tm-red-bright); --tm-red-soft:rgba(229,19,36,.20);
+  --tm-invert-bg:#0e0e10; --tm-invert-text:#ffffff; --tm-footer-bg:#0e0e10;
+  --tm-nav-bg:rgba(22,22,24,.82);
+  --tm-shadow-sm:0 1px 3px rgba(0,0,0,.5);
+  --tm-shadow:0 6px 24px rgba(0,0,0,.55);
+  --tm-shadow-lg:0 18px 48px rgba(0,0,0,.6);
+  --tm-logo-color:none; --tm-logo-white:block;
+}
+
+/* ============================================================
+   4. RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+body {
+  margin: 0; font-family: var(--tm-font-body); font-size: var(--tm-fs-base);
+  line-height: var(--tm-lh-base); color: var(--tm-text); background: var(--tm-bg);
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--tm-transition), color var(--tm-transition);
+}
+img, svg { max-width: 100%; height: auto; display: block; }
+a { color: var(--tm-link); text-decoration: none; transition: color var(--tm-transition); }
+a:hover { color: var(--tm-red-dark); text-decoration: underline; }
+[data-theme="dark"] a:hover, :root:not([data-theme="light"]) a:hover { color: var(--tm-coral); }
+
+h1, h2, h3, h4 {
+  font-family: var(--tm-font-head); font-weight: 400; line-height: var(--tm-lh-tight);
+  color: var(--tm-text); margin: 0 0 var(--tm-space-4);
+}
+h1 { font-size: var(--tm-fs-4xl); letter-spacing: -.01em; }
+h2 { font-size: var(--tm-fs-3xl); }
+h3 { font-size: var(--tm-fs-2xl); }
+h4 { font-size: var(--tm-fs-xl); }
+p  { margin: 0 0 var(--tm-space-4); }
+small { font-size: var(--tm-fs-sm); color: var(--tm-text-soft); }
+hr { border: 0; border-top: 1px solid var(--tm-border); margin: var(--tm-space-6) 0; }
+::selection { background: var(--tm-red); color: #fff; }
+
+/* ============================================================
+   5. LAYOUT
+   ============================================================ */
+.tm-container { width: 100%; max-width: var(--tm-container); margin-inline: auto; padding-inline: var(--tm-space-5); }
+.tm-container--narrow { max-width: var(--tm-container-narrow); }
+.tm-section { padding-block: var(--tm-space-8); }
+.tm-section--tint { background: var(--tm-surface-2); }
+.tm-section--mint { background: var(--tm-tint); color: var(--tm-tint-text); }
+.tm-section--mint h1,.tm-section--mint h2,.tm-section--mint h3 { color: var(--tm-tint-text); }
+.tm-section--ink  { background: var(--tm-invert-bg); color: var(--tm-invert-text); }
+.tm-section--ink h1,.tm-section--ink h2,.tm-section--ink h3 { color: var(--tm-invert-text); }
+
+.tm-grid { display: grid; gap: var(--tm-space-5); }
+@media (min-width: 720px) {
+  .tm-grid--2 { grid-template-columns: repeat(2, 1fr); }
+  .tm-grid--3 { grid-template-columns: repeat(3, 1fr); }
+  .tm-grid--4 { grid-template-columns: repeat(4, 1fr); }
+}
+.tm-stack > * + * { margin-top: var(--tm-space-4); }
+.tm-center { text-align: center; }
+.tm-eyebrow { font-family: var(--tm-font-body); font-weight: 700; text-transform: uppercase;
+  letter-spacing: .12em; font-size: var(--tm-fs-xs); color: var(--tm-red); margin-bottom: var(--tm-space-2); }
+
+/* ============================================================
+   6. BUTTONS
+   ============================================================ */
+.tm-btn {
+  display: inline-flex; align-items: center; gap: var(--tm-space-2);
+  font-family: var(--tm-font-body); font-weight: 700; font-size: var(--tm-fs-base);
+  line-height: 1; cursor: pointer; border: 2px solid transparent;
+  padding: .85em 1.6em; border-radius: var(--tm-radius-pill);
+  transition: transform var(--tm-transition), background var(--tm-transition), color var(--tm-transition);
+  text-decoration: none;
+}
+.tm-btn:hover { text-decoration: none; transform: translateY(-1px); }
+.tm-btn:active { transform: translateY(0); }
+.tm-btn:focus-visible { outline: 3px solid var(--tm-red); outline-offset: 2px; }
+.tm-btn--primary { background: var(--tm-red); color: #fff; }
+.tm-btn--primary:hover { background: var(--tm-red-dark); color: #fff; }
+.tm-btn--secondary { background: var(--tm-text); color: var(--tm-bg); }
+.tm-btn--secondary:hover { opacity: .88; color: var(--tm-bg); }
+.tm-btn--ghost { background: transparent; color: var(--tm-link); border-color: currentColor; }
+.tm-btn--ghost:hover { background: var(--tm-red); color: #fff; border-color: var(--tm-red); }
+.tm-btn--light { background: #fff; color: var(--tm-red); }
+.tm-btn--light:hover { background: rgba(255,255,255,.85); color: var(--tm-red-dark); }
+.tm-btn--block { display: flex; width: 100%; justify-content: center; }
+.tm-btn--lg { font-size: var(--tm-fs-lg); padding: 1em 2em; }
+
+/* ============================================================
+   7. CARDS
+   ============================================================ */
+.tm-card {
+  background: var(--tm-surface); border: 1px solid var(--tm-border);
+  border-radius: var(--tm-radius); padding: var(--tm-space-6); box-shadow: var(--tm-shadow-sm);
+  transition: box-shadow var(--tm-transition), transform var(--tm-transition), border-color var(--tm-transition);
+}
+.tm-card--hover:hover { box-shadow: var(--tm-shadow); transform: translateY(-3px); }
+.tm-card__icon { width: 52px; height: 52px; border-radius: var(--tm-radius-sm); display: grid;
+  place-items: center; margin-bottom: var(--tm-space-4); background: var(--tm-red-soft); color: var(--tm-red); font-size: 1.5rem; }
+.tm-card--accent { border-top: 4px solid var(--tm-red); }
+
+/* ============================================================
+   8. FORMS
+   ============================================================ */
+.tm-field { margin-bottom: var(--tm-space-4); }
+.tm-label { display: block; font-weight: 500; font-size: var(--tm-fs-sm); margin-bottom: var(--tm-space-2); color: var(--tm-text); }
+.tm-input, .tm-select, .tm-textarea {
+  width: 100%; font-family: var(--tm-font-body); font-size: var(--tm-fs-base); color: var(--tm-text);
+  background: var(--tm-bg); border: 1.5px solid var(--tm-border); border-radius: var(--tm-radius-sm);
+  padding: .75em .9em; transition: border-color var(--tm-transition), box-shadow var(--tm-transition);
+}
+.tm-input::placeholder, .tm-textarea::placeholder { color: var(--tm-text-soft); opacity: .8; }
+.tm-input:focus, .tm-select:focus, .tm-textarea:focus { outline: none; border-color: var(--tm-red); box-shadow: 0 0 0 3px var(--tm-red-soft); }
+.tm-textarea { min-height: 120px; resize: vertical; }
+.tm-check { display: flex; align-items: flex-start; gap: var(--tm-space-2); font-size: var(--tm-fs-sm); }
+.tm-check input { margin-top: .2em; accent-color: var(--tm-red); }
+.tm-hint { font-size: var(--tm-fs-xs); color: var(--tm-text-soft); margin-top: var(--tm-space-1); }
+
+/* ============================================================
+   9. BADGES, ALERTS
+   ============================================================ */
+.tm-badge { display: inline-flex; align-items: center; gap: .4em; font-size: var(--tm-fs-xs);
+  font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: .35em .8em;
+  border-radius: var(--tm-radius-pill); background: var(--tm-red-soft); color: var(--tm-red); }
+.tm-badge--green   { background: color-mix(in srgb, var(--tm-green) 16%, transparent); color: var(--tm-green); }
+.tm-badge--yellow  { background: color-mix(in srgb, var(--tm-yellow) 22%, transparent); color: #8a6d00; }
+.tm-badge--magenta { background: color-mix(in srgb, var(--tm-magenta) 14%, transparent); color: var(--tm-magenta); }
+.tm-badge--slate   { background: var(--tm-surface-2); color: var(--tm-text-soft); }
+[data-theme="dark"] .tm-badge--yellow, :root:not([data-theme="light"]) .tm-badge--yellow { color: var(--tm-yellow); }
+
+.tm-alert { border-radius: var(--tm-radius-sm); padding: var(--tm-space-4) var(--tm-space-5);
+  border-left: 4px solid var(--tm-text-soft); background: var(--tm-surface-2); margin-bottom: var(--tm-space-4); }
+.tm-alert--success { border-color: var(--tm-green);   background: color-mix(in srgb, var(--tm-green) 10%, var(--tm-surface)); }
+.tm-alert--warning { border-color: var(--tm-yellow);  background: color-mix(in srgb, var(--tm-yellow) 14%, var(--tm-surface)); }
+.tm-alert--danger  { border-color: var(--tm-red);     background: var(--tm-red-soft); }
+
+/* ============================================================
+   10. NAVBAR
+   ============================================================ */
+.tm-nav { position: sticky; top: 0; z-index: 50; background: var(--tm-nav-bg);
+  backdrop-filter: saturate(180%) blur(8px); border-bottom: 1px solid var(--tm-border); }
+/* brand bar across the top of the header – SPÖ red leads */
+.tm-nav::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--tm-flag-gradient); }
+.tm-nav__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--tm-space-5); padding-block: var(--tm-space-3); }
+.tm-nav__brand { display: flex; align-items: center; gap: var(--tm-space-3); }
+.tm-nav__brand img { height: 44px; width: auto; }
+.tm-nav__links { display: flex; align-items: center; gap: var(--tm-space-5); list-style: none; margin: 0; padding: 0; }
+.tm-nav__links a { color: var(--tm-text); font-weight: 500; font-size: var(--tm-fs-sm); }
+.tm-nav__links a:hover { color: var(--tm-red); text-decoration: none; }
+@media (max-width: 720px) { .tm-nav__links { display: none; } }
+
+/* ============================================================
+   11. HERO
+   ============================================================ */
+.tm-hero { position: relative; overflow: hidden; padding-block: var(--tm-space-9); }
+.tm-hero--red { background: linear-gradient(135deg, var(--tm-red) 0%, var(--tm-red-dark) 100%); color: #fff; }
+.tm-hero--red h1, .tm-hero--red h2 { color: #fff; }
+.tm-hero--red .tm-eyebrow { color: rgba(255,255,255,.85); }
+.tm-hero__lead { font-size: var(--tm-fs-lg); max-width: 38ch; opacity: .95; }
+.tm-hero__actions { display: flex; flex-wrap: wrap; gap: var(--tm-space-3); margin-top: var(--tm-space-5); }
+.tm-swoosh { position: absolute; inset: auto -6% -40% auto; width: 60%; aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(255,255,255,.18); pointer-events: none; }
+
+/* ============================================================
+   12. FOOTER
+   ============================================================ */
+.tm-footer { background: var(--tm-footer-bg); color: rgba(255,255,255,.78); padding-block: var(--tm-space-7) var(--tm-space-5); font-size: var(--tm-fs-sm); }
+.tm-footer a { color: #fff; }
+.tm-footer a:hover { color: var(--tm-coral); }
+.tm-footer__grid { display: grid; gap: var(--tm-space-6); grid-template-columns: 1fr; }
+@media (min-width: 720px) { .tm-footer__grid { grid-template-columns: 2fr 1fr 1fr; } }
+.tm-footer__legal { margin-top: var(--tm-space-6); padding-top: var(--tm-space-4); border-top: 1px solid rgba(255,255,255,.15);
+  font-size: var(--tm-fs-xs); color: rgba(255,255,255,.6); display: flex; flex-wrap: wrap;
+  gap: var(--tm-space-2) var(--tm-space-5); justify-content: space-between; }
+.tm-footer__legal a { color: rgba(255,255,255,.8); }
+
+/* ============================================================
+   13. LOGO SWAP  (color in light, white knockout in dark)
+   ============================================================ */
+.tm-logo { display: inline-block; line-height: 0; }
+.tm-logo img { height: 44px; width: auto; }
+.tm-logo .tm-logo__color { display: var(--tm-logo-color); }
+.tm-logo .tm-logo__white { display: var(--tm-logo-white); }
+
+/* ============================================================
+   14. THEME TOGGLE
+   ============================================================ */
+.tm-theme-toggle {
+  display: inline-grid; place-items: center; width: 40px; height: 40px; cursor: pointer;
+  border: 1.5px solid var(--tm-border); border-radius: var(--tm-radius-pill);
+  background: var(--tm-surface); color: var(--tm-text); transition: all var(--tm-transition);
+}
+.tm-theme-toggle:hover { border-color: var(--tm-red); color: var(--tm-red); }
+.tm-theme-toggle .tm-ico-sun  { display: var(--tm-logo-white); }  /* show sun in dark */
+.tm-theme-toggle .tm-ico-moon { display: var(--tm-logo-color); }  /* show moon in light */
+
+/* ============================================================
+   15. UTILITIES
+   ============================================================ */
+.tm-text-red { color: var(--tm-red); }
+.tm-text-muted { color: var(--tm-text-soft); }
+.tm-mt-0 { margin-top: 0; } .tm-mb-0 { margin-bottom: 0; }
+.tm-flag { width: 100%; height: 4px; border: 0; margin: 0; background: var(--tm-flag-gradient); }
+.tm-skip { position: absolute; left: -9999px; }
+.tm-skip:focus { left: var(--tm-space-4); top: var(--tm-space-4); background: var(--tm-surface); color: var(--tm-text);
+  padding: var(--tm-space-2) var(--tm-space-4); border-radius: var(--tm-radius-sm); z-index: 100; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
+}
