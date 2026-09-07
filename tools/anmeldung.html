@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<title>Anmeldung offen – Sujet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+  /* Sujet für den Anmelde-Post am 17. September.
+     Gleiche Bildwelt wie Save the Date — wer den ersten Post gesehen hat,
+     erkennt den zweiten sofort. */
+
+  :root {
+    --red:      #e51324;
+    --green:    #3aaa35;
+    --yellow:   #ffcc00;
+    --magenta:  #e6007e;
+    --board:    #f0e8d8;
+    --board-sh: #ddd2bc;
+    --ink:      #4a4034;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; overflow: hidden; }
+
+  .stage { position: relative; overflow: hidden; display: grid; place-items: center;
+           background: #3f2c20; }
+
+  .wood, .wood-photo, .vignette { position: absolute; inset: 0; }
+  .wood {
+    background:
+      repeating-linear-gradient(91.5deg,
+        rgba(0,0,0,.07) 0, rgba(0,0,0,.07) 3px,
+        rgba(255,255,255,.014) 3px, rgba(255,255,255,.014) 9px,
+        rgba(0,0,0,.035) 9px, rgba(0,0,0,.035) 23px),
+      linear-gradient(163deg, #63483a 0%, #4a3527 48%, #33241a 100%);
+  }
+  .wood-photo {
+    background-image: url("wood.jpg");
+    background-size: cover; background-position: center;
+    filter: brightness(1.12) saturate(1.06);
+  }
+  .vignette {
+    background: radial-gradient(ellipse at 50% 42%,
+      rgba(255,232,190,.13) 0%, rgba(0,0,0,0) 52%, rgba(0,0,0,.38) 100%);
+  }
+
+  .mat-wrap { position: relative; }
+  .mat {
+    position: relative; background: var(--board);
+    border-radius: 4.5%;
+    display: grid; place-items: center; text-align: center;
+    box-shadow:
+      0 2px 0 var(--board-sh),
+      0 3px 1px rgba(0,0,0,.35),
+      0 26px 50px rgba(0,0,0,.55);
+  }
+  .mat::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background-image: var(--noise); opacity: .5; mix-blend-mode: multiply;
+  }
+  .mat::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(145deg, rgba(255,255,255,.5), rgba(0,0,0,0) 38%, rgba(0,0,0,.06));
+  }
+  .keyline { position: absolute; inset: 4.5%; border: 2px solid var(--red);
+             border-radius: 2.5%; opacity: .85; }
+
+  .content { position: relative; z-index: 2; padding: 0 8%; width: 100%; }
+
+  .kicker { font-family: Rubik, sans-serif; font-weight: 600; color: var(--ink);
+            text-transform: uppercase; }
+  .title  { font-family: 'Patua One', Georgia, serif; color: var(--red);
+            line-height: .9; letter-spacing: -.015em; }
+  .flagbar { margin-inline: auto; border-radius: 99px;
+             background: linear-gradient(90deg, var(--red) 0 45%, var(--green) 45% 63.3%,
+                         var(--yellow) 63.3% 81.6%, var(--magenta) 81.6% 100%); }
+  .what   { font-family: 'Patua One', Georgia, serif; color: var(--ink); line-height: 1.16; }
+  .where  { font-family: Rubik, sans-serif; font-weight: 500; color: var(--ink); opacity: .82; }
+
+  .promo {
+    display: inline-block; background: var(--yellow); color: #5a4200;
+    font-family: Rubik, sans-serif; font-weight: 700; line-height: 1.25;
+    border-radius: 99px;
+  }
+
+  .url    { font-family: Rubik, sans-serif; font-weight: 600; color: var(--red); }
+  .meta   { font-family: Rubik, sans-serif; font-weight: 500; color: var(--ink); opacity: .68; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="wood"></div>
+  <div class="wood-photo"></div>
+  <div class="vignette"></div>
+
+  <div class="mat-wrap" id="matWrap">
+    <div class="mat" id="mat">
+      <div class="keyline"></div>
+      <div class="content">
+        <p class="kicker" id="kicker">Ab sofort</p>
+        <h1 class="title" id="title">Anmeldung<br>offen</h1>
+        <div class="flagbar" id="flagbar"></div>
+        <p class="what" id="what">Wirtshausquiz<br>Freitag, 16. Oktober</p>
+        <p class="where" id="where">Gasthaus Burchhart · Atzelsdorf</p>
+        <p><span class="promo" id="promo">🍺 Die ersten 5 Teams: erste Runde aufs Haus</span></p>
+        <p class="url" id="url">quiz.team-michelhausen.at</p>
+        <p class="meta" id="meta">Teams mit 3 bis 5 Personen · Teilnahme kostenlos</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var W = parseInt(q.get('w'), 10) || 1080;
+  var H = parseInt(q.get('h'), 10) || 1350;
+
+  var stage = document.getElementById('stage');
+  stage.style.width = W + 'px';
+  stage.style.height = H + 'px';
+
+  var mat = Math.round(Math.min(W, H) * (W === H ? 0.86 : 0.88));
+  var m = document.getElementById('mat');
+  m.style.width = mat + 'px';
+  m.style.height = mat + 'px';
+  document.getElementById('matWrap').style.transform = 'rotate(-2deg)';
+
+  var u = mat / 100;
+  function set(id, prop, v) { document.getElementById(id).style[prop] = (u * v) + 'px'; }
+
+  set('kicker', 'fontSize', 3.4);
+  document.getElementById('kicker').style.letterSpacing = (u * 0.4) + 'px';
+  set('kicker', 'marginBottom', 2.8);
+
+  set('title', 'fontSize', 12.8);
+  set('title', 'marginBottom', 3.6);
+
+  var fb = document.getElementById('flagbar');
+  fb.style.width = (u * 28) + 'px';
+  fb.style.height = (u * 1.4) + 'px';
+  fb.style.marginBottom = (u * 4.4) + 'px';
+
+  set('what', 'fontSize', 5.2);
+  set('what', 'marginBottom', 1.8);
+  set('where', 'fontSize', 3.9);
+  set('where', 'marginBottom', 4.0);
+
+  var p = document.getElementById('promo');
+  p.style.fontSize = (u * 2.95) + 'px';
+  p.style.padding = (u * 1.5) + 'px ' + (u * 3.4) + 'px';
+  p.style.whiteSpace = 'nowrap';
+  p.parentNode.style.marginBottom = (u * 4.4) + 'px';
+
+  set('url', 'fontSize', 4.6);
+  set('url', 'marginBottom', 1.6);
+  set('meta', 'fontSize', 3.1);
+})();
+</script>
+</body>
+</html>

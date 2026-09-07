@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<title>Wirtshausquiz – A3-Plakat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+  /* A3-Plakat fürs Gasthaus und den Nahversorger.
+     Layout in Millimetern, damit das PDF echte A3-Maße hat. Der PNG-Screenshot
+     kommt aus derselben Datei über einen höheren Device-Scale-Faktor. */
+
+  @page { size: A3 portrait; margin: 0; }
+
+  :root {
+    --red:      #e51324;
+    --green:    #3aaa35;
+    --yellow:   #ffcc00;
+    --magenta:  #e6007e;
+    --board:    #f0e8d8;
+    --board-sh: #ddd2bc;
+    --ink:      #4a4034;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { width: 297mm; height: 420mm; overflow: hidden; }
+
+  .sheet {
+    position: relative;
+    width: 297mm; height: 420mm;
+    overflow: hidden;
+    background: #3f2c20;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14mm;
+    padding: 16mm 14mm 12mm;
+  }
+
+  .wood, .wood-photo, .vignette { position: absolute; inset: 0; }
+  .wood {
+    background:
+      repeating-linear-gradient(91.5deg,
+        rgba(0,0,0,.07) 0, rgba(0,0,0,.07) 3px,
+        rgba(255,255,255,.014) 3px, rgba(255,255,255,.014) 9px,
+        rgba(0,0,0,.035) 9px, rgba(0,0,0,.035) 23px),
+      linear-gradient(163deg, #63483a 0%, #4a3527 48%, #33241a 100%);
+  }
+  .wood-photo {
+    background-image: url("wood.jpg");
+    background-size: cover; background-position: center;
+    filter: brightness(1.1) saturate(1.05);
+  }
+  .vignette {
+    background: radial-gradient(ellipse at 50% 40%,
+      rgba(255,232,190,.12) 0%, rgba(0,0,0,0) 55%, rgba(0,0,0,.42) 100%);
+  }
+
+  /* ---- Bierdeckel ---- */
+  .mat {
+    position: relative; z-index: 2;
+    width: 232mm; height: 232mm;
+    background: var(--board);
+    border-radius: 11mm;
+    display: grid; place-items: center; text-align: center;
+    transform: rotate(-1.8deg);
+    box-shadow:
+      0 1.2mm 0 var(--board-sh),
+      0 2mm 1mm rgba(0,0,0,.32),
+      0 14mm 26mm rgba(0,0,0,.5);
+  }
+  .mat::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background-image: var(--noise); opacity: .5; mix-blend-mode: multiply;
+  }
+  .mat::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(145deg, rgba(255,255,255,.45), rgba(0,0,0,0) 38%, rgba(0,0,0,.05));
+  }
+  .keyline {
+    position: absolute; inset: 10mm; border: .7mm solid var(--red);
+    border-radius: 6mm; opacity: .85;
+  }
+  .mat .inner { position: relative; z-index: 2; padding: 0 18mm; }
+
+  .kicker {
+    font: 600 7.4mm/1.3 Rubik, sans-serif; color: var(--ink);
+    text-transform: uppercase; letter-spacing: 1mm; margin-bottom: 7mm;
+  }
+  .title {
+    font: 400 36mm/.88 'Patua One', Georgia, serif; color: var(--red);
+    letter-spacing: -.4mm; margin-bottom: 9mm;
+  }
+  .flagbar {
+    width: 70mm; height: 3.4mm; margin: 0 auto 11mm; border-radius: 99mm;
+    background: linear-gradient(90deg, var(--red) 0 45%, var(--green) 45% 63.3%,
+                var(--yellow) 63.3% 81.6%, var(--magenta) 81.6% 100%);
+  }
+  .date  { font: 400 17mm/1.05 'Patua One', Georgia, serif; color: var(--ink); margin-bottom: 5mm; }
+  .venue { font: 500 9mm/1.35 Rubik, sans-serif; color: var(--ink); opacity: .84; margin-bottom: 6mm; }
+  .times { font: 600 8.4mm/1.3 Rubik, sans-serif; color: var(--red); }
+
+  /* ---- Infoband unter dem Deckel ---- */
+  .band {
+    position: relative; z-index: 2;
+    width: 100%;
+    background: rgba(255,255,255,.96);
+    border-radius: 7mm;
+    padding: 9mm 11mm;
+    display: flex; align-items: center; gap: 10mm;
+    box-shadow: 0 6mm 16mm rgba(0,0,0,.4);
+  }
+  .band .qr {
+    width: 42mm; height: 42mm; flex: none;
+    background: #fff; border-radius: 2mm;
+  }
+  .band .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .band .txt { text-align: left; }
+  .band .cta {
+    font: 400 12mm/1.1 'Patua One', Georgia, serif; color: var(--red); margin-bottom: 3mm;
+  }
+  .band .url {
+    font: 600 8.6mm/1.2 Rubik, sans-serif; color: var(--ink); margin-bottom: 4mm;
+    letter-spacing: -.1mm;
+  }
+  .band .meta { font: 500 6.4mm/1.45 Rubik, sans-serif; color: var(--ink); opacity: .8; }
+
+  .promo {
+    display: inline-block; margin-top: 4mm;
+    background: var(--yellow); color: #5a4200;
+    font: 700 6.4mm/1.2 Rubik, sans-serif;
+    padding: 2.6mm 5mm; border-radius: 99mm;
+  }
+
+  .imprint {
+    position: relative; z-index: 2;
+    font: 400 3.8mm/1.4 Rubik, sans-serif; color: rgba(255,255,255,.62);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="wood"></div>
+    <div class="wood-photo"></div>
+    <div class="vignette"></div>
+
+    <div class="mat">
+      <div class="keyline"></div>
+      <div class="inner">
+        <p class="kicker">Team Michelhausen lädt ein</p>
+        <h1 class="title">Wirtshaus<br>quiz</h1>
+        <div class="flagbar"></div>
+        <p class="date">Freitag, 16. Oktober 2026</p>
+        <p class="venue">Gasthaus Burchhart · Atzelsdorf</p>
+        <p class="times">Ab 17:30 · Quizstart 18:30</p>
+      </div>
+    </div>
+
+    <div class="band">
+      <div class="qr"><img src="" id="qr" alt="QR-Code zur Anmeldung"></div>
+      <div class="txt">
+        <p class="cta">Jetzt Team anmelden</p>
+        <p class="url">quiz.team-michelhausen.at</p>
+        <p class="meta">Teams mit 3 bis 5 Personen · Teilnahme kostenlos</p>
+        <span class="promo">Die ersten 5 Teams: erste Runde aufs Haus</span>
+      </div>
+    </div>
+
+    <p class="imprint">
+      Für den Inhalt verantwortlich: Gerald Fröhlich · SPÖ &amp; Unabhängige – Team Michelhausen
+    </p>
+  </div>
+
+  <script>
+    // Der QR-Code wird beim Bauen als data-URI in --qr gelegt.
+    var qr = getComputedStyle(document.documentElement).getPropertyValue('--qr').trim();
+    if (qr) { document.getElementById('qr').src = qr.replace(/^url\(["']?/, '').replace(/["']?\)$/, ''); }
+  </script>
+</body>
+</html>
