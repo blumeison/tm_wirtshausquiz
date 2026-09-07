@@ -69,8 +69,10 @@
     .wq-texture, .wq-photo, .wq-scrim {
       position: absolute; inset: 0; z-index: 0; pointer-events: none;
     }
+    /* Nur Ausweichlösung: sobald das Foto geladen ist, blenden die Ringe sich
+       aus — über einem echten Raum sehen sie aus wie Artefakte. */
     .wq-texture {
-      opacity: .07;
+      opacity: .1;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420' viewBox='0 0 420 420'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='2.5'%3E%3Ccircle cx='72' cy='88' r='47'/%3E%3Ccircle cx='72' cy='88' r='39'/%3E%3Ccircle cx='305' cy='58' r='35'/%3E%3Ccircle cx='305' cy='58' r='28'/%3E%3Ccircle cx='203' cy='252' r='53'/%3E%3Ccircle cx='203' cy='252' r='45'/%3E%3Ccircle cx='372' cy='330' r='31'/%3E%3Ccircle cx='372' cy='330' r='24'/%3E%3Ccircle cx='88' cy='348' r='27'/%3E%3Ccircle cx='88' cy='348' r='20'/%3E%3C/g%3E%3C/svg%3E");
       background-repeat: repeat;
       background-size: 420px 420px;
@@ -400,6 +402,14 @@
     'use strict';
     var $ = function (id) { return document.getElementById(id); };
     var year = $('tm-year'); if (year) { year.textContent = new Date().getFullYear(); }
+
+    // Bierdeckel-Ringe verschwinden, sobald das Wirtshausfoto steht.
+    var probe = new Image();
+    probe.onload = function () {
+      var t = document.querySelector('.wq-texture');
+      if (t) { t.style.display = 'none'; }
+    };
+    probe.src = 'assets/pub.jpg';
 
     // ---- Live counters ------------------------------------------------------
     function renderCounters(d) {
