@@ -40,7 +40,7 @@
   .wood-photo {
     background-image: url("wood.jpg");   /* optional, fehlt = egal */
     background-size: cover; background-position: center;
-    opacity: .55; mix-blend-mode: multiply;
+    filter: brightness(1.12) saturate(1.06);
   }
   .wood-grain {
     background-image:
@@ -57,7 +57,7 @@
   }
   .wood-vignette {
     background: radial-gradient(ellipse at 50% 42%,
-      rgba(255,235,200,.16) 0%, rgba(0,0,0,0) 45%, rgba(0,0,0,.55) 100%);
+      rgba(255,232,190,.13) 0%, rgba(0,0,0,0) 52%, rgba(0,0,0,.38) 100%);
   }
 
   /* Abgestellter Glasrand auf dem Holz — der Deckel ist nicht der erste hier. */
@@ -230,7 +230,15 @@
   px('footnote', 'fontSize', 3.2);
   document.getElementById('footnote').style.letterSpacing = (u * 0.3) + 'px';
 
-  // Glasränder aufs Holz, je nach Format an andere Ecken.
+  // Glasränder aufs Holz — aber nur, solange kein echtes Foto da ist.
+  // wood.jpg bringt eigene Ringe mit; gezeichnete daneben sähen doppelt aus.
+  var probe = new Image();
+  probe.onload = function () {
+    document.getElementById('ring1').style.display = 'none';
+    document.getElementById('ring2').style.display = 'none';
+  };
+  probe.src = 'wood.jpg';
+
   function ring(id, size, left, top) {
     var el = document.getElementById(id);
     el.style.width = size + 'px';
