@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<title>Save the Date – Bierdeckel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;600&display=swap">
+<style>
+  /* Save-the-Date-Sujet als Bierdeckel auf dem Wirtshaustisch.
+     Gerendert per Chrome headless in exakter Zielgröße — Größe kommt aus
+     ?w=…&h=… und die Bühne rechnet alles daraus ab. */
+
+  :root {
+    --red:      #e51324;
+    --red-dark: #b80f1c;
+    --green:    #3aaa35;
+    --yellow:   #ffcc00;
+    --magenta:  #e6007e;
+    --board:    #f0e8d8;   /* Bierdeckel-Karton */
+    --board-sh: #ddd2bc;
+    --ink:      #4a4034;
+    --wood:     #4a3527;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; overflow: hidden; }
+
+  .stage {
+    position: relative;
+    overflow: hidden;
+    background: var(--wood);
+    display: grid;
+    place-items: center;
+  }
+
+  /* ---- Tisch ---------------------------------------------------------- */
+  .wood-grain, .wood-photo, .wood-vignette { position: absolute; inset: 0; }
+
+  .wood-photo {
+    background-image: url("wood.jpg");   /* optional, fehlt = egal */
+    background-size: cover; background-position: center;
+    opacity: .55; mix-blend-mode: multiply;
+  }
+  .wood-grain {
+    background-image:
+      repeating-linear-gradient(91.5deg,
+        rgba(0,0,0,.07) 0px, rgba(0,0,0,.07) 3px,
+        rgba(255,255,255,.014) 3px, rgba(255,255,255,.014) 9px,
+        rgba(0,0,0,.035) 9px, rgba(0,0,0,.035) 23px,
+        rgba(255,255,255,.01) 23px, rgba(255,255,255,.01) 41px),
+      repeating-linear-gradient(88.5deg,
+        rgba(0,0,0,.05) 0px, rgba(0,0,0,.05) 7px,
+        rgba(255,255,255,.012) 7px, rgba(255,255,255,.012) 31px),
+      radial-gradient(ellipse 60% 120% at 18% 30%, rgba(120,84,58,.5), rgba(0,0,0,0) 70%),
+      linear-gradient(163deg, #63483a 0%, #4a3527 48%, #33241a 100%);
+  }
+  .wood-vignette {
+    background: radial-gradient(ellipse at 50% 42%,
+      rgba(255,235,200,.16) 0%, rgba(0,0,0,0) 45%, rgba(0,0,0,.55) 100%);
+  }
+
+  /* Abgestellter Glasrand auf dem Holz — der Deckel ist nicht der erste hier. */
+  .ring {
+    position: absolute; border-radius: 50%;
+    border: 2px solid rgba(0,0,0,.28);
+    box-shadow: inset 0 0 14px rgba(0,0,0,.16);
+  }
+
+  /* ---- Bierdeckel ------------------------------------------------------ */
+  .mat-wrap { position: relative; }
+
+  .mat {
+    position: relative;
+    background: var(--board);
+    display: grid;
+    place-items: center;
+    text-align: center;
+    /* Karton hat keine scharfe Kante: weiche Rundung + Faserrand */
+    border-radius: 4.5%;
+    box-shadow:
+      0 2px 0 var(--board-sh),
+      0 3px 1px rgba(0,0,0,.35),
+      0 26px 50px rgba(0,0,0,.55),
+      inset 0 0 0 1px rgba(0,0,0,.06);
+  }
+  /* Papierfaser */
+  .mat::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background-image: var(--noise);
+    opacity: .5; mix-blend-mode: multiply; pointer-events: none;
+  }
+  /* Leichte Lichtkante oben links, wie bei liegendem Karton */
+  .mat::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(145deg, rgba(255,255,255,.5), rgba(0,0,0,0) 38%,
+                rgba(0,0,0,.06) 100%);
+    pointer-events: none;
+  }
+
+  /* Typischer Keyline-Rahmen wie im Zweifarbdruck */
+  .keyline {
+    position: absolute; inset: 4.5%;
+    border: 2px solid var(--red);
+    border-radius: 2.5%;
+    opacity: .85;
+  }
+
+  .content { position: relative; z-index: 2; padding: 0 9%; width: 100%; }
+
+  .kicker {
+    font-family: Rubik, sans-serif; font-weight: 600;
+    color: var(--ink); text-transform: uppercase;
+  }
+
+  .title {
+    font-family: 'Patua One', Georgia, serif;
+    color: var(--red);
+    line-height: .88;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+  }
+
+  .rule {
+    height: 3px; background: var(--ink); opacity: .28;
+    margin-inline: auto; border-radius: 2px;
+  }
+
+  .flagbar {
+    margin-inline: auto; border-radius: 99px;
+    background: linear-gradient(90deg,
+      var(--red) 0 45%, var(--green) 45% 63.3%,
+      var(--yellow) 63.3% 81.6%, var(--magenta) 81.6% 100%);
+  }
+
+  .date {
+    font-family: 'Patua One', Georgia, serif;
+    color: var(--ink); line-height: 1.05;
+  }
+  .venue {
+    font-family: Rubik, sans-serif; font-weight: 500;
+    color: var(--ink); opacity: .82; line-height: 1.4;
+  }
+  .times {
+    font-family: Rubik, sans-serif; font-weight: 600;
+    color: var(--red); letter-spacing: .02em;
+  }
+
+  .footnote {
+    font-family: Rubik, sans-serif; font-weight: 600;
+    text-transform: uppercase; color: var(--ink); opacity: .62;
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="wood-grain"></div>
+  <div class="wood-photo"></div>
+  <div class="wood-vignette"></div>
+
+  <div class="ring" id="ring1"></div>
+  <div class="ring" id="ring2"></div>
+
+  <div class="mat-wrap" id="matWrap">
+    <div class="mat" id="mat">
+      <div class="keyline"></div>
+      <div class="content" id="content">
+        <p class="kicker" id="kicker">Team Michelhausen lädt ein</p>
+        <h1 class="title" id="title">Wirtshaus<br>quiz</h1>
+        <div class="flagbar" id="flagbar"></div>
+        <p class="date" id="date">Freitag, 16. Oktober</p>
+        <p class="venue" id="venue">Gasthaus Burchhart · Atzelsdorf</p>
+        <p class="times" id="times">Ab 17:30 · Quizstart 18:30</p>
+        <div class="rule" id="rule"></div>
+        <p class="footnote" id="footnote">Anmeldung ab nächster Woche</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var W = parseInt(q.get('w'), 10) || 1080;
+  var H = parseInt(q.get('h'), 10) || 1350;
+
+  var stage = document.getElementById('stage');
+  stage.style.width = W + 'px';
+  stage.style.height = H + 'px';
+
+  // Der Deckel füllt die kürzere Seite fast aus, lässt aber Tisch sichtbar.
+  var mat = Math.round(Math.min(W, H) * (W === H ? 0.84 : 0.86));
+  var m = document.getElementById('mat');
+  m.style.width = mat + 'px';
+  m.style.height = mat + 'px';
+
+  // Ein Bierdeckel liegt nie exakt gerade.
+  document.getElementById('matWrap').style.transform = 'rotate(-2.4deg)';
+
+  // Maßstab: alle Textgrößen hängen an der Deckelbreite, nicht am Format.
+  var u = mat / 100;
+  function px(el, prop, v) { document.getElementById(el).style[prop] = (u * v) + 'px'; }
+
+  px('kicker', 'fontSize', 3.5);
+  document.getElementById('kicker').style.letterSpacing = (u * 0.42) + 'px';
+  px('kicker', 'marginBottom', 3.4);
+
+  px('title', 'fontSize', 14.2);
+  px('title', 'marginBottom', 4.2);
+
+  var fb = document.getElementById('flagbar');
+  fb.style.width = (u * 30) + 'px';
+  fb.style.height = (u * 1.5) + 'px';
+  fb.style.marginBottom = (u * 5.2) + 'px';
+
+  px('date', 'fontSize', 7.4);
+  px('date', 'marginBottom', 2.2);
+
+  px('venue', 'fontSize', 4.2);
+  px('venue', 'marginBottom', 3.0);
+
+  px('times', 'fontSize', 4.0);
+
+  var r = document.getElementById('rule');
+  r.style.width = (u * 22) + 'px';
+  r.style.marginTop = (u * 5.4) + 'px';
+  r.style.marginBottom = (u * 4.0) + 'px';
+  r.style.height = Math.max(2, u * 0.3) + 'px';
+
+  px('footnote', 'fontSize', 3.2);
+  document.getElementById('footnote').style.letterSpacing = (u * 0.3) + 'px';
+
+  // Glasränder aufs Holz, je nach Format an andere Ecken.
+  function ring(id, size, left, top) {
+    var el = document.getElementById(id);
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+  }
+  var rs = Math.round(mat * 0.30);
+  ring('ring1', rs, Math.round(-rs * 0.35), Math.round(H * 0.06));
+  ring('ring2', Math.round(rs * 0.8), Math.round(W - rs * 0.62), Math.round(H * 0.84));
+})();
+</script>
+</body>
+</html>
