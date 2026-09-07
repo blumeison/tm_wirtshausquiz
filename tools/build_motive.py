@@ -31,7 +31,18 @@ OUT = ROOT / "out"
 # tm_go-Kurzlink. Slug muss im tm_go-Backoffice existieren und auf
 # https://quiz.team-michelhausen.at zeigen.
 GO_SLUG = "quiz"
-GO_URL = "https://go.team-michelhausen.at/" + GO_SLUG + "?s=plakat"
+GO_BASE = "https://go.team-michelhausen.at/" + GO_SLUG
+
+# Ein Kurzlink, mehrere Tracking-Varianten — so ist tm_go gebaut. Jede Variante
+# bekommt ihren eigenen QR-Code, das Ziel bleibt fuer alle dasselbe und laesst
+# sich spaeter aendern, ohne neu zu drucken.
+# Die Schluessel muessen den Labels im tm_go-Backoffice entsprechen: dort wird
+# aus dem Label per slugify der Schluessel, "Nahversorger" -> nahversorger.
+PLAKAT_ORTE = [
+    ("wirtshaus", "Wirtshaus"),
+    ("nahversorger", "Nahversorger"),
+    ("bahnhof", "Bahnhof"),
+]
 
 MOTIVE = {
     "savethedate": {
@@ -54,9 +65,10 @@ MOTIVE = {
         "template": "plakat.html",
         # A3 = 297x420mm. CSS rechnet 96dpi, also 1122x1587 CSS-Pixel.
         # Scale 3 ergibt rund 288 dpi — mehr als jede Druckerei braucht.
-        "renders": [("wirtshausquiz-plakat-a3", 1122, 1587, "A3 Vorschau")],
+        "renders": [("wirtshausquiz-plakat-a3", 1122, 1587, "A3")],
         "scale": 3,
         "pdf": "wirtshausquiz-plakat-a3",
+        "orte": PLAKAT_ORTE,
     },
 }
 
@@ -102,8 +114,11 @@ def qr_datauri(url):
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
-def build(name, spec, browser, noise, qr):
+def build(name, spec, browser, noise, qr, ort=None, suffix=""):
     tpl = (ROOT / spec["template"]).read_text(encoding="utf-8")
+    # Verrät am Plakatfuß, welche Variante das ist — damit beim Aufhängen
+    # nicht der Bahnhof-Code im Wirtshaus landet. Auf Lesedistanz unsichtbar.
+    tpl = tpl.replace("<!--ORT-->", (" · " + ort) if ort else "")
     # Bewusst Verkettung statt .format(): die CSS-Klammer in ":root {" wäre
     # sonst eine Formatangabe.
     injected = tpl.replace(
@@ -112,13 +127,13 @@ def build(name, spec, browser, noise, qr):
         '\n    --qr: url("' + qr + '");',
         1,
     )
-    built = ROOT / ("_" + name + ".built.html")
+    built = ROOT / ("_" + name + suffix + ".built.html")
     built.write_text(injected, encoding="utf-8")
     scale = spec.get("scale", 1)
 
     try:
         for fname, w, h, label in spec["renders"]:
-            target = OUT / (fname + ".png")
+            target = OUT / (fname + suffix + ".png")
             url = built.as_uri() + "?w={}&h={}".format(w, h)
             subprocess.run(
                 [
@@ -144,7 +159,7 @@ def build(name, spec, browser, noise, qr):
                 print("  FEHLGESCHLAGEN:", target.name)
 
         if spec.get("pdf"):
-            pdf = OUT / (spec["pdf"] + ".pdf")
+            pdf = OUT / (spec["pdf"] + suffix + ".pdf")
             subprocess.run(
                 [
                     browser,
@@ -177,13 +192,22 @@ def main():
 
     browser = find_browser()
     noise = paper_noise()
-    qr = qr_datauri(GO_URL)
     print("Renderer:", browser)
-    print("QR zeigt auf:", GO_URL)
 
     for name in wanted:
         print("\n" + name)
-        build(name, MOTIVE[name], browser, noise, qr)
+        spec = MOTIVE[name]
+        orte = spec.get("orte")
+        if not orte:
+            build(name, spec, browser, noise, qr_datauri(GO_BASE))
+            continue
+        # Eine Fassung je Aushangort — gleicher Kurzlink, eigener QR, eigene
+        # Zählung in tm_go.
+        for key, label in orte:
+            url = GO_BASE + "?s=" + key
+            print("  [{}] QR -> {}".format(label, url))
+            build(name, spec, browser, noise, qr_datauri(url),
+                  ort=label, suffix="-" + key)
 
 
 if __name__ == "__main__":
