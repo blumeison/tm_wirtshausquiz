@@ -55,6 +55,12 @@
     .wq-done.is-on { display: block; }
     .is-hidden { display: none !important; }
 
+    /* tokens.css pins h1 to 3.5rem with no mobile step-down. "Wirtshausquiz"
+       is one unbreakable 13-letter word: at 56px it measures 357px and gets
+       clipped inside a 327px column on a 375px phone. Scale it with the
+       viewport instead, capped at the design-system size. */
+    .tm-hero h1 { font-size: clamp(2.5rem, 12vw, var(--tm-fs-4xl)); }
+
     /* On a phone the card's 2.5rem padding eats 80px of an already narrow
        screen — the inputs end up around 245px. Give the form the room back. */
     @media (max-width: 560px) {
