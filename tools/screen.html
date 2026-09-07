@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<title>Quizfrage – Werbescreen und Plakat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+  /* Quizfrage mit drei QR-Codes — für den Werbescreen in der Siedlung und
+     als Plakat. Die drei Codes zeigen auf drei verschiedene tm_go-Kurzlinks,
+     die jeweils auf quizfrage.html?a=1|2|3 weiterleiten.
+
+     Gestaltungsvorgabe: Wer vorbeigeht, liest EINE Zeile. Die Frage steht
+     groß, die Antworten kurz, die Codes so groß wie möglich. Alles andere
+     fliegt raus — deshalb gibt es hier keinen Bierdeckel. */
+
+  :root {
+    --red: #e51324; --green: #3aaa35; --yellow: #ffcc00; --magenta: #e6007e;
+    --board: #f0e8d8; --ink: #3a3128;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { background: #000; overflow: hidden; }
+
+  .stage {
+    position: relative; overflow: hidden;
+    background: var(--red);
+    display: flex; flex-direction: column; align-items: center;
+    color: #fff;
+  }
+
+  .brand { font-family: Rubik, sans-serif; font-weight: 600;
+           text-transform: uppercase; opacity: .92; }
+
+  .q { font-family: 'Patua One', Georgia, serif; line-height: 1.08;
+       text-align: center; text-wrap: balance; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; }
+
+  .card {
+    background: var(--board); color: var(--ink);
+    border-radius: 3%; display: flex; flex-direction: column; align-items: center;
+    text-align: center;
+  }
+  .letter {
+    display: grid; place-items: center; border-radius: 50%;
+    background: var(--red); color: #fff;
+    font-family: Rubik, sans-serif; font-weight: 700;
+  }
+  .answer { font-family: 'Patua One', Georgia, serif; line-height: 1.1; }
+  .qr { background: #fff; border-radius: 2%; }
+  .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+
+  .scan { font-family: Rubik, sans-serif; font-weight: 600; text-align: center; opacity: .95; }
+  .when { font-family: Rubik, sans-serif; font-weight: 500; text-align: center; opacity: .9; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <p class="brand" id="brand">Team Michelhausen · Wirtshausquiz</p>
+  <h1 class="q" id="q">Wie lang braucht der Zug von Tullnerfeld nach Wien&nbsp;Hbf?</h1>
+
+  <div class="cards" id="cards">
+    <div class="card">
+      <div class="letter">A</div>
+      <p class="answer">20 Minuten</p>
+      <div class="qr"><img id="qrA" src="" alt="QR-Code Antwort A"></div>
+    </div>
+    <div class="card">
+      <div class="letter">B</div>
+      <p class="answer">35 Minuten</p>
+      <div class="qr"><img id="qrB" src="" alt="QR-Code Antwort B"></div>
+    </div>
+    <div class="card">
+      <div class="letter">C</div>
+      <p class="answer">50 Minuten</p>
+      <div class="qr"><img id="qrC" src="" alt="QR-Code Antwort C"></div>
+    </div>
+  </div>
+
+  <p class="scan" id="scan">Antwort scannen — und sehen, ob ihr richtig liegt</p>
+  <p class="when" id="when">Wirtshausquiz · Fr 16. Oktober · Gasthaus Burchhart, Atzelsdorf</p>
+</div>
+
+<script>
+(function () {
+  var p = new URLSearchParams(location.search);
+  var W = parseInt(p.get('w'), 10) || 1920;
+  var H = parseInt(p.get('h'), 10) || 1080;
+
+  var stage = document.getElementById('stage');
+  stage.style.width = W + 'px';
+  stage.style.height = H + 'px';
+
+  // QR-Codes werden beim Bauen als data-URI in --qr-a/b/c gelegt.
+  var cs = getComputedStyle(document.documentElement);
+  function put(id, varName) {
+    var v = cs.getPropertyValue(varName).trim();
+    if (v) {
+      document.getElementById(id).src =
+        v.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+    }
+  }
+  put('qrA', '--qr-a'); put('qrB', '--qr-b'); put('qrC', '--qr-c');
+
+  // Maßstab an der kürzeren Seite: das Motiv soll quer wie hoch funktionieren.
+  var u = Math.min(W, H) / 100;
+  var wide = W >= H;
+
+  stage.style.padding = (u * (wide ? 5 : 7)) + 'px ' + (u * (wide ? 5 : 6)) + 'px';
+  stage.style.justifyContent = 'center';
+  stage.style.gap = (u * (wide ? 3.4 : 4.2)) + 'px';
+
+  var brand = document.getElementById('brand');
+  brand.style.fontSize = (u * (wide ? 2.4 : 2.8)) + 'px';
+  brand.style.letterSpacing = (u * 0.28) + 'px';
+
+  document.getElementById('q').style.fontSize = (u * (wide ? 7.6 : 8.2)) + 'px';
+
+  var cards = document.getElementById('cards');
+  cards.style.gap = (u * (wide ? 3.2 : 3.6)) + 'px';
+  cards.style.maxWidth = (u * (wide ? 88 : 100)) + 'px';
+
+  [].forEach.call(document.querySelectorAll('.card'), function (el) {
+    el.style.padding = (u * 2.8) + 'px';
+    el.style.gap = (u * 1.8) + 'px';
+    var l = el.querySelector('.letter');
+    l.style.width = (u * 6.4) + 'px';
+    l.style.height = (u * 6.4) + 'px';
+    l.style.fontSize = (u * 3.6) + 'px';
+    el.querySelector('.answer').style.fontSize = (u * 4.4) + 'px';
+    // Der QR-Code bekommt so viel Platz wie irgend möglich — er ist der
+    // einzige Grund, warum jemand stehen bleibt.
+    var q = el.querySelector('.qr');
+    var side = u * (wide ? 20 : 22);
+    q.style.width = side + 'px';
+    q.style.height = side + 'px';
+    q.style.padding = (u * 0.9) + 'px';
+  });
+
+  document.getElementById('scan').style.fontSize = (u * (wide ? 3.0 : 3.4)) + 'px';
+  document.getElementById('when').style.fontSize = (u * (wide ? 2.6 : 3.0)) + 'px';
+})();
+</script>
+</body>
+</html>

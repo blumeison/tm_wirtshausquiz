@@ -44,6 +44,16 @@ PLAKAT_ORTE = [
     ("bahnhof", "Bahnhof"),
 ]
 
+# Die drei Antworten der Screen-Frage brauchen DREI EIGENE Kurzlinks, keine
+# Varianten: jede Antwort führt auf ein anderes Ziel (quizfrage.html?a=1|2|3).
+# Beim Anmelde-Plakat war es umgekehrt — dort ein Link mit drei Varianten.
+# Diese Slugs müssen im tm_go-Backoffice angelegt sein.
+SCREEN_SLUGS = [
+    ("quiz-a", "https://quiz.team-michelhausen.at/quizfrage.html?a=1"),
+    ("quiz-b", "https://quiz.team-michelhausen.at/quizfrage.html?a=2"),
+    ("quiz-c", "https://quiz.team-michelhausen.at/quizfrage.html?a=3"),
+]
+
 MOTIVE = {
     "savethedate": {
         "template": "sujet.html",
@@ -60,6 +70,22 @@ MOTIVE = {
             ("wirtshausquiz-anmeldung-quadrat", 1080, 1080, "Feed 1:1"),
             ("wirtshausquiz-anmeldung-story", 1080, 1920, "Story 9:16"),
         ],
+    },
+    "frage": {
+        "template": "frage.html",
+        "renders": [
+            ("wirtshausquiz-frage1-feed", 1080, 1350, "Feed 4:5"),
+            ("wirtshausquiz-frage1-quadrat", 1080, 1080, "Feed 1:1"),
+            ("wirtshausquiz-frage1-story", 1080, 1920, "Story 9:16"),
+        ],
+    },
+    "screen": {
+        "template": "screen.html",
+        "renders": [
+            ("wirtshausquiz-screen-quer", 1920, 1080, "Werbescreen 16:9"),
+            ("wirtshausquiz-screen-hoch", 1080, 1920, "Screen hochkant 9:16"),
+        ],
+        "screen_qr": True,
     },
     "plakat": {
         "template": "plakat.html",
@@ -114,19 +140,20 @@ def qr_datauri(url):
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
-def build(name, spec, browser, noise, qr, ort=None, suffix=""):
+def build(name, spec, browser, noise, qr, ort=None, suffix="", extra_vars=None):
     tpl = (ROOT / spec["template"]).read_text(encoding="utf-8")
     # Verrät am Plakatfuß, welche Variante das ist — damit beim Aufhängen
     # nicht der Bahnhof-Code im Wirtshaus landet. Auf Lesedistanz unsichtbar.
     tpl = tpl.replace("<!--ORT-->", (" · " + ort) if ort else "")
     # Bewusst Verkettung statt .format(): die CSS-Klammer in ":root {" wäre
     # sonst eine Formatangabe.
-    injected = tpl.replace(
-        "  :root {",
-        '  :root {\n    --noise: url("data:image/png;base64,' + noise + '");'
-        '\n    --qr: url("' + qr + '");',
-        1,
-    )
+    block = '  :root {\n    --noise: url("data:image/png;base64,' + noise + '");'
+    if qr:
+        block += '\n    --qr: url("' + qr + '");'
+    # Das Screen-Motiv braucht drei QR-Codes statt einem.
+    for key, uri in (extra_vars or {}).items():
+        block += '\n    ' + key + ': url("' + uri + '");'
+    injected = tpl.replace("  :root {", block, 1)
     built = ROOT / ("_" + name + suffix + ".built.html")
     built.write_text(injected, encoding="utf-8")
     scale = spec.get("scale", 1)
@@ -211,6 +238,17 @@ def main():
         print("\n" + name)
         spec = MOTIVE[name]
         orte = spec.get("orte")
+        if spec.get("screen_qr"):
+            # Ein QR je Antwort, jeder auf seinen eigenen Kurzlink.
+            qrs = {}
+            for i, (slug, target) in enumerate(SCREEN_SLUGS):
+                url = "https://go.team-michelhausen.at/" + slug + "?s=screen"
+                print("  {} -> {}   (Ziel: {})".format(
+                    "ABC"[i], url, target))
+                qrs["--qr-" + "abc"[i]] = qr_datauri(url)
+            build(name, spec, browser, noise, None, extra_vars=qrs)
+            continue
+
         if not orte:
             build(name, spec, browser, noise, qr_datauri(GO_BASE))
             continue
