@@ -50,7 +50,7 @@ return [
         'prompt'  => 'Wie lang braucht der Zug von Tullnerfeld nach Wien Hbf?',
         'options' => ['20 Minuten', '35 Minuten', '50 Minuten'],
         'correct' => 1,
-        'reveal'  => 'Zwanzig Minuten. Genau deshalb ist Michelhausen die am stärksten wachsende Gemeinde Österreichs — und deshalb kennen sich hier so viele noch nicht.',
+        'reveal'  => 'Deshalb ist Michelhausen die am stärksten wachsende Gemeinde Österreichs — und deshalb kennen sich hier so viele noch nicht.',
     ],
 
     // ---- Anti-abuse --------------------------------------------------------

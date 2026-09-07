@@ -150,11 +150,13 @@
         }
 
         $('wq-question').textContent = q.prompt;
-        $('wq-reveal').innerHTML = known && !right
-          ? 'Die richtige Antwort war <strong>' + esc(q.options[q.correct - 1]) + '</strong>. '
-            + esc(q.reveal)
-          : (known ? esc(q.reveal)
-                   : '<strong>' + esc(q.options[q.correct - 1]) + '</strong>. ' + esc(q.reveal));
+        // Die Antwort wird immer genannt, nur anders eingeleitet — sonst
+        // wiederholt sich der Auflösungssatz oder die Antwort fehlt ganz.
+        var answer = '<strong>' + esc(q.options[q.correct - 1]) + '</strong>';
+        var lead = !known ? (answer + '. ')
+                 : right  ? ('Genau — ' + answer + '. ')
+                          : ('Richtig wären ' + answer + ' gewesen. ');
+        $('wq-reveal').innerHTML = lead + esc(q.reveal);
         show('wq-result');
 
         var e = d.event;
