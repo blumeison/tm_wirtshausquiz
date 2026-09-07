@@ -68,11 +68,11 @@ DNS-Stand am 07.09.2026, geprüft:
 
 ```
 tm_wirtshausquiz/
-  index.html              Event-Landing: Datum, Ort, Ablauf, Anmelde-CTA, Zähler
-  anmelden.html           Anmeldeformular
+  index.html              Event-Landing MIT Anmeldeformular unter #anmelden
   absage.html             Abmeldung per Token aus der Erinnerungsmail
   quizfrage.html          Landeseite der Werbescreen- und Plakat-QR-Codes
-  styles.css  tokens.css  TM-Design-System
+  tokens.css              TM-Design-System (Tokens + Komponenten)
+  logo.png logo-white.png Logo, hell/dunkel automatisch
   assets/                 auth.js, Logo, og-image, Sujets
   admin/                  Backoffice (SSO-geschützt, clientseitig gerendert)
     index.html            Dashboard
@@ -210,16 +210,25 @@ beiträgt — das ist der Kern des Formats und darf beim Port nicht verlorengehe
   "size": 5,
   "lookingForPlayers": false,
   "note": "",
-  "status": "CONFIRMED",
-  "promoRank": 3,
+  "status": "ACTIVE",
   "cancelToken": "…",
   "createdAt": "…", "ip": "…"
 }
 ```
 
-`status` ∈ `CONFIRMED | WAITLIST | CANCELLED`.
-`promoRank` ist die laufende Nummer unter den ersten `promoTeams` — daraus
-speist sich der Freirunden-Zähler auf der Startseite.
+Gespeichert wird nur `status` ∈ `ACTIVE | CANCELLED`.
+
+**Platz und Freirunden-Rang werden abgeleitet, nicht gespeichert.** Beide
+ergeben sich aus der Anmeldereihenfolge unter den nicht stornierten Einträgen:
+Position ≤ `capacityTeams` heißt bestätigt, darüber Warteliste; Position ≤
+`promoTeams` heißt Freirunde. Das hat drei Vorteile: Eine Absage lässt die
+Warteliste automatisch nachrücken, ohne Umbuchungslogik; derselbe Freirunden-Rang
+kann nicht zweimal vergeben werden; und ein Team kann sich nur nach vorne
+bewegen, nie nach hinten — vor einen bestehenden Eintrag lässt sich nichts
+einfügen, und eine Stornierung wird nie zurückgenommen.
+
+Der Preis: Rückt ein Team von der Warteliste nach, erfährt es das nicht von
+selbst. Diese Benachrichtigung ist bis P3 Handarbeit.
 
 ### Benutzer und Whitelist
 
@@ -393,9 +402,9 @@ echten Anmeldungen verfälschen. Die 8 Fragen sind es wert.
 
 Phase 2 kommt bewusst früh: Sie ist das Einzige, was die Werbung blockiert.
 
-- [ ] **P0** Repos zusammenlegen, Deploy-Action, `api/health.php` gegen die Subdomain verifizieren, Google-OAuth-Client anlegen
-- [ ] **P1** `api/lib.php`: JSON-Store mit flock, Session, Google-JWT-Verify, Upload, Mail — größtenteils aus HTS portiert
-- [ ] **P2** Öffentliche Anmeldung: Startseite, Formular, `register.php`, Bestätigungsmail, Zähler, Warteliste, Absage → **ab hier kann geworben werden**
+- [x] **P0** Repos zusammenlegen, Deploy-Action, `api/health.php` gegen die Subdomain verifizieren, Google-OAuth-Client anlegen
+- [x] **P1** `api/lib.php`: JSON-Store mit flock, Session, Google-JWT-Verify, Upload, Mail — größtenteils aus HTS portiert
+- [x] **P2** Öffentliche Anmeldung: Startseite, Formular, `register.php`, Bestätigungsmail, Zähler, Warteliste, Absage → **ab hier kann geworben werden**
 - [ ] **P3** Admin-Shell mit SSO und Whitelist, Anmeldungsverwaltung, CSV-Export
 - [ ] **P4** Fragenpool und Editor für alle acht Typen
 - [ ] **P5** Quizabende: Runden, Fragen ziehen, Multiplikatoren, Masterfrage
@@ -425,15 +434,20 @@ Phase 2 kommt bewusst früh: Sie ist das Einzige, was die Werbung blockiert.
 Der Name ist gegen die Gemeindeseite und herold.at geprüft: **Burchhart** mit
 zwei r, offizieller Zusatz „Zur Veste Liechtenstein“.
 
-**Harte Deadline: Die Anmeldung muss bis Donnerstag, 17.09.2026 live sein.**
-Das ist der Tag des Anmelde-Posts; alles davor ist reines Teasern ohne Link.
-Ab heute sind das zehn Tage — P0 bis P2.
+Uhrzeit: **Einlass ab 17:30 Uhr** (Küche offen, damit der Wirt nicht spät
+kochen muss), **Quizstart 18:30 Uhr**, Ende gegen 21:45 Uhr.
+
+**Die Anmeldung ist seit 07.09.2026 live** — deutlich vor dem Anmelde-Post am
+17.09.
 
 ## 14. Offen
 
-- **Uhrzeit** des Abends fehlt noch. Vorschlag: Einlass 18:30, Start 19:00,
-  Ende gegen 22:30 — vier Runden mit Pause sind rund dreieinhalb Stunden.
 - Freirunden-Mechanik mit dem Wirt klären; bis dahin bleibt der Aktionsblock aus
+  (`promo_enabled` in `data/config.json` auf `true` setzen, sonst nichts)
+- Mailversand läuft derzeit über den `mail()`-Fallback, weil `smtp_pass` fehlt.
+  Funktioniert, ist aber die schlechtere Zustellung — Mailbox anlegen und
+  `{"smtp_pass":"…"}` in `data/config.json` legen
+- `api/health.php` löschen, sobald die Anmeldung abgenommen ist
 - Google-OAuth-Client für `quiz.team-michelhausen.at` — der User legt ihn an,
   sobald P3 ansteht. P0 bis P2 brauchen ihn nicht.
 - Mailbox `quiz@team-michelhausen.at` in Plesk anlegen, DKIM aktivieren

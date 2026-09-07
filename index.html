@@ -55,6 +55,13 @@
     .wq-done.is-on { display: block; }
     .is-hidden { display: none !important; }
 
+    /* On a phone the card's 2.5rem padding eats 80px of an already narrow
+       screen — the inputs end up around 245px. Give the form the room back. */
+    @media (max-width: 560px) {
+      .tm-card { padding: var(--tm-space-5) !important; }
+      .wq-fact { padding: var(--tm-space-4); }
+    }
+
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
   </style>
 </head>

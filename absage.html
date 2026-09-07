@@ -10,7 +10,10 @@
   <meta name="color-scheme" content="light dark">
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="stylesheet" href="tokens.css">
-  <style>.is-hidden{display:none!important;}</style>
+  <style>
+    .is-hidden{display:none!important;}
+    @media (max-width: 560px) { .tm-card { padding: var(--tm-space-5) !important; } }
+  </style>
 </head>
 <body>
   <a class="tm-skip" href="#main">Zum Inhalt springen</a>
