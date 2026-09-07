@@ -174,10 +174,23 @@ def build(name, spec, browser, noise, qr, ort=None, suffix=""):
                 timeout=180,
             )
             if pdf.is_file():
-                print("  {:<44} {:>27.0f} KB  A3-PDF für die Druckerei".format(
-                    pdf.name, pdf.stat().st_size / 1024))
+                print("  {:<44} {:>27.1f} MB  A3-PDF, Text vektoriell".format(
+                    pdf.name, pdf.stat().st_size / 1048576))
             else:
                 print("  FEHLGESCHLAGEN:", pdf.name)
+
+            # Chrome bettet den Holzhintergrund unkomprimiert ein — rund 22 MB
+            # pro Seite, zu viel für Mail oder Upload. Diese Fassung ist aus dem
+            # PNG gebaut und JPEG-komprimiert: gleiche 288 dpi, ein Fünfzehntel
+            # der Größe. Für ein Plakat, das aus einem halben Meter Entfernung
+            # gelesen wird, ist der Unterschied nicht sichtbar.
+            png = OUT / (spec["renders"][0][0] + suffix + ".png")
+            if png.is_file():
+                slim = OUT / (spec["pdf"] + suffix + "-kompakt.pdf")
+                im = Image.open(png).convert("RGB")
+                im.save(slim, "PDF", resolution=round(im.width / 11.69), quality=88)
+                print("  {:<44} {:>27.1f} MB  A3-PDF zum Verschicken".format(
+                    slim.name, slim.stat().st_size / 1048576))
     finally:
         built.unlink(missing_ok=True)
 
