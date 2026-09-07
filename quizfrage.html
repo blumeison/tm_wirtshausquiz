@@ -16,8 +16,8 @@
        sichtbar sein. */
     .is-hidden { display: none !important; }
 
-    .wq-result { text-align: center; padding: var(--tm-space-7) 0 var(--tm-space-6); }
-    .wq-mark { font-size: 3.4rem; line-height: 1; margin-bottom: var(--tm-space-3); }
+    .wq-result { text-align: center; padding: var(--tm-space-5) 0 var(--tm-space-5); }
+    .wq-mark { font-size: 2.6rem; line-height: 1; margin-bottom: var(--tm-space-2); }
     .wq-verdict {
       font-family: var(--tm-font-head); font-weight: 400;
       font-size: clamp(2rem, 10vw, var(--tm-fs-3xl));
@@ -27,7 +27,7 @@
     .wq-verdict.is-wrong { color: var(--tm-red); }
 
     .wq-q { color: var(--tm-text-muted); font-size: var(--tm-fs-sm); margin: 0 0 var(--tm-space-2); }
-    .wq-reveal { max-width: 46ch; margin: 0 auto; font-size: var(--tm-fs-lg); line-height: 1.5; }
+    .wq-reveal { max-width: 46ch; margin: 0 auto; font-size: var(--tm-fs-base); line-height: 1.55; }
     .wq-reveal strong { color: var(--tm-red); }
 
     .wq-cta { text-align: center; }
@@ -37,6 +37,15 @@
       margin: 0 0 var(--tm-space-5);
     }
     .wq-facts span { white-space: nowrap; }
+
+    /* Am Handy zaehlt jeder Pixel: Der Anmeldeknopf soll ohne Scrollen
+       erreichbar sein, sonst war der QR-Code umsonst. */
+    @media (max-width: 560px) {
+      .wq-result { padding: var(--tm-space-4) 0; }
+      .wq-mark { font-size: 2.1rem; }
+      .tm-card { padding: 1.4rem !important; }
+      .wq-facts { margin-bottom: var(--tm-space-4); }
+    }
 
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
   </style>
