@@ -66,11 +66,11 @@
     .tm-hero > .tm-container { position: relative; z-index: 2; }
     .tm-hero .tm-swoosh { z-index: 1; }
 
-    .wq-texture, .wq-photo {
+    .wq-texture, .wq-photo, .wq-scrim {
       position: absolute; inset: 0; z-index: 0; pointer-events: none;
     }
     .wq-texture {
-      opacity: .13;
+      opacity: .07;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420' viewBox='0 0 420 420'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='2.5'%3E%3Ccircle cx='72' cy='88' r='47'/%3E%3Ccircle cx='72' cy='88' r='39'/%3E%3Ccircle cx='305' cy='58' r='35'/%3E%3Ccircle cx='305' cy='58' r='28'/%3E%3Ccircle cx='203' cy='252' r='53'/%3E%3Ccircle cx='203' cy='252' r='45'/%3E%3Ccircle cx='372' cy='330' r='31'/%3E%3Ccircle cx='372' cy='330' r='24'/%3E%3Ccircle cx='88' cy='348' r='27'/%3E%3Ccircle cx='88' cy='348' r='20'/%3E%3C/g%3E%3C/svg%3E");
       background-repeat: repeat;
       background-size: 420px 420px;
@@ -78,9 +78,24 @@
     .wq-photo {
       background-image: url("assets/pub.jpg");
       background-size: cover;
-      background-position: center;
-      opacity: .16;
+      background-position: center right;
+      opacity: .34;
       mix-blend-mode: luminosity;
+    }
+    /* Roter Schleier: links dicht, damit der Text steht, rechts offen,
+       damit man das Wirtshaus noch sieht. */
+    .wq-scrim {
+      background: linear-gradient(100deg,
+        rgba(229,19,36,.94) 0%,
+        rgba(229,19,36,.86) 38%,
+        rgba(229,19,36,.55) 72%,
+        rgba(229,19,36,.34) 100%);
+    }
+    /* Am Handy laeuft der Text ueber die volle Breite — dann deckt der
+       Schleier durchgehend. */
+    @media (max-width: 860px) {
+      .wq-scrim { background: rgba(229,19,36,.9); }
+      .wq-photo { opacity: .26; }
     }
 
     /* tokens.css pins h1 to 3.5rem with no mobile step-down. "Wirtshausquiz"
@@ -131,6 +146,7 @@
 
     <section class="tm-hero tm-hero--red">
       <span class="wq-photo" aria-hidden="true"></span>
+      <span class="wq-scrim" aria-hidden="true"></span>
       <span class="wq-texture" aria-hidden="true"></span>
       <span class="tm-swoosh" aria-hidden="true"></span>
       <div class="tm-container tm-stack">
