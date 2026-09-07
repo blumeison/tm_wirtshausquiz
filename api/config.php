@@ -39,8 +39,8 @@ return [
     // ---- Free-round promo --------------------------------------------------
     // ON: agreed 2026-09-07. Team Michelhausen covers it if the Wirt doesn't.
     'promo_enabled' => true,
-    'promo_teams'   => 5,
-    'promo_label'   => 'Die ersten 5 Teams bekommen die erste Runde aufs Haus.',
+    'promo_teams'   => 2,
+    'promo_label'   => 'Die ersten 2 Teams bekommen die erste Runde aufs Haus.',
 
     // ---- Anti-abuse --------------------------------------------------------
     'rate_limit_max'    => 5,     // signups per IP …
