@@ -32,15 +32,13 @@ return [
     // ---- Registration rules -----------------------------------------------
     'registration_open' => true,
     'team_min'          => 3,
-    'team_max'          => 6,
+    'team_max'          => 5,
     'capacity_teams'    => 12,   // teams that get a confirmed spot
     'waitlist_from'     => 14,   // hard stop: no signups at all beyond this
 
     // ---- Free-round promo --------------------------------------------------
-    // OFF until it is agreed with the Wirt who pays. Flip in data/config.json:
-    //   {"promo_enabled": true}
-    // Nothing about the promo is shown or promised while this is false.
-    'promo_enabled' => false,
+    // ON: agreed 2026-09-07. Team Michelhausen covers it if the Wirt doesn't.
+    'promo_enabled' => true,
     'promo_teams'   => 5,
     'promo_label'   => 'Die ersten 5 Teams bekommen die erste Runde aufs Haus.',
 
