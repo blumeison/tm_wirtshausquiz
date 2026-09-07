@@ -42,6 +42,17 @@ return [
     'promo_teams'   => 2,
     'promo_label'   => 'Die ersten 2 Teams bekommen die erste Runde aufs Haus.',
 
+    // ---- Quizfrage auf Werbescreen und Plakat ------------------------------
+    // Ziel der drei QR-Codes. Frage und Auflösung stehen hier, damit sie ohne
+    // Deploy wechseln können: {"screen_question": {...}} in data/config.json.
+    // `correct` ist 1-basiert und passt damit direkt zum ?a= aus dem QR-Code.
+    'screen_question' => [
+        'prompt'  => 'Wie lang braucht der Zug von Tullnerfeld nach Wien Hbf?',
+        'options' => ['20 Minuten', '35 Minuten', '50 Minuten'],
+        'correct' => 1,
+        'reveal'  => 'Zwanzig Minuten. Genau deshalb ist Michelhausen die am stärksten wachsende Gemeinde Österreichs — und deshalb kennen sich hier so viele noch nicht.',
+    ],
+
     // ---- Anti-abuse --------------------------------------------------------
     'rate_limit_max'    => 5,     // signups per IP …
     'rate_limit_window' => 3600,  // … per this many seconds

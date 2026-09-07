@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>(function(){try{var s=localStorage.getItem('tm-theme');if(s==='light'||s==='dark')document.documentElement.setAttribute('data-theme',s);}catch(e){}})();</script>
+  <title>Quizfrage – Wirtshausquiz</title>
+  <meta name="description" content="Die Quizfrage vom Plakat — und die Anmeldung zum Wirtshausquiz am 16. Oktober.">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    /* Diese Seite wird fast nur am Handy im Vorbeigehen geöffnet. Alles
+       Wichtige — Ergebnis, Auflösung, Anmeldeknopf — muss ohne Scrollen
+       sichtbar sein. */
+    .is-hidden { display: none !important; }
+
+    .wq-result { text-align: center; padding: var(--tm-space-7) 0 var(--tm-space-6); }
+    .wq-mark { font-size: 3.4rem; line-height: 1; margin-bottom: var(--tm-space-3); }
+    .wq-verdict {
+      font-family: var(--tm-font-head); font-weight: 400;
+      font-size: clamp(2rem, 10vw, var(--tm-fs-3xl));
+      line-height: 1.05; margin: 0 0 var(--tm-space-3);
+    }
+    .wq-verdict.is-right { color: var(--tm-green); }
+    .wq-verdict.is-wrong { color: var(--tm-red); }
+
+    .wq-q { color: var(--tm-text-muted); font-size: var(--tm-fs-sm); margin: 0 0 var(--tm-space-2); }
+    .wq-reveal { max-width: 46ch; margin: 0 auto; font-size: var(--tm-fs-lg); line-height: 1.5; }
+    .wq-reveal strong { color: var(--tm-red); }
+
+    .wq-cta { text-align: center; }
+    .wq-facts {
+      display: inline-flex; flex-wrap: wrap; justify-content: center; gap: .35rem 1.1rem;
+      color: var(--tm-text-muted); font-size: var(--tm-fs-sm);
+      margin: 0 0 var(--tm-space-5);
+    }
+    .wq-facts span { white-space: nowrap; }
+
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <a class="tm-skip" href="#main">Zum Inhalt springen</a>
+
+  <header class="tm-nav">
+    <div class="tm-container tm-nav__inner">
+      <a class="tm-nav__brand" href="/" aria-label="Wirtshausquiz Startseite">
+        <span class="tm-logo">
+          <img class="tm-logo__color" src="logo.png"       alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+          <img class="tm-logo__white" src="logo-white.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+        </span>
+      </a>
+      <a class="tm-btn tm-btn--primary" href="/#anmelden">Team anmelden</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="tm-section" style="padding-top:0;">
+      <div class="tm-container tm-container--narrow">
+
+        <p id="wq-loading" class="tm-text-muted tm-center" style="padding:var(--tm-space-7) 0;">
+          Einen Moment …
+        </p>
+
+        <div id="wq-result" class="wq-result is-hidden">
+          <div class="wq-mark" id="wq-mark" aria-hidden="true">🍺</div>
+          <h1 class="wq-verdict" id="wq-verdict">&nbsp;</h1>
+          <p class="wq-q" id="wq-question"></p>
+          <p class="wq-reveal" id="wq-reveal"></p>
+        </div>
+
+        <div class="tm-card wq-cta is-hidden" id="wq-cta" style="padding:2rem;">
+          <p class="tm-eyebrow">Und jetzt das Eigentliche</p>
+          <h2 class="tm-mt-0" style="font-size:var(--tm-fs-2xl);">Kommt zum Wirtshausquiz</h2>
+          <p class="tm-text-muted" id="wq-pitch" style="max-width:42ch;margin:0 auto var(--tm-space-4);">
+            Vier Runden dieser Sorte, ein Tisch voller Leute und am Ende weiß man,
+            wer recht gehabt hat.
+          </p>
+
+          <p class="wq-facts" id="wq-facts"></p>
+
+          <p id="wq-promo" class="tm-alert tm-alert--warning is-hidden" style="text-align:left;"></p>
+
+          <a class="tm-btn tm-btn--primary tm-btn--lg tm-btn--block" href="/#anmelden">Team anmelden</a>
+          <p class="tm-hint" style="margin-top:.75rem;">
+            Kostenlos. Ihr müsst niemanden kennen — meldet euch auch allein an,
+            wir setzen euch zu einem Team dazu.
+          </p>
+        </div>
+
+        <p id="wq-error" class="tm-alert tm-alert--danger is-hidden"></p>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="tm-footer">
+    <hr class="tm-flag" aria-hidden="true">
+    <div class="tm-container">
+      <div class="tm-footer__legal" style="padding-top:1.5rem;border-top:none;">
+        <span>© <span id="tm-year">2026</span> SPÖ &amp; Unabhängige – Team Michelhausen.</span>
+        <span><a href="https://team-michelhausen.at/impressum/">Impressum</a> ·
+              <a href="https://team-michelhausen.at/datenschutz/">Datenschutz</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  (function () {
+    'use strict';
+    var $ = function (id) { return document.getElementById(id); };
+    $('tm-year').textContent = new Date().getFullYear();
+
+    function show(id) { $(id).classList.remove('is-hidden'); }
+    function hide(id) { $(id).classList.add('is-hidden'); }
+
+    var picked = parseInt((new URLSearchParams(window.location.search)).get('a'), 10);
+
+    fetch('api/quizfrage.php', { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        hide('wq-loading');
+        if (!d || !d.ok) { throw new Error('keine Frage'); }
+
+        var q = d.question;
+        var right = (picked === q.correct);
+        var known = (picked >= 1 && picked <= q.options.length);
+
+        // Auch ohne gültiges ?a= bleibt die Seite brauchbar: dann eben ohne
+        // Ergebnis, aber mit Frage, Auflösung und Anmeldung.
+        if (known) {
+          $('wq-mark').textContent = right ? '🎉' : '🤏';
+          $('wq-verdict').textContent = right ? 'Richtig!' : 'Knapp daneben';
+          $('wq-verdict').className = 'wq-verdict ' + (right ? 'is-right' : 'is-wrong');
+        } else {
+          $('wq-mark').textContent = '🍺';
+          $('wq-verdict').textContent = 'Die Auflösung';
+          $('wq-verdict').className = 'wq-verdict';
+        }
+
+        $('wq-question').textContent = q.prompt;
+        $('wq-reveal').innerHTML = known && !right
+          ? 'Die richtige Antwort war <strong>' + esc(q.options[q.correct - 1]) + '</strong>. '
+            + esc(q.reveal)
+          : (known ? esc(q.reveal)
+                   : '<strong>' + esc(q.options[q.correct - 1]) + '</strong>. ' + esc(q.reveal));
+        show('wq-result');
+
+        var e = d.event;
+        $('wq-facts').innerHTML =
+          '<span>' + esc(e.dateLong) + '</span>' +
+          '<span>Einlass ' + esc(e.doorsTime) + ', Start ' + esc(e.startTime) + '</span>' +
+          '<span>' + esc(e.venue) + '</span>';
+
+        if (d.promo && d.promo.enabled && d.promo.left > 0) {
+          $('wq-promo').textContent = '🍺 ' + d.promo.label
+            + ' Noch ' + d.promo.left + ' zu haben.';
+          show('wq-promo');
+        }
+
+        if (!d.open) {
+          $('wq-pitch').textContent = 'Der Abend ist leider schon ausgebucht — '
+            + 'aber es wird ein nächstes Mal geben.';
+        }
+        show('wq-cta');
+      })
+      .catch(function () {
+        hide('wq-loading');
+        $('wq-error').textContent = 'Die Frage können wir gerade nicht laden. '
+          + 'Zum Wirtshausquiz geht es trotzdem: einfach oben auf „Team anmelden".';
+        show('wq-error');
+        show('wq-cta');
+      });
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+  })();
+  </script>
+</body>
+</html>
