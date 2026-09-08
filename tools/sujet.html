@@ -146,6 +146,12 @@
     color: var(--red); letter-spacing: .02em;
   }
 
+
+  /* Absender-Marke. Bewusst groß: In der Gemeinde ist „Team Michelhausen"
+     als Name allein offenbar nicht bekannt genug — das Logo muss die
+     Zuordnung leisten, nicht der Schriftzug. */
+  .sender { display: flex; justify-content: center; }
+  .sender img { display: block; width: auto; }
   .footnote {
     font-family: Rubik, sans-serif; font-weight: 600;
     text-transform: uppercase; color: var(--ink); opacity: .62;
@@ -173,6 +179,9 @@
         <p class="times" id="times">Ab 17:30 · Quizstart 18:30</p>
         <div class="rule" id="rule"></div>
         <p class="footnote" id="footnote">Anmeldung ab nächster Woche</p>
+        <div class="sender" id="sender">
+          <img id="logo" src="logo-trim.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+        </div>
       </div>
     </div>
   </div>
@@ -203,31 +212,33 @@
 
   px('kicker', 'fontSize', 3.5);
   document.getElementById('kicker').style.letterSpacing = (u * 0.42) + 'px';
-  px('kicker', 'marginBottom', 3.4);
+  px('kicker', 'marginBottom', 2.6);
 
-  px('title', 'fontSize', 14.2);
-  px('title', 'marginBottom', 4.2);
+  px('title', 'fontSize', 11.6);
+  px('title', 'marginBottom', 3.2);
 
   var fb = document.getElementById('flagbar');
   fb.style.width = (u * 30) + 'px';
   fb.style.height = (u * 1.5) + 'px';
-  fb.style.marginBottom = (u * 5.2) + 'px';
+  fb.style.marginBottom = (u * 4.0) + 'px';
 
-  px('date', 'fontSize', 7.4);
+  px('date', 'fontSize', 6.2);
   px('date', 'marginBottom', 2.2);
 
   px('venue', 'fontSize', 4.2);
-  px('venue', 'marginBottom', 3.0);
+  px('venue', 'marginBottom', 2.4);
 
   px('times', 'fontSize', 4.0);
 
   var r = document.getElementById('rule');
   r.style.width = (u * 22) + 'px';
-  r.style.marginTop = (u * 5.4) + 'px';
-  r.style.marginBottom = (u * 4.0) + 'px';
+  r.style.marginTop = (u * 4.2) + 'px';
+  r.style.marginBottom = (u * 3.4) + 'px';
   r.style.height = Math.max(2, u * 0.3) + 'px';
 
   px('footnote', 'fontSize', 3.2);
+  px('footnote', 'marginBottom', 3.2);
+  document.getElementById('logo').style.height = (u * 12.5) + 'px';
   document.getElementById('footnote').style.letterSpacing = (u * 0.3) + 'px';
 
   // Glasränder aufs Holz — aber nur, solange kein echtes Foto da ist.

@@ -133,6 +133,26 @@ def paper_noise(size=160, strength=26, seed=7):
     return base64.b64encode(buf.getvalue()).decode("ascii")
 
 
+def trim_logo():
+    """
+    Beschneidet die transparenten Ränder des Logos.
+
+    logo.png ist 1790x1286, die Marke füllt davon aber nur rund ein Drittel —
+    der Rest ist Luft. Ohne Beschnitt wirkt das Logo in jeder Box winzig,
+    egal wie groß man die Box macht.
+    """
+    src = ROOT.parent / "logo.png"
+    dst = ROOT / "logo-trim.png"
+    im = Image.open(src).convert("RGBA")
+    box = im.split()[3].getbbox()
+    if box:
+        im = im.crop(box)
+    im.save(dst, "PNG", optimize=True)
+    print("Logo beschnitten: {}x{} -> {}x{}".format(
+        Image.open(src).size[0], Image.open(src).size[1], im.size[0], im.size[1]))
+    return dst
+
+
 def qr_datauri(url):
     """Fehlerkorrektur Q: der Code bleibt lesbar, auch wenn das Plakat leidet."""
     q = qrcode.QRCode(
@@ -247,6 +267,7 @@ def main():
 
     browser = find_browser()
     noise = paper_noise()
+    trim_logo()
     print("Renderer:", browser)
 
     for name in wanted:

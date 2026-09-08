@@ -117,21 +117,27 @@
   .band .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
   .band .txt { text-align: left; }
   .band .cta {
-    font: 400 12mm/1.1 'Patua One', Georgia, serif; color: var(--red); margin-bottom: 3mm;
+    font: 400 11mm/1.1 'Patua One', Georgia, serif; color: var(--red); margin-bottom: 2.6mm;
   }
   .band .url {
-    font: 600 8.6mm/1.2 Rubik, sans-serif; color: var(--ink); margin-bottom: 4mm;
+    font: 600 7.8mm/1.2 Rubik, sans-serif; white-space: nowrap; color: var(--ink); margin-bottom: 4mm;
     letter-spacing: -.1mm;
   }
-  .band .meta { font: 500 6.4mm/1.45 Rubik, sans-serif; color: var(--ink); opacity: .8; }
+  .band .meta { font: 500 5.6mm/1.4 Rubik, sans-serif; white-space: nowrap; color: var(--ink); opacity: .8; }
+  .band .sender { flex: none; }
+  .band .sender img { height: 34mm; }
 
   .promo {
-    display: inline-block; margin-top: 4mm;
+    display: inline-block; margin-top: 3.4mm; white-space: nowrap;
     background: var(--yellow); color: #5a4200;
-    font: 700 6.4mm/1.2 Rubik, sans-serif;
-    padding: 2.6mm 5mm; border-radius: 99mm;
+    font: 700 5.4mm/1.2 Rubik, sans-serif;
+    padding: 2.4mm 4.4mm; border-radius: 99mm;
   }
 
+
+  /* Absender-Marke. Bewusst groß, siehe die übrigen Sujets. */
+  .sender { display: flex; justify-content: center; }
+  .sender img { display: block; width: auto; }
   .imprint {
     position: relative; z-index: 2;
     font: 400 3.8mm/1.4 Rubik, sans-serif; color: rgba(255,255,255,.62);
@@ -159,11 +165,14 @@
 
     <div class="band">
       <div class="qr"><img src="" id="qr" alt="QR-Code zur Anmeldung"></div>
-      <div class="txt">
+      <div class="txt" style="flex:1 1 auto;">
         <p class="cta">Jetzt Team anmelden</p>
         <p class="url">quiz.team-michelhausen.at</p>
         <p class="meta">Teams mit 3 bis 5 Personen · Teilnahme kostenlos</p>
         <span class="promo">Die ersten 2 Teams: erste Runde aufs Haus</span>
+      </div>
+      <div class="sender">
+        <img src="logo-trim.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
       </div>
     </div>
 

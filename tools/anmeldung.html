@@ -86,6 +86,12 @@
   }
 
   .url    { font-family: Rubik, sans-serif; font-weight: 600; color: var(--red); }
+
+  /* Absender-Marke. Bewusst groß: In der Gemeinde ist „Team Michelhausen"
+     als Name allein offenbar nicht bekannt genug — das Logo muss die
+     Zuordnung leisten, nicht der Schriftzug. */
+  .sender { display: flex; justify-content: center; }
+  .sender img { display: block; width: auto; }
   .meta   { font-family: Rubik, sans-serif; font-weight: 500; color: var(--ink); opacity: .68; }
 </style>
 </head>
@@ -107,6 +113,9 @@
         <p><span class="promo" id="promo">🍺 Die ersten 2 Teams: erste Runde aufs Haus</span></p>
         <p class="url" id="url">quiz.team-michelhausen.at</p>
         <p class="meta" id="meta">Teams mit 3 bis 5 Personen · Teilnahme kostenlos</p>
+        <div class="sender" id="sender">
+          <img id="logo" src="logo-trim.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+        </div>
       </div>
     </div>
   </div>
@@ -133,30 +142,32 @@
 
   set('kicker', 'fontSize', 3.4);
   document.getElementById('kicker').style.letterSpacing = (u * 0.4) + 'px';
-  set('kicker', 'marginBottom', 2.8);
+  set('kicker', 'marginBottom', 2.2);
 
-  set('title', 'fontSize', 12.8);
-  set('title', 'marginBottom', 3.6);
+  set('title', 'fontSize', 10.6);
+  set('title', 'marginBottom', 2.8);
 
   var fb = document.getElementById('flagbar');
   fb.style.width = (u * 28) + 'px';
   fb.style.height = (u * 1.4) + 'px';
-  fb.style.marginBottom = (u * 4.4) + 'px';
+  fb.style.marginBottom = (u * 3.4) + 'px';
 
-  set('what', 'fontSize', 5.2);
+  set('what', 'fontSize', 4.8);
   set('what', 'marginBottom', 1.8);
   set('where', 'fontSize', 3.9);
-  set('where', 'marginBottom', 4.0);
+  set('where', 'marginBottom', 2.8);
 
   var p = document.getElementById('promo');
   p.style.fontSize = (u * 2.95) + 'px';
   p.style.padding = (u * 1.5) + 'px ' + (u * 3.4) + 'px';
   p.style.whiteSpace = 'nowrap';
-  p.parentNode.style.marginBottom = (u * 4.4) + 'px';
+  p.parentNode.style.marginBottom = (u * 3.8) + 'px';
 
   set('url', 'fontSize', 4.6);
-  set('url', 'marginBottom', 1.6);
+  set('url', 'marginBottom', 1.2);
   set('meta', 'fontSize', 3.1);
+  set('meta', 'marginBottom', 3.0);
+  document.getElementById('logo').style.height = (u * 12) + 'px';
 })();
 </script>
 </body>
