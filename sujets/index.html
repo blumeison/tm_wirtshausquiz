@@ -1,228 +1,1107 @@
 <!DOCTYPE html>
 <html lang="de-AT">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script>(function(){try{var s=localStorage.getItem('tm-theme');if(s==='light'||s==='dark')document.documentElement.setAttribute('data-theme',s);}catch(e){}})();</script>
-  <title>Sujets – Wirtshausquiz</title>
-  <meta name="description" content="Alle Motive zum Wirtshausquiz am 16. Oktober 2026 zum Herunterladen.">
-  <meta name="robots" content="noindex">
-  <meta name="color-scheme" content="light dark">
-  <link rel="icon" type="image/png" href="../logo.png">
-  <link rel="stylesheet" href="../tokens.css">
-  <style>
-    /* Dateiablage fürs Social-Media-Team. Bewusst simpel: echte Dateien auf
-       der eigenen Domain, echte Links. Kein Artefakt, keine Freigabe, keine
-       Sonderrechte — auf jedem Gerät gleich. */
-    .wq-group { margin-bottom: var(--tm-space-7); }
-    .wq-group h2 { margin-bottom: .25rem; }
-    .wq-when { color: var(--tm-text-muted); font-size: var(--tm-fs-sm); margin: 0 0 var(--tm-space-5); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/png" href="../logo.png">
+<title>Wirtshausquiz Posting-Fahrplan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@300;400;500;600&display=swap">
+<style>
+  :root {
+    --red:      #e51324;
+    --green:    #3aaa35;
+    --yellow:   #ffcc00;
+    --magenta:  #e6007e;
 
-    .wq-files { display: grid; gap: var(--tm-space-5);
-                grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
-    .wq-file { border: 1px solid var(--tm-border); border-radius: var(--tm-radius);
-               overflow: hidden; background: var(--tm-surface); display: flex;
-               flex-direction: column; }
-    .wq-file img { display: block; width: 100%; height: auto; background: var(--tm-surface-2); }
-    .wq-file__bar { padding: .75rem .9rem; display: flex; flex-direction: column;
-                    gap: .5rem; flex: 1 1 auto; }
-    .wq-file__name { font-size: var(--tm-fs-sm); font-weight: 500; }
-    .wq-file__meta { font-size: .78rem; color: var(--tm-text-muted); }
-    .wq-file__bar .tm-btn { margin-top: auto; }
+    --bg:       #ffffff;
+    --surface:  #ffffff;
+    --surface2: #f5f4f2;
+    --line:     #e4e1dd;
+    --line-soft:#efedea;
+    --text:     #3f3f3e;
+    --muted:    #74726f;
+    --faint:    #9b9895;
+    --accent:   var(--red);
+    --shadow:   0 1px 2px rgba(63,63,62,.06), 0 8px 24px rgba(63,63,62,.05);
 
-    .wq-pdf { display: grid; place-items: center; aspect-ratio: 297/420;
-              background: var(--tm-surface-2); color: var(--tm-text-muted);
-              font-size: 2.4rem; }
+    --ok-bg:    #e8f4e7;  --ok-fg:   #2b7a27;
+    --wip-bg:   #fff4d1;  --wip-fg:  #8a6400;
 
-    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
-  </style>
+    --font-head: 'Patua One', Georgia, 'Times New Roman', serif;
+    --font-body: 'Rubik', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --container: 940px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1b1a; --surface: #262423; --surface2: #201f1e;
+      --line: #3b3937; --line-soft: #312f2d;
+      --text: #ecebe9; --muted: #a9a5a1; --faint: #7d7975;
+      --accent: #ff4d5e;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+      --ok-bg: #22331f; --ok-fg: #7fce78;
+      --wip-bg: #352c10; --wip-fg: #e8bb45;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1b1a; --surface: #262423; --surface2: #201f1e;
+    --line: #3b3937; --line-soft: #312f2d;
+    --text: #ecebe9; --muted: #a9a5a1; --faint: #7d7975;
+    --accent: #ff4d5e;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+    --ok-bg: #22331f; --ok-fg: #7fce78;
+    --wip-bg: #352c10; --wip-fg: #e8bb45;
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body);
+         font-weight: 300; font-size: 16px; line-height: 1.62; -webkit-font-smoothing: antialiased; }
+
+  .flag { height: 5px; background: linear-gradient(90deg,
+      var(--red) 0 45%, var(--green) 45% 63.3%, var(--yellow) 63.3% 81.6%, var(--magenta) 81.6% 100%); }
+  .wrap { max-width: var(--container); margin: 0 auto; padding: 0 24px; }
+
+  header.top { padding: 52px 0 36px; border-bottom: 1px solid var(--line); }
+  .eyebrow { font-size: .72rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+             color: var(--accent); margin: 0 0 12px; }
+  h1 { font-family: var(--font-head); font-weight: 400; text-wrap: balance;
+       font-size: clamp(2rem, 5vw, 2.9rem); line-height: 1.1; margin: 0 0 16px; }
+  .lede { max-width: 60ch; font-size: 1.08rem; color: var(--muted); margin: 0; }
+  .stamp { margin-top: 20px; font-size: .8rem; color: var(--faint);
+           display: flex; flex-wrap: wrap; gap: 6px 18px; }
+
+  section { padding: 44px 0; border-bottom: 1px solid var(--line-soft); }
+  section:last-of-type { border-bottom: 0; }
+  h2 { font-family: var(--font-head); font-weight: 400; text-wrap: balance;
+       font-size: 1.6rem; line-height: 1.2; margin: 0 0 6px; }
+  h3 { font-family: var(--font-head); font-weight: 400; font-size: 1.08rem; margin: 0 0 8px; }
+  .sub { color: var(--muted); margin: 0 0 26px; max-width: 66ch; }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  p:last-child { margin-bottom: 0; }
+  strong { font-weight: 500; color: var(--text); }
+  ul { padding-left: 1.15em; margin: 0 0 14px; max-width: 68ch; }
+  li { margin-bottom: 7px; }
+  li::marker { color: var(--faint); }
+  code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .9em; }
+
+  /* ---- Regelkarten ---- */
+  .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+  .rule { background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+          padding: 18px 20px; box-shadow: var(--shadow); }
+  .rule p { font-size: .93rem; color: var(--muted); margin: 0; }
+  .rule p strong { color: var(--text); }
+
+  /* ---- Post-Karten ---- */
+  .posts { display: grid; gap: 18px; }
+  .post { background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+          box-shadow: var(--shadow); overflow: hidden; }
+  .post.is-key { border-color: var(--accent); border-width: 2px; }
+
+  .post__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 16px;
+                padding: 16px 22px; border-bottom: 1px solid var(--line-soft);
+                background: var(--surface2); }
+  .post__when { font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .post__time { color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+  .post__title { font-family: var(--font-head); font-weight: 400; font-size: 1.12rem;
+                 flex: 1 1 auto; min-width: 40%; }
+
+  .post__body { padding: 20px 22px 22px; }
+
+  .meta { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px;
+          font-size: .9rem; margin: 0 0 16px; }
+  .meta dt { color: var(--faint); font-weight: 500; white-space: nowrap; }
+  .meta dd { margin: 0; color: var(--muted); }
+  .meta dd strong { color: var(--text); }
+
+  .chan { display: inline-block; font-size: .74rem; padding: 2px 8px; border-radius: 5px;
+          background: var(--surface2); border: 1px solid var(--line);
+          color: var(--muted); margin: 0 5px 5px 0; white-space: nowrap; }
+
+  .pill { display: inline-block; font-size: .68rem; font-weight: 600; letter-spacing: .07em;
+          text-transform: uppercase; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill.ok  { background: var(--ok-bg);  color: var(--ok-fg); }
+  .pill.wip { background: var(--wip-bg); color: var(--wip-fg); }
+
+  /* ---- Text zum Kopieren ---- */
+  .caption { position: relative; background: var(--surface2); border: 1px solid var(--line);
+             border-radius: 10px; padding: 16px 18px; margin: 0 0 12px; }
+  .caption pre { margin: 0; white-space: pre-wrap; word-break: break-word;
+                 font-family: var(--font-body); font-size: .93rem; line-height: 1.6;
+                 color: var(--text); }
+  .caption__label { display: block; font-size: .7rem; font-weight: 600; letter-spacing: .1em;
+                    text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+  .copy { position: absolute; top: 12px; right: 12px; font: 500 .78rem var(--font-body);
+          background: var(--surface); color: var(--muted); border: 1px solid var(--line);
+          border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+  .copy:hover { color: var(--accent); border-color: var(--accent); }
+  .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .copy.is-done { color: var(--ok-fg); border-color: var(--ok-fg); }
+
+  .todo { margin: 0; padding-left: 1.15em; font-size: .92rem; color: var(--muted); }
+  .todo li { margin-bottom: 5px; }
+
+  .note { border-left: 3px solid var(--accent); padding: 2px 0 2px 16px; margin: 22px 0 0;
+          color: var(--muted); font-size: .94rem; }
+  .note strong { color: var(--text); }
+
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: .92rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+       color: var(--faint); border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: 0; }
+
+  footer.end { padding: 32px 0 60px; color: var(--faint); font-size: .85rem; }
+
+  @media (max-width: 620px) {
+    .meta { grid-template-columns: 1fr; gap: 2px 0; }
+    .meta dd { margin-bottom: 10px; }
+    .copy { position: static; display: inline-block; margin-bottom: 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  /* ---- Bilder und Downloads ---- */
+  .assets { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+            gap: 14px; margin: 0 0 20px; }
+  .asset { margin: 0; border: 1px solid var(--line); border-radius: 10px;
+           overflow: hidden; background: var(--surface2); display: flex;
+           flex-direction: column; }
+  .asset img { display: block; width: 100%; height: auto; background: var(--surface2); }
+  .asset__bar { padding: 10px 11px; display: flex; flex-direction: column; gap: 8px;
+                flex: 1 1 auto; font-size: .76rem; line-height: 1.35; }
+  .asset__name { color: var(--muted); }
+  .asset__name b { color: var(--text); font-weight: 500; }
+  .dl { margin-top: auto; text-align: center; font: 500 .78rem var(--font-body);
+        background: var(--surface); color: var(--accent); border: 1px solid var(--line);
+        border-radius: 999px; padding: 5px 11px; text-decoration: none; }
+  .dl:hover { border-color: var(--accent); }
+  .dl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .pdfbox { display: grid; place-items: center; aspect-ratio: 297/420;
+            background: var(--surface2); color: var(--faint); font-size: 2.2rem; }
+
+  /* ---- Kopfleiste der Seite ---- */
+  .sitebar { display: flex; align-items: center; justify-content: space-between;
+             gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .sitebar img { height: 38px; width: auto; display: block; }
+  .sitebar a { font-size: .85rem; }
+  .legal { padding: 26px 0 60px; font-size: .8rem; color: var(--faint); }
+  .legal a { color: var(--faint); }
+
+</style>
 </head>
 <body>
-  <a class="tm-skip" href="#main">Zum Inhalt springen</a>
 
-  <header class="tm-nav">
-    <div class="tm-container tm-nav__inner">
-      <a class="tm-nav__brand" href="/" aria-label="Wirtshausquiz Startseite">
-        <span class="tm-logo">
-          <img class="tm-logo__color" src="../logo.png"       alt="SPÖ &amp; Unabhängige – Team Michelhausen">
-          <img class="tm-logo__white" src="../logo-white.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
-        </span>
-      </a>
-      <a class="tm-btn tm-btn--ghost" href="/">Zur Quizseite</a>
+<div class="flag"></div>
+<div class="wrap">
+  <div class="sitebar">
+    <img src="../logo.png" alt="SPOe &amp; Unabhaengige &ndash; Team Michelhausen">
+    <a href="/">Zur Quizseite</a>
+  </div>
+</div>
+
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">Team Michelhausen · Wirtshausquiz</p>
+    <h1>Posting-Fahrplan</h1>
+    <p class="lede">Fünfzehn Posts vom 10. September bis 20. Oktober. Pro Post: wann, wo, welches
+      Bild, fertiger Text zum Kopieren und was danach zu tun ist. Zielgruppe sind vor allem
+      die Zugezogenen in Pixendorf — danach ist jeder Text geschrieben.</p>
+    <div class="stamp">
+      <span>Für das Social-Media-Team</span>
+      <span>Instagram &amp; Facebook</span>
+      <span>Quizabend: Fr 16. Oktober 2026</span>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main id="main" class="tm-section">
-    <div class="tm-container">
+<section>
+  <div class="wrap">
+    <h2>Sechs Regeln, die für jeden Post gelten</h2>
+    <p class="sub">Wenn ihr sonst nichts lest — das hier entscheidet, ob die Posts ankommen.</p>
 
-      <div class="tm-stack" style="margin-bottom:var(--tm-space-7);max-width:60ch;">
-        <p class="tm-eyebrow">Wirtshausquiz · 16. Oktober 2026</p>
-        <h1 class="tm-mt-0">Alle Sujets zum Herunterladen</h1>
-        <p class="tm-text-muted">Am Handy das Bild antippen und lange drücken, am Rechner auf
-          „Herunterladen“. Welcher Text wann zu welchem Bild gehört, steht im Posting-Fahrplan.</p>
+    <div class="rules">
+      <div class="rule">
+        <h3>Der Link gehört in die Bio</h3>
+        <p>Auf Instagram sind Links im Text <strong>nicht klickbar</strong>. Ab 17. September muss
+          <code>quiz.team-michelhausen.at</code> im Profil-Link stehen, und im Text der Hinweis
+          „Link in der Bio“. In Stories immer den <strong>Link-Sticker</strong> setzen.</p>
       </div>
+      <div class="rule">
+        <h3>Die erste Stunde entscheidet</h3>
+        <p>Kommentare in der ersten Stunde treiben die Reichweite mehr als alles andere.
+          <strong>Wer postet, ist die nächste Stunde erreichbar</strong> und antwortet auf jeden
+          Kommentar — und sei es mit einem Satz.</p>
+      </div>
+      <div class="rule">
+        <h3>Das Schwarze Brett ist der Hauptkanal</h3>
+        <p>Nicht die Seite. Dort sind die Leute, die ihr erreichen wollt. Aber: Den Seitentext
+          <strong>nicht hineinkopieren</strong> — in der Gruppe postet ein Mensch mit eigenem
+          Profil und eigenen Worten. Alles andere wird als Werbung gelesen und weggescrollt.</p>
+      </div>
+      <div class="rule">
+        <h3>Schreibt für Zugezogene</h3>
+        <p>Pixendorf ist wegen des Bahnhofs von 200 auf über 1.500 Einwohner gewachsen. Die
+          meisten dort <strong>kennen das Gasthaus Burchhart nicht</strong>, haben kein Team und
+          niemanden zum Mitgehen. Genau die wollen wir — also nie voraussetzen, dass man
+          jemanden kennt.</p>
+      </div>
+      <div class="rule">
+        <h3>Erst das Bild, dann der Text</h3>
+        <p>Immer als <strong>Bildpost</strong> hochladen und den Link in den Text schreiben — nie
+          den Link allein posten. Ein Beitrag mit Linkvorschau bekommt deutlich weniger Reichweite
+          als ein Bild.</p>
+      </div>
+      <div class="rule">
+        <h3>Ein Post pro Sujet</h3>
+        <p>Nicht nachlegen, nicht wiederholen, nichts zusätzlich einschieben. Wer öfter postet,
+          verliert die Gruppe und die Geduld der Leute. <strong>Der Plan ist vollständig.</strong></p>
+      </div>
+      <div class="rule">
+        <h3>Kritik wird beantwortet, nicht gelöscht</h3>
+        <p>Kommt ein blöder Kommentar: sachlich und freundlich antworten, einmal. Löschen nur bei
+          Beschimpfungen. Ein gelöschter Kommentar wird zur eigenen Geschichte.</p>
+      </div>
+    </div>
 
-      <section class="wq-group">
-        <h2>Save the Date</h2>
-        <p class="wq-when">Donnerstag, 10. September · Instagram und Facebook</p>
-        <div class="wq-files">
-          <figure class="wq-file">
-            <img src="wirtshausquiz-save-the-date-feed.jpg" alt="Save the Date, Feed" loading="lazy">
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Feed 4:5</span>
-              <span class="wq-file__meta">1080 × 1350 · Instagram, Facebook</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-save-the-date-feed.jpg" download>Herunterladen</a>
-            </figcaption>
-          </figure>
-          <figure class="wq-file">
-            <img src="wirtshausquiz-save-the-date-story.jpg" alt="Save the Date, Story" loading="lazy">
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Story 9:16</span>
-              <span class="wq-file__meta">1080 × 1920 · Story</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-save-the-date-story.jpg" download>Herunterladen</a>
-            </figcaption>
-          </figure>
-          <figure class="wq-file">
-            <img src="wirtshausquiz-save-the-date-quadrat.jpg" alt="Save the Date, quadratisch" loading="lazy">
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Quadrat 1:1</span>
-              <span class="wq-file__meta">1080 × 1080 · Facebook</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-save-the-date-quadrat.jpg" download>Herunterladen</a>
-            </figcaption>
-          </figure>
+    <div class="note">
+      <strong>Uhrzeiten:</strong> Dienstag und Donnerstag um <strong>18:30</strong>, Sonntag um
+      <strong>10:30</strong>. Nicht vormittags unter der Woche — da erreicht ihr niemanden.
+      Wenn ein Termin nicht ausgeht, lieber am selben Tag später als am nächsten Tag.
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Die fünfzehn Posts</h2>
+    <p class="sub">Die Bilddateien kommen aus <code>tools/out/</code> im Repo. Was noch fehlt, ist
+      als solches markiert — dort steht auch, was dafür gebraucht wird.</p>
+
+    <div class="posts">
+
+      <!-- 1 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">Do 10.09.</span>
+          <span class="post__time">18:30</span>
+          <span class="post__title">Save the Date</span>
+          <span class="pill ok">Bild fertig</span>
         </div>
-      </section>
+        <div class="post__body">
+          <div class="assets">
+          <figure class="asset">
+            <img src="wirtshausquiz-save-the-date-feed.jpg" alt="Feed 4:5" loading="lazy">
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>Feed 4:5</b><br>Instagram, Facebook</span>
+              <a class="dl" href="wirtshausquiz-save-the-date-feed.jpg" download>Herunterladen</a>
+            </figcaption>
+          </figure>
+          <figure class="asset">
+            <img src="wirtshausquiz-save-the-date-story.jpg" alt="Story 9:16" loading="lazy">
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>Story 9:16</b><br>Story</span>
+              <a class="dl" href="wirtshausquiz-save-the-date-story.jpg" download>Herunterladen</a>
+            </figcaption>
+          </figure>
+          <figure class="asset">
+            <img src="wirtshausquiz-save-the-date-quadrat.jpg" alt="Quadrat 1:1" loading="lazy">
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>Quadrat 1:1</b><br>Facebook</span>
+              <a class="dl" href="wirtshausquiz-save-the-date-quadrat.jpg" download>Herunterladen</a>
+            </figcaption>
+          </figure>
+          </div>
 
-      <section class="wq-group">
-        <h2>Anmeldung offen</h2>
-        <p class="wq-when">Donnerstag, 17. September · der wichtigste Post</p>
-        <div class="wq-files">
-          <figure class="wq-file">
-            <img src="wirtshausquiz-anmeldung-feed.jpg" alt="Anmeldung offen, Feed" loading="lazy">
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Feed 4:5</span>
-              <span class="wq-file__meta">1080 × 1350 · Instagram, Facebook</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-anmeldung-feed.jpg" download>Herunterladen</a>
-            </figcaption>
-          </figure>
-          <figure class="wq-file">
-            <img src="wirtshausquiz-anmeldung-story.jpg" alt="Anmeldung offen, Story" loading="lazy">
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Story 9:16</span>
-              <span class="wq-file__meta">1080 × 1920 · Link-Sticker nicht vergessen</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-anmeldung-story.jpg" download>Herunterladen</a>
-            </figcaption>
-          </figure>
-          <figure class="wq-file">
-            <img src="wirtshausquiz-anmeldung-quadrat.jpg" alt="Anmeldung offen, quadratisch" loading="lazy">
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Quadrat 1:1</span>
-              <span class="wq-file__meta">1080 × 1080 · Facebook</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-anmeldung-quadrat.jpg" download>Herunterladen</a>
-            </figcaption>
-          </figure>
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Feed</span><span class="chan">Facebook Seite</span></dd>
+            <dt>Bild</dt>
+            <dd><strong>save-the-date-feed.png</strong> (Instagram, 4:5) ·
+                <strong>save-the-date-quadrat.png</strong> (Facebook)</dd>
+            <dt>Ziel</dt>
+            <dd>Neugier, kein Klick. Es gibt noch nichts zu tun — genau das ist der Punkt.</dd>
+          </dl>
+
+          <div class="caption">
+            <span class="caption__label">Text zum Kopieren</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Michelhausen kriegt sein Wirtshausquiz. 🍺
+
+Freitag, 16. Oktober, im Gasthaus Burchhart in Atzelsdorf. Vier Runden, ein Tisch voller Leute, die's besser wissen wollen — und am Ende weiß man endlich, wer recht gehabt hat.
+
+Die Anmeldung sperren wir nächste Woche auf. Bis dahin habt ihr Zeit, euer Team zusammenzutrommeln.
+
+#wirtshausquiz #michelhausen #atzelsdorf #teammichelhausen</pre>
+          </div>
+
+          <ul class="todo">
+            <li><strong>Kein Link</strong> in diesem Post. Die Anmeldeseite ist zwar schon online,
+              aber der Anmelde-Post am 17. soll seine eigene Aufmerksamkeit bekommen.</li>
+            <li>Auf „Wann kann man sich anmelden?“ antworten mit: „Nächste Woche Donnerstag,
+              wir sagen Bescheid.“</li>
+          </ul>
         </div>
-      </section>
+      </article>
 
-      <section class="wq-group">
-        <h2>Frage der Woche #1</h2>
-        <p class="wq-when">Dienstag, 22. September · Antwort nicht verraten</p>
-        <div class="wq-files">
-          <figure class="wq-file">
-            <img src="wirtshausquiz-frage1-feed.jpg" alt="Frage der Woche, Feed" loading="lazy">
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Feed 4:5</span>
-              <span class="wq-file__meta">1080 × 1350 · Instagram, Facebook</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-frage1-feed.jpg" download>Herunterladen</a>
-            </figcaption>
-          </figure>
-          <figure class="wq-file">
-            <img src="wirtshausquiz-frage1-story.jpg" alt="Frage der Woche, Story" loading="lazy">
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Story 9:16</span>
-              <span class="wq-file__meta">1080 × 1920 · Story</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-frage1-story.jpg" download>Herunterladen</a>
-            </figcaption>
-          </figure>
-          <figure class="wq-file">
-            <img src="wirtshausquiz-frage1-quadrat.jpg" alt="Frage der Woche, quadratisch" loading="lazy">
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Quadrat 1:1</span>
-              <span class="wq-file__meta">1080 × 1080 · Facebook</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-frage1-quadrat.jpg" download>Herunterladen</a>
-            </figcaption>
-          </figure>
+      <!-- 2 -->
+      <article class="post is-key">
+        <div class="post__head">
+          <span class="post__when">Do 17.09.</span>
+          <span class="post__time">18:30</span>
+          <span class="post__title">Anmeldung offen — der wichtigste Post</span>
+          <span class="pill ok">Bild fertig</span>
         </div>
-      </section>
-
-      <section class="wq-group">
-        <h2>Werbescreen</h2>
-        <p class="wq-when">Für die Werbeagentur · nicht für Social Media</p>
-        <div class="wq-files">
-          <figure class="wq-file">
-            <img src="wirtshausquiz-screen-fussgeher.jpg" alt="Screen, Fußgänger" loading="lazy">
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Fußgänger, mit QR</span>
-              <span class="wq-file__meta">1080 × 1920 · Quizfrage mit drei Codes</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-screen-fussgeher.jpg" download>Herunterladen</a>
+        <div class="post__body">
+          <div class="assets">
+          <figure class="asset">
+            <img src="wirtshausquiz-anmeldung-feed.jpg" alt="Feed 4:5" loading="lazy">
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>Feed 4:5</b><br>Instagram, Facebook</span>
+              <a class="dl" href="wirtshausquiz-anmeldung-feed.jpg" download>Herunterladen</a>
             </figcaption>
           </figure>
-          <figure class="wq-file">
+          <figure class="asset">
+            <img src="wirtshausquiz-anmeldung-story.jpg" alt="Story 9:16" loading="lazy">
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>Story 9:16</b><br>Story, Link-Sticker!</span>
+              <a class="dl" href="wirtshausquiz-anmeldung-story.jpg" download>Herunterladen</a>
+            </figcaption>
+          </figure>
+          <figure class="asset">
+            <img src="wirtshausquiz-anmeldung-quadrat.jpg" alt="Quadrat 1:1" loading="lazy">
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>Quadrat 1:1</b><br>Facebook</span>
+              <a class="dl" href="wirtshausquiz-anmeldung-quadrat.jpg" download>Herunterladen</a>
+            </figcaption>
+          </figure>
+          </div>
+
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Feed</span><span class="chan">Instagram Story</span><span class="chan">Facebook Seite</span><span class="chan">Schwarzes Brett</span></dd>
+            <dt>Bild</dt>
+            <dd><strong>anmeldung-feed.png</strong> (Feed) ·
+                <strong>anmeldung-story.png</strong> (Story) ·
+                <strong>anmeldung-quadrat.png</strong> (Facebook)</dd>
+            <dt>Ziel</dt>
+            <dd>Anmeldungen. Alles andere in dieser Kampagne dient diesem einen Tag.</dd>
+          </dl>
+
+          <div class="caption">
+            <span class="caption__label">Text zum Kopieren — Facebook</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Ab jetzt könnt ihr euch anmelden. 🍺
+
+Wirtshausquiz, Freitag 16. Oktober, Gasthaus Burchhart in Atzelsdorf.
+Einlass ab 17:30 — die Küche hat offen, kommt ruhig früher und esst in Ruhe was. Quizstart ist um 18:30.
+
+Ein Team sind 3 bis 5 Leute. Mehr braucht's nicht, und mitspielen kostet nichts.
+
+👉 Die ersten 2 Teams, die sich anmelden, bekommen die erste Runde aufs Haus.
+
+Anmelden: quiz.team-michelhausen.at
+
+Ihr habt kein Team? Meldet euch trotzdem an und setzt das Hakerl „wir suchen noch Mitspieler“ — wir setzen euch vor Ort zu einem Team dazu.</pre>
+          </div>
+
+          <div class="caption">
+            <span class="caption__label">Text zum Kopieren — Instagram</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Ab jetzt könnt ihr euch anmelden. 🍺
+
+Wirtshausquiz, Freitag 16. Oktober, Gasthaus Burchhart in Atzelsdorf.
+Einlass ab 17:30, Quizstart 18:30. Ein Team sind 3 bis 5 Leute, mitspielen kostet nichts.
+
+👉 Die ersten 2 Teams bekommen die erste Runde aufs Haus.
+
+Anmeldung über den Link in der Bio.
+
+Kein Team? Meldet euch trotzdem an und setzt das Hakerl „wir suchen noch Mitspieler“.
+
+#wirtshausquiz #michelhausen #atzelsdorf #teammichelhausen #pubquiz</pre>
+          </div>
+
+          <div class="caption">
+            <span class="caption__label">Text zum Kopieren — Schwarzes Brett (vom eigenen Profil)</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Servus miteinander!
+
+Wir machen am Freitag, 16. Oktober ein Wirtshausquiz beim Burchhart in Atzelsdorf — Einlass ab 17:30, Quiz startet um 18:30.
+
+Ein Team sind 3 bis 5 Leute, mitspielen kostet nichts. Die ersten 2 Teams bekommen die erste Runde aufs Haus.
+
+Und falls jemand denkt „ich kenn ja niemanden": Genau dafür ist der Abend gut. Meldet euch einfach allein oder zu zweit an und setzt das Hakerl „wir suchen noch Mitspieler" — wir setzen euch zu einem Team dazu. Ihr müsst niemanden kennen und nichts vorbereiten.
+
+Von Pixendorf sind es ein paar Minuten mit dem Auto. Wer keins hat, schreibt mir — wir schauen, dass wir Mitfahrgelegenheiten zusammenbekommen.
+
+Anmeldung: quiz.team-michelhausen.at</pre>
+          </div>
+
+          <ul class="todo">
+            <li><strong>Vorher:</strong> Link in der Instagram-Bio auf
+              <code>quiz.team-michelhausen.at</code> setzen. Ohne das läuft der Post ins Leere.</li>
+            <li><strong>Story mit Link-Sticker</strong> posten und als Highlight speichern.</li>
+            <li><strong>Am selben Tag:</strong> die drei A3-Plakate aufhängen — Gasthaus,
+              Nahversorger, Bahnhof. Jedes hat seinen eigenen QR-Code, nicht vertauschen; unten am
+              Blatt steht klein, welches wohin gehört.</li>
+            <li><strong>Ins Schwarze Brett</strong> von einem persönlichen Profil, nicht von der
+              Seite. Dritte Textfassung oben verwenden — die ist für Leute geschrieben, die
+              niemanden kennen.</li>
+            <li><strong>Die Anfahrtszeit von Pixendorf einsetzen.</strong> Im Text steht
+              „ein paar Minuten“ — ersetzt das durch die echte Zahl. Für Zugezogene ist
+              Atzelsdorf ein unbekannter Ort, und jede Unklarheit kostet Anmeldungen.</li>
+            <li>Jeder aus dem Team schickt den Link an drei Leute persönlich. Das bringt am Land
+              mehr als der Post selbst.</li>
+            <li>Die nächsten zwei Stunden erreichbar bleiben und jeden Kommentar beantworten.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 3 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">So 20.09.</span>
+          <span class="post__time">10:30</span>
+          <span class="post__title">Die ersten Teams sind da</span>
+          <span class="pill ok">ohne Grafik</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Story</span></dd>
+            <dt>Bild</dt>
+            <dd>Keins. Handyfoto vom Wirtshaus oder einfach farbiger Hintergrund mit Text.</dd>
+            <dt>Ziel</dt>
+            <dd>Zeigen, dass es läuft. Wer sieht, dass andere schon dabei sind, meldet sich eher an.</dd>
+          </dl>
+
+          <div class="caption">
+            <span class="caption__label">Wenn die Freirunden noch zu haben sind</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Die ersten Teams haben sich schon angemeldet 🍺
+Und die Freirunde ist noch zu haben — wer schnell ist, trinkt die erste Runde aufs Haus.
+Link unten 👇</pre>
+          </div>
+
+          <div class="caption">
+            <span class="caption__label">Wenn die Freirunden weg sind (wahrscheinlicher)</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Die zwei Freirunden sind weg — das ging schnell 🍺
+Anmelden geht natürlich weiter, es sind noch Plätze frei.
+Link unten 👇</pre>
+          </div>
+
+          <ul class="todo">
+            <li>Vorher auf <code>quiz.team-michelhausen.at</code> nachschauen, welche Variante
+              stimmt. Der Zähler auf der Seite ist live.</li>
+            <li>Link-Sticker nicht vergessen.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 4 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">Di 22.09.</span>
+          <span class="post__time">18:30</span>
+          <span class="post__title">Frage der Woche #1</span>
+          <span class="pill wip">Frage fehlt</span>
+        </div>
+        <div class="post__body">
+          <div class="assets">
+          <figure class="asset">
+            <img src="wirtshausquiz-frage1-feed.jpg" alt="Feed 4:5" loading="lazy">
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>Feed 4:5</b><br>Instagram, Facebook</span>
+              <a class="dl" href="wirtshausquiz-frage1-feed.jpg" download>Herunterladen</a>
+            </figcaption>
+          </figure>
+          <figure class="asset">
+            <img src="wirtshausquiz-frage1-story.jpg" alt="Story 9:16" loading="lazy">
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>Story 9:16</b><br>Story</span>
+              <a class="dl" href="wirtshausquiz-frage1-story.jpg" download>Herunterladen</a>
+            </figcaption>
+          </figure>
+          <figure class="asset">
+            <img src="wirtshausquiz-frage1-quadrat.jpg" alt="Quadrat 1:1" loading="lazy">
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>Quadrat 1:1</b><br>Facebook</span>
+              <a class="dl" href="wirtshausquiz-frage1-quadrat.jpg" download>Herunterladen</a>
+            </figcaption>
+          </figure>
+          </div>
+
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Feed</span><span class="chan">Facebook Seite</span></dd>
+            <dt>Bild</dt>
+            <dd>Wird gebaut, sobald die Frage feststeht — gleiches Bierdeckel-Motiv.</dd>
+            <dt>Ziel</dt>
+            <dd>Reichweite über Kommentare. Das billigste Mittel, das es gibt: Leute raten mit,
+              und jeder Kommentar trägt den Post weiter.</dd>
+          </dl>
+
+          <div class="caption">
+            <span class="caption__label">Textgerüst — Frage einsetzen</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Frage der Woche 🍺
+
+[FRAGE HIER]
+
+Was sagt ihr? Schreibt eure Antwort in die Kommentare — Auflösung gibt's morgen.
+
+Und wer's beim Quizabend live wissen will: Freitag, 16. Oktober beim Burchhart. Anmeldung: quiz.team-michelhausen.at
+
+#wirtshausquiz #michelhausen</pre>
+          </div>
+
+          <ul class="todo">
+            <li><strong>Die Antwort steht nicht im Text.</strong> Sie kommt am nächsten Tag als
+              Kommentar unter den eigenen Post.</li>
+            <li>Auf falsche Antworten freundlich reagieren, nicht korrigieren — das hält die
+              Diskussion am Laufen.</li>
+            <li>Am Folgetag: Auflösung kommentieren und den Kommentar anpinnen.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 5 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">So 27.09.</span>
+          <span class="post__time">10:30</span>
+          <span class="post__title">So läuft ein Quizabend ab</span>
+          <span class="pill wip">Bild fehlt</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Facebook Seite</span><span class="chan">Instagram Feed</span></dd>
+            <dt>Bild</dt>
+            <dd>Foto vom Wirtshaus oder ein einfaches Textbild mit den fünf Punkten.</dd>
+            <dt>Ziel</dt>
+            <dd>Die Hemmschwelle nehmen. Der häufigste Grund, nicht zu kommen, ist die Angst,
+              sich zu blamieren.</dd>
+          </dl>
+
+          <div class="caption">
+            <span class="caption__label">Text zum Kopieren</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>„Ich war noch nie bei einem Quiz" — das hören wir oft. Also kurz, wie das läuft:
+
+🍺 Ab 17:30 ist offen, die Küche auch. Kommt früher, esst was.
+📝 Um 18:30 geht's los. Vier Runden, jede mit einem Thema.
+🤫 Ihr beratet euch am Tisch und schreibt eure Antwort auf. Handys bleiben in der Tasche — das ist die einzige Regel.
+🎵 Es gibt nicht nur Fragen: Bilder, Musik zum Erraten, Schätzfragen und eine Karte, auf der ihr einen Ort markieren müsst.
+👑 Am Ende jeder Runde die Masterfrage. Ihre Lösung steckt in den Antworten davor versteckt.
+
+Vorbereiten muss man nichts. In jedem Team weiß irgendwer irgendwas — genau darum geht's.
+
+Anmeldung: quiz.team-michelhausen.at</pre>
+          </div>
+
+          <ul class="todo">
+            <li>Auf Instagram wieder „Link in der Bio“ statt der Adresse.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 6 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">Di 29.09.</span>
+          <span class="post__time">18:30</span>
+          <span class="post__title">Frage der Woche #2</span>
+          <span class="pill wip">Frage fehlt</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Feed</span><span class="chan">Facebook Seite</span></dd>
+            <dt>Bild</dt>
+            <dd>Wie #1, diesmal schwieriger und mit Bild.</dd>
+          </dl>
+          <div class="caption">
+            <span class="caption__label">Textgerüst — Frage und Zahl einsetzen</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Frage der Woche, Teil 2 🍺
+
+[FRAGE HIER]
+
+Antworten in die Kommentare, Auflösung morgen.
+
+Übrigens: [X] Teams sind schon angemeldet. Wollt ihr auch? quiz.team-michelhausen.at
+
+#wirtshausquiz #michelhausen</pre>
+          </div>
+          <ul class="todo">
+            <li>Die Teamzahl vorher auf der Anmeldeseite nachschauen. <strong>Keine Zahl erfinden</strong>
+              — im Ort merkt das jemand.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 7 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">Do 01.10.</span>
+          <span class="post__time">18:30</span>
+          <span class="post__title">Der Quizmaster</span>
+          <span class="pill wip">Video fehlt</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Reel</span><span class="chan">Facebook Seite</span></dd>
+            <dt>Material</dt>
+            <dd>15–25 Sekunden, hochkant, im Gasthaus gedreht. Er stellt eine Frage und
+              verrät die Antwort <strong>nicht</strong>.</dd>
+            <dt>Ziel</dt>
+            <dd>Ein Gesicht. Menschen melden sich bei Menschen an, nicht bei Veranstaltungen.</dd>
+          </dl>
+          <div class="caption">
+            <span class="caption__label">Text zum Kopieren — Name einsetzen</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Das ist [NAME] — er stellt euch am 16. Oktober die Fragen. 🍺
+
+Eine davon gibt's schon vorab. Die Auflösung allerdings erst am Quizabend, beim Burchhart in Atzelsdorf.
+
+Anmeldung: quiz.team-michelhausen.at
+
+#wirtshausquiz #michelhausen #atzelsdorf</pre>
+          </div>
+          <ul class="todo">
+            <li>Ein Take, kein Schnitt, keine Musik. Was zu produziert wirkt, wirkt am Land falsch.</li>
+            <li>Untertitel einblenden — die meisten schauen ohne Ton.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 8 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">So 04.10.</span>
+          <span class="post__time">10:30</span>
+          <span class="post__title">Was es zu gewinnen gibt</span>
+          <span class="pill ok">entschieden</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Feed</span><span class="chan">Facebook Seite</span></dd>
+            <dt>Bild</dt>
+            <dd>Foto von vollen Gläsern am Wirtshaustisch. Braucht keine Grafik.</dd>
+            <dt>Preis</dt>
+            <dd><strong>Eine Freirunde fürs Siegerteam.</strong> Mehr nicht — und genau das ist
+              der Post. Wer so tut, als ginge es um den Preis, verliert an Glaubwürdigkeit;
+              wer offen sagt, dass es um den Abend geht, gewinnt sie.</dd>
+          </dl>
+
+          <div class="caption">
+            <span class="caption__label">Text zum Kopieren</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Was gibt's zu gewinnen? Eine Freirunde. 🍺
+
+Das war's. Kein Fernseher, kein Wochenende in Venedig, keine Urkunde mit Goldrand.
+
+Dafür ein Freitagabend, an dem endlich geklärt wird, wer von euch am Tisch recht gehabt hat. Und ein Jahr lang Angeberrecht in der Gemeinde — das ist unbezahlbar.
+
+Freitag, 16. Oktober, Gasthaus Burchhart in Atzelsdorf. Noch sind Plätze frei.
+quiz.team-michelhausen.at</pre>
+          </div>
+
+          <ul class="todo">
+            <li>Nicht aufblasen. Der Ton macht diesen Post — Understatement wirkt hier stärker
+              als jede Preisankündigung.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 9 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">Di 06.10.</span>
+          <span class="post__time">18:30</span>
+          <span class="post__title">Die vier Runden</span>
+          <span class="pill wip">Themen fehlen</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Feed</span><span class="chan">Facebook Seite</span></dd>
+            <dt>Bild</dt>
+            <dd>Textbild mit den vier Rundentiteln. Wird gebaut, sobald die Runden stehen.</dd>
+            <dt>Ziel</dt>
+            <dd>Jeder soll eine Runde finden, bei der er sich sagt: „Da bin ich gut.“ Das ist
+              der häufigste letzte Anstoß zur Anmeldung.</dd>
+          </dl>
+
+          <div class="caption">
+            <span class="caption__label">Textgerüst — Rundentitel einsetzen</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Vier Runden, vier Themen — so schaut der Abend aus 🍺
+
+1️⃣ [RUNDE 1]
+2️⃣ [RUNDE 2]
+3️⃣ [RUNDE 3]
+4️⃣ [RUNDE 4]
+
+Irgendwas davon kann jeder. Und was ihr nicht könnt, kann wer anderer am Tisch — darum spielt man ja im Team.
+
+Am Ende jeder Runde wartet noch die Masterfrage. Deren Lösung steckt in den Antworten davor versteckt.
+
+Freitag, 16. Oktober, Gasthaus Burchhart.
+quiz.team-michelhausen.at</pre>
+          </div>
+
+          <ul class="todo">
+            <li><strong>Keine echten Fragen verraten</strong> — nur die Themen der Runden.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 10 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">Do 08.10.</span>
+          <span class="post__time">18:30</span>
+          <span class="post__title">Frage der Woche #3</span>
+          <span class="pill wip">Frage fehlt</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Feed</span><span class="chan">Facebook Seite</span></dd>
+            <dt>Ziel</dt>
+            <dd>Letzte Frage der Serie, gekoppelt an die freien Plätze. Ab hier zählt nur noch
+              Verknappung.</dd>
+          </dl>
+          <div class="caption">
+            <span class="caption__label">Textgerüst</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Letzte Frage der Woche vor dem Quizabend 🍺
+
+[FRAGE HIER]
+
+Antworten in die Kommentare.
+
+Und: Es sind nur noch [X] Plätze frei. Wer mitspielen will, sollte sich jetzt anmelden.
+quiz.team-michelhausen.at</pre>
+          </div>
+          <ul class="todo">
+            <li>Zahl auf der Anmeldeseite nachschauen.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 11 -->
+      <article class="post is-key">
+        <div class="post__head">
+          <span class="post__when">Di 13.10.</span>
+          <span class="post__time">18:30</span>
+          <span class="post__title">Letzte Plätze</span>
+          <span class="pill wip">Bild fehlt</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Feed</span><span class="chan">Instagram Story</span><span class="chan">Facebook Seite</span><span class="chan">Schwarzes Brett</span></dd>
+            <dt>Ziel</dt>
+            <dd>Der letzte Anmeldeschub. Danach kommt fast nichts mehr.</dd>
+          </dl>
+          <div class="caption">
+            <span class="caption__label">Text zum Kopieren</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Noch [X] Plätze, dann ist Schluss. 🍺
+
+Wirtshausquiz am Freitag, 16. Oktober, Gasthaus Burchhart in Atzelsdorf. Einlass ab 17:30, Quizstart 18:30.
+
+Wer noch mit will: quiz.team-michelhausen.at</pre>
+          </div>
+          <ul class="todo">
+            <li><strong>Am selben Tag die Erinnerungsmail</strong> an alle angemeldeten Teams —
+              mit dem Absage-Link. Das ist das wirksamste Mittel gegen leere Tische am Quizabend.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 12 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">Do 15.10.</span>
+          <span class="post__time">18:30</span>
+          <span class="post__title">Morgen geht's los</span>
+          <span class="pill ok">nur Handy nötig</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Story</span><span class="chan">Facebook Seite</span></dd>
+            <dt>Material</dt>
+            <dd>Kurzes Handyvideo aus dem leeren Saal: Tische, Zettel, Stifte. Zehn Sekunden reichen.</dd>
+          </dl>
+          <div class="caption">
+            <span class="caption__label">Text zum Kopieren</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Morgen ist es so weit. 🍺
+Tische stehen, Zettel liegen bereit, die Fragen sind geschrieben.
+
+Wirtshausquiz, Freitag 16. Oktober, Gasthaus Burchhart in Atzelsdorf.
+Einlass ab 17:30, Quizstart 18:30. Bis morgen!</pre>
+          </div>
+        </div>
+      </article>
+
+      <!-- 13 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">Fr 16.10.</span>
+          <span class="post__time">ab 17:30</span>
+          <span class="post__title">Der Quizabend selbst</span>
+          <span class="pill ok">live</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Story</span></dd>
+            <dt>Was</dt>
+            <dd>Drei, vier Stories über den Abend verteilt. Nicht mehr — ihr sollt mitspielen,
+              nicht dokumentieren.</dd>
+          </dl>
+          <ul class="todo">
+            <li><strong>17:45</strong> — volle Tische, kurzer Schwenk durch den Raum</li>
+            <li><strong>18:30</strong> — der Quizmaster stellt die erste Frage</li>
+            <li><strong>ca. 20:00</strong> — ein Tisch beim Grübeln, am besten von hinten</li>
+            <li><strong>ca. 21:45</strong> — das Siegerteam im Moment des Gewinnens</li>
+            <li>Bei Personenaufnahmen kurz fragen, ob es passt. Ein Nein wird respektiert.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 14 -->
+      <article class="post is-key">
+        <div class="post__head">
+          <span class="post__when">Sa 17.10.</span>
+          <span class="post__time">11:00</span>
+          <span class="post__title">Siegerfoto</span>
+          <span class="pill ok">nur Foto nötig</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Instagram Feed</span><span class="chan">Facebook Seite</span><span class="chan">Schwarzes Brett</span></dd>
+            <dt>Ziel</dt>
+            <dd>Der wichtigste Post nach dem Anmelde-Post — und die halbe Werbung für den
+              zweiten Termin. <strong>Innerhalb von 24 Stunden</strong>, solange alle noch
+              darüber reden.</dd>
+          </dl>
+          <div class="caption">
+            <span class="caption__label">Text zum Kopieren</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Das war's: [TEAMNAME] hat das erste Michelhausner Wirtshausquiz gewonnen. 🏆
+
+Danke an alle [X] Teams, die gekommen sind — und danke an die Familie Burchhart fürs Haus, die Küche und die Geduld.
+
+Die knappste Frage des Abends war übrigens: [FRAGE] — nur [X] Teams hatten sie richtig.
+
+Es wird ein nächstes Mal geben. Termin sagen wir bald.
+
+#wirtshausquiz #michelhausen #atzelsdorf</pre>
+          </div>
+          <ul class="todo">
+            <li>Das Siegerteam vorher fragen, ob das Foto online darf.</li>
+            <li>Den Wirt markieren, wenn er eine Seite hat.</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 15 -->
+      <article class="post">
+        <div class="post__head">
+          <span class="post__when">Di 20.10.</span>
+          <span class="post__time">18:30</span>
+          <span class="post__title">Der nächste Termin</span>
+          <span class="pill wip">Termin offen</span>
+        </div>
+        <div class="post__body">
+          <dl class="meta">
+            <dt>Wo</dt>
+            <dd><span class="chan">Facebook Seite</span><span class="chan">Instagram Feed</span><span class="chan">E-Mail</span></dd>
+            <dt>Ziel</dt>
+            <dd>Aus einem Abend eine Reihe machen. Solange die Erinnerung frisch ist, kostet der
+              zweite Termin fast keine Werbung mehr.</dd>
+          </dl>
+          <div class="caption">
+            <span class="caption__label">Text zum Kopieren</span>
+            <button class="copy" type="button">Kopieren</button>
+            <pre>Das nächste Wirtshausquiz ist am [DATUM]. 🍺
+
+Wer beim ersten dabei war, weiß Bescheid. Wer nicht: Es hat sich ausgezahlt.
+
+Anmeldung wie gehabt: quiz.team-michelhausen.at</pre>
+          </div>
+          <ul class="todo">
+            <li><strong>Wer auf der Warteliste stand, erfährt den Termin zuerst</strong> — per Mail,
+              einen Tag vor diesem Post. Diese Leute wollten schon einmal und kamen nicht rein.</li>
+          </ul>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Screen und Plakate</h2>
+    <p class="sub">Nicht fuer Social Media. Die Screen-Motive gehen an die Werbeagentur, die Plakate haengen im Gasthaus, beim Nahversorger und am Bahnhof &mdash; jedes mit eigenem QR-Code, der Ort steht klein am Fuss.</p>
+          <div class="assets">
+          <figure class="asset">
+            <img src="wirtshausquiz-screen-fussgeher.jpg" alt="Screen, Fussgaenger" loading="lazy">
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>Screen, Fussgaenger</b><br>Quizfrage mit drei QR-Codes</span>
+              <a class="dl" href="wirtshausquiz-screen-fussgeher.jpg" download>Herunterladen</a>
+            </figcaption>
+          </figure>
+          <figure class="asset">
             <img src="wirtshausquiz-screen-fahrer.jpg" alt="Screen, Autofahrer" loading="lazy">
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Autofahrer, ohne QR</span>
-              <span class="wq-file__meta">1080 × 1920 · nur Anlass, Datum, Ort</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-screen-fahrer.jpg" download>Herunterladen</a>
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>Screen, Autofahrer</b><br>Nur Anlass, Datum, Ort</span>
+              <a class="dl" href="wirtshausquiz-screen-fahrer.jpg" download>Herunterladen</a>
             </figcaption>
           </figure>
-        </div>
-      </section>
+          </div>
 
-      <section class="wq-group">
-        <h2>A3-Plakate zum Drucken</h2>
-        <p class="wq-when">Drei Fassungen mit je eigenem QR-Code — nicht vertauschen,
-          der Ort steht klein am Fuß</p>
-        <div class="wq-files">
-          <figure class="wq-file">
-            <div class="wq-pdf" aria-hidden="true">📄</div>
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Wirtshaus</span>
-              <span class="wq-file__meta">A3, 288 dpi · 1,5 MB</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-plakat-a3-wirtshaus-kompakt.pdf" download>Herunterladen</a>
+          <div class="assets">
+          <figure class="asset">
+            <div class="pdfbox" aria-hidden="true">&#128196;</div>
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>A3 Wirtshaus</b><br>A3, 288 dpi</span>
+              <a class="dl" href="wirtshausquiz-plakat-a3-wirtshaus-kompakt.pdf" download>Herunterladen</a>
             </figcaption>
           </figure>
-          <figure class="wq-file">
-            <div class="wq-pdf" aria-hidden="true">📄</div>
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Nahversorger</span>
-              <span class="wq-file__meta">A3, 288 dpi · 1,5 MB</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-plakat-a3-nahversorger-kompakt.pdf" download>Herunterladen</a>
+          <figure class="asset">
+            <div class="pdfbox" aria-hidden="true">&#128196;</div>
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>A3 Nahversorger</b><br>A3, 288 dpi</span>
+              <a class="dl" href="wirtshausquiz-plakat-a3-nahversorger-kompakt.pdf" download>Herunterladen</a>
             </figcaption>
           </figure>
-          <figure class="wq-file">
-            <div class="wq-pdf" aria-hidden="true">📄</div>
-            <figcaption class="wq-file__bar">
-              <span class="wq-file__name">Bahnhof</span>
-              <span class="wq-file__meta">A3, 288 dpi · 1,5 MB</span>
-              <a class="tm-btn tm-btn--ghost" href="wirtshausquiz-plakat-a3-bahnhof-kompakt.pdf" download>Herunterladen</a>
+          <figure class="asset">
+            <div class="pdfbox" aria-hidden="true">&#128196;</div>
+            <figcaption class="asset__bar">
+              <span class="asset__name"><b>A3 Bahnhof</b><br>A3, 288 dpi</span>
+              <a class="dl" href="wirtshausquiz-plakat-a3-bahnhof-kompakt.pdf" download>Herunterladen</a>
             </figcaption>
           </figure>
-        </div>
-      </section>
+          </div>
+  </div>
+</section>
 
+<section>
+  <div class="wrap">
+    <h2>Was noch fehlt</h2>
+    <p class="sub">Fünf von fünfzehn Posts hängen an Material, das noch nicht da ist. Ohne das
+      fallen sie aus — und zwar die aus der zweiten Hälfte, wo die Verknappung wirkt.</p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Bis wann</th><th>Was</th><th>Für welchen Post</th><th>Wer</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>vor 17.09.</td>
+            <td>Link in der Instagram-Bio setzen</td>
+            <td>Anmeldung offen — und alle danach</td>
+            <td>Social-Media-Team</td>
+          </tr>
+          <tr>
+            <td>vor 22.09.</td>
+            <td>Drei Quizfragen mit Michelhausen-Bezug, leicht genug zum Mitraten</td>
+            <td>Frage der Woche 1–3</td>
+            <td>Markus / Quizmaster</td>
+          </tr>
+          <tr>
+            <td>vor 27.09.</td>
+            <td>Ein paar Fotos aus dem Gasthaus Burchhart</td>
+            <td>Ablauf-Post, Stories, Website</td>
+            <td>Markus</td>
+          </tr>
+          <tr>
+            <td>vor 01.10.</td>
+            <td>Quizmaster-Video, 15–25 s hochkant, plus Name für den Text</td>
+            <td>Der Quizmaster</td>
+            <td>Quizmaster</td>
+          </tr>
+          <tr>
+            <td>vor 06.10.</td>
+            <td>Die vier Rundentitel — nur die Themen, keine Fragen</td>
+            <td>Die vier Runden</td>
+            <td>Markus / Quizmaster</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </main>
 
-  <footer class="tm-footer">
-    <hr class="tm-flag" aria-hidden="true">
-    <div class="tm-container">
-      <div class="tm-footer__legal" style="padding-top:1.5rem;border-top:none;">
-        <span>© <span id="tm-year">2026</span> SPÖ &amp; Unabhängige – Team Michelhausen.</span>
-        <span><a href="https://team-michelhausen.at/impressum/">Impressum</a> ·
-              <a href="https://team-michelhausen.at/datenschutz/">Datenschutz</a></span>
-      </div>
+    <div class="note">
+      <strong>Wenn nur eine Sache klappt, dann der 17. September im Schwarzen Brett.</strong>
+      Alle anderen Posts verstärken; dieser eine trägt. Fällt er aus oder geht ohne Link online,
+      ist die Kampagne vorbei, bevor sie angefangen hat.
+      <br><br>
+      Und der stärkste Hebel steht in keinem Textbaustein: <strong>Jeder aus dem Team schickt
+      den Link an drei Leute persönlich.</strong> In einer Gemeinde, in der die Hälfte erst
+      zugezogen ist, schlägt eine persönliche Nachricht jeden Post.
     </div>
-    <script>document.getElementById('tm-year').textContent=new Date().getFullYear();</script>
-  </footer>
+  </div>
+</section>
+
+<footer class="end">
+  <div class="wrap">
+    Wirtshausquiz · Team Michelhausen · Stand 7. September 2026 · quiz.team-michelhausen.at
+  </div>
+</footer>
+
+<script>
+  document.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('.copy');
+    if (!btn) { return; }
+    var pre = btn.parentNode.querySelector('pre');
+    if (!pre) { return; }
+
+    function done() {
+      var old = btn.textContent;
+      btn.textContent = 'Kopiert';
+      btn.classList.add('is-done');
+      setTimeout(function () { btn.textContent = old; btn.classList.remove('is-done'); }, 1600);
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(pre.textContent).then(done, fallback);
+    } else {
+      fallback();
+    }
+
+    // Ohne Zwischenablage-Rechte bleibt der Text wenigstens markiert.
+    function fallback() {
+      var r = document.createRange();
+      r.selectNodeContents(pre);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+      btn.textContent = 'Markiert — mit Strg+C kopieren';
+      setTimeout(function () { btn.textContent = 'Kopieren'; }, 2600);
+    }
+  });
+</script>
+<div class="wrap">
+  <p class="legal">Interne Arbeitsunterlage des Social-Media-Teams &middot; SPOe &amp; Unabhaengige &ndash; Team Michelhausen &middot; <a href="https://team-michelhausen.at/impressum/">Impressum</a> &middot; <a href="https://team-michelhausen.at/datenschutz/">Datenschutz</a></p>
+</div>
+
 </body>
 </html>
