@@ -12,6 +12,10 @@ Der QR zeigt bewusst NICHT direkt auf quiz.team-michelhausen.at, sondern auf
 den tm_go-Kurzlink: nur so ist messbar, wie viele Leute über das Plakat
 gekommen sind, und das Ziel lässt sich später ändern, ohne neu zu drucken.
 Der Slug muss vorher in tm_go angelegt sein, sonst führt der Code ins Leere.
+
+Am Ende kopiert das Skript alle fertigen Dateien nach ../sujets/. Diese Seite
+ist die einzige Quelle für das Social-Media-Team — nach jedem Lauf also
+committen und pushen, sonst zeigt sie alte Motive.
 """
 
 import base64
@@ -62,6 +66,7 @@ MOTIVE = {
             ("wirtshausquiz-save-the-date-quadrat", 1080, 1080, "Feed 1:1"),
             ("wirtshausquiz-save-the-date-story", 1080, 1920, "Story 9:16"),
         ],
+        "jpg": True,
     },
     "anmeldung": {
         "template": "anmeldung.html",
@@ -70,6 +75,7 @@ MOTIVE = {
             ("wirtshausquiz-anmeldung-quadrat", 1080, 1080, "Feed 1:1"),
             ("wirtshausquiz-anmeldung-story", 1080, 1920, "Story 9:16"),
         ],
+        "jpg": True,
     },
     "frage": {
         "template": "frage.html",
@@ -78,6 +84,7 @@ MOTIVE = {
             ("wirtshausquiz-frage1-quadrat", 1080, 1080, "Feed 1:1"),
             ("wirtshausquiz-frage1-story", 1080, 1920, "Story 9:16"),
         ],
+        "jpg": True,
     },
     # Die Agentur nimmt ausschliesslich Hochformat 1080x1920, PNG/JPG unter 3 MB.
     # Zwei Motive fuer zwei Publikumsgruppen am Kreisverkehr: Fussgaenger
@@ -216,7 +223,7 @@ def build(name, spec, browser, noise, qr, ort=None, suffix="", extra_vars=None):
                         jpg, "JPEG", quality=90, optimize=True, progressive=True)
                     print("  {:<44} {}x{}  {:>6.0f} KB  {}".format(
                         jpg.name, got[0], got[1], jpg.stat().st_size / 1024,
-                        label + ", fuer die Agentur"))
+                        label + ", JPG"))
             else:
                 print("  FEHLGESCHLAGEN:", target.name)
 
@@ -257,6 +264,40 @@ def build(name, spec, browser, noise, qr, ort=None, suffix="", extra_vars=None):
         built.unlink(missing_ok=True)
 
 
+# Was auf die Seite gehoert. Die Dateiablage unter /sujets/ ist die einzige
+# Quelle fuer das Social-Media-Team — sie muss mitwandern, sonst zeigt die
+# Seite alte Motive.
+SEITE = ROOT.parent / "sujets"
+AUF_DIE_SEITE = (
+    "wirtshausquiz-save-the-date-feed.jpg",
+    "wirtshausquiz-save-the-date-story.jpg",
+    "wirtshausquiz-save-the-date-quadrat.jpg",
+    "wirtshausquiz-anmeldung-feed.jpg",
+    "wirtshausquiz-anmeldung-story.jpg",
+    "wirtshausquiz-anmeldung-quadrat.jpg",
+    "wirtshausquiz-frage1-feed.jpg",
+    "wirtshausquiz-frage1-story.jpg",
+    "wirtshausquiz-frage1-quadrat.jpg",
+    "wirtshausquiz-screen-fussgeher.jpg",
+    "wirtshausquiz-screen-fahrer.jpg",
+    "wirtshausquiz-plakat-a3-wirtshaus-kompakt.pdf",
+    "wirtshausquiz-plakat-a3-nahversorger-kompakt.pdf",
+    "wirtshausquiz-plakat-a3-bahnhof-kompakt.pdf",
+)
+
+
+def auf_die_seite():
+    """Kopiert die fertigen Dateien in sujets/, damit die Seite nie veraltet."""
+    import shutil
+    n = 0
+    for name in AUF_DIE_SEITE:
+        src = OUT / name
+        if src.is_file():
+            shutil.copy2(src, SEITE / name)
+            n += 1
+    print("%d Dateien nach sujets/ kopiert - jetzt committen und pushen." % n)
+
+
 def main():
     OUT.mkdir(exist_ok=True)
     wanted = sys.argv[1:] or list(MOTIVE)
@@ -295,6 +336,8 @@ def main():
             print("  [{}] QR -> {}".format(label, url))
             build(name, spec, browser, noise, qr_datauri(url),
                   ort=label, suffix="-" + key)
+
+    auf_die_seite()
 
 
 if __name__ == "__main__":
