@@ -79,13 +79,19 @@ MOTIVE = {
             ("wirtshausquiz-frage1-story", 1080, 1920, "Story 9:16"),
         ],
     },
-    "screen": {
-        "template": "screen.html",
-        "renders": [
-            ("wirtshausquiz-screen-quer", 1920, 1080, "Werbescreen 16:9"),
-            ("wirtshausquiz-screen-hoch", 1080, 1920, "Screen hochkant 9:16"),
-        ],
+    # Die Agentur nimmt ausschliesslich Hochformat 1080x1920, PNG/JPG unter 3 MB.
+    # Zwei Motive fuer zwei Publikumsgruppen am Kreisverkehr: Fussgaenger
+    # koennen scannen, Autofahrer nicht.
+    "screen-fuss": {
+        "template": "screen-fuss.html",
+        "renders": [("wirtshausquiz-screen-fussgeher", 1080, 1920, "9:16, mit QR")],
         "screen_qr": True,
+        "jpg": True,
+    },
+    "screen-fahrer": {
+        "template": "screen-fahrer.html",
+        "renders": [("wirtshausquiz-screen-fahrer", 1080, 1920, "9:16, ohne QR")],
+        "jpg": True,
     },
     "plakat": {
         "template": "plakat.html",
@@ -182,6 +188,15 @@ def build(name, spec, browser, noise, qr, ort=None, suffix="", extra_vars=None):
                 kb = target.stat().st_size / 1024
                 print("  {:<44} {}x{}  {:>6.0f} KB  {}".format(
                     target.name, got[0], got[1], kb, label))
+                # Das Holzfoto macht PNG unnoetig schwer. Die Agentur nimmt
+                # auch JPG, und darunter bleibt reichlich Luft zum 3-MB-Limit.
+                if spec.get("jpg"):
+                    jpg = target.with_suffix(".jpg")
+                    Image.open(target).convert("RGB").save(
+                        jpg, "JPEG", quality=90, optimize=True, progressive=True)
+                    print("  {:<44} {}x{}  {:>6.0f} KB  {}".format(
+                        jpg.name, got[0], got[1], jpg.stat().st_size / 1024,
+                        label + ", fuer die Agentur"))
             else:
                 print("  FEHLGESCHLAGEN:", target.name)
 

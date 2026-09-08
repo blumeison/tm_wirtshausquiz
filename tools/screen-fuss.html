@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<title>Quizfrage – Screen für Fußgänger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+  /* Screen-Motiv für Fußgänger und Hundebesitzer — die einzigen, die an einem
+     Kreisverkehr überhaupt scannen.
+
+     Bewusst zurückgenommen: keine rote Vollfläche, sondern Holz und Karton wie
+     bei den übrigen Sujets. Auf einer öffentlichen Fläche wird stark
+     gebrandete Parteiwerbung eher weggeschaut als angeschaut — die Botschaft
+     „hier ist ein Wirtshausquiz" trägt sich selbst. Rot bleibt für die
+     Antwortmarken und die Adresse, das Logo steht klein am Fuß. */
+
+  :root {
+    --red: #e51324;
+    --board: #f2ebdc; --board-sh: #ddd2bc;
+    --ink: #3d342a; --ink-soft: #6d6153;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; overflow: hidden; }
+
+  .stage { position: relative; overflow: hidden; display: grid; place-items: center;
+           background: #33241a; }
+
+  .wood, .wood-photo, .vignette { position: absolute; inset: 0; }
+  .wood {
+    background:
+      repeating-linear-gradient(91.5deg,
+        rgba(0,0,0,.07) 0, rgba(0,0,0,.07) 3px,
+        rgba(255,255,255,.014) 3px, rgba(255,255,255,.014) 9px,
+        rgba(0,0,0,.035) 9px, rgba(0,0,0,.035) 23px),
+      linear-gradient(163deg, #63483a 0%, #4a3527 48%, #33241a 100%);
+  }
+  .wood-photo {
+    background-image: url("wood.jpg"); background-size: cover; background-position: center;
+    filter: brightness(1.06) saturate(1.04);
+  }
+  .vignette {
+    background: radial-gradient(ellipse at 50% 45%,
+      rgba(255,232,190,.10) 0%, rgba(0,0,0,0) 55%, rgba(0,0,0,.45) 100%);
+  }
+
+  .card {
+    position: relative; z-index: 2;
+    background: var(--board);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center;
+    box-shadow: 0 3px 0 var(--board-sh), 0 5px 2px rgba(0,0,0,.3),
+                0 40px 70px rgba(0,0,0,.55);
+  }
+  .card::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background-image: var(--noise); opacity: .45; mix-blend-mode: multiply;
+  }
+  .card::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(155deg, rgba(255,255,255,.45), rgba(0,0,0,0) 34%, rgba(0,0,0,.05));
+  }
+  .keyline { position: absolute; border: 2px solid var(--red); opacity: .5; }
+  .inner { position: relative; z-index: 3; width: 100%;
+           display: flex; flex-direction: column; align-items: center; }
+
+  .kicker { font-family: Rubik, sans-serif; font-weight: 600; color: var(--red);
+            text-transform: uppercase; }
+  .q { font-family: 'Patua One', Georgia, serif; color: var(--ink);
+       line-height: 1.1; text-wrap: balance; }
+
+  .opts { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; }
+  .opt { display: flex; flex-direction: column; align-items: center; }
+  .opt .letter { display: grid; place-items: center; border-radius: 50%;
+                 background: var(--red); color: #fff;
+                 font-family: Rubik, sans-serif; font-weight: 700; }
+  .opt .txt { font-family: 'Patua One', Georgia, serif; color: var(--ink); line-height: 1.1; }
+  .opt .qr { background: #fff; }
+  .opt .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+
+  .scan { font-family: Rubik, sans-serif; font-weight: 500; color: var(--ink-soft); }
+  .rule { background: var(--ink); opacity: .16; }
+  .when { font-family: 'Patua One', Georgia, serif; color: var(--ink); line-height: 1.25; }
+  .where { font-family: Rubik, sans-serif; font-weight: 500; color: var(--ink-soft); }
+  .url { font-family: Rubik, sans-serif; font-weight: 600; color: var(--red); }
+
+  .foot { display: flex; align-items: center; justify-content: center; }
+  .foot img { display: block; }
+  .foot span { font-family: Rubik, sans-serif; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="wood"></div>
+  <div class="wood-photo"></div>
+  <div class="vignette"></div>
+
+  <div class="card" id="card">
+    <div class="keyline" id="keyline"></div>
+    <div class="inner" id="inner">
+      <p class="kicker" id="kicker">Wirtshausquiz</p>
+      <h1 class="q" id="q">Wie lang braucht der Zug von Tullnerfeld nach Wien&nbsp;Hbf?</h1>
+
+      <div class="opts" id="opts">
+        <div class="opt">
+          <div class="letter">A</div>
+          <p class="txt">20 Min</p>
+          <div class="qr"><img id="qrA" src="" alt="QR-Code Antwort A"></div>
+        </div>
+        <div class="opt">
+          <div class="letter">B</div>
+          <p class="txt">35 Min</p>
+          <div class="qr"><img id="qrB" src="" alt="QR-Code Antwort B"></div>
+        </div>
+        <div class="opt">
+          <div class="letter">C</div>
+          <p class="txt">50 Min</p>
+          <div class="qr"><img id="qrC" src="" alt="QR-Code Antwort C"></div>
+        </div>
+      </div>
+
+      <p class="scan" id="scan">Scannt eure Antwort</p>
+      <div class="rule" id="rule"></div>
+      <p class="when" id="when">Freitag, 16. Oktober</p>
+      <p class="where" id="where">Gasthaus Burchhart · Atzelsdorf</p>
+      <p class="url" id="url">quiz.team-michelhausen.at</p>
+
+      <div class="foot" id="foot">
+        <img id="logo" src="../logo.png" alt="">
+        <span id="foottxt">Eine Einladung von Team Michelhausen</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var p = new URLSearchParams(location.search);
+  var W = parseInt(p.get('w'), 10) || 1080;
+  var H = parseInt(p.get('h'), 10) || 1920;
+
+  var stage = document.getElementById('stage');
+  stage.style.width = W + 'px';
+  stage.style.height = H + 'px';
+
+  var cs = getComputedStyle(document.documentElement);
+  function put(id, name) {
+    var v = cs.getPropertyValue(name).trim();
+    if (v) { document.getElementById(id).src = v.replace(/^url\(["']?/, '').replace(/["']?\)$/, ''); }
+  }
+  put('qrA', '--qr-a'); put('qrB', '--qr-b'); put('qrC', '--qr-c');
+
+  // Alle Maße hängen an der Kartenbreite, nicht am Ausgabeformat.
+  var cardW = Math.round(W * 0.90);
+  var cardH = Math.round(H * 0.88);
+  var card = document.getElementById('card');
+  card.style.width = cardW + 'px';
+  card.style.height = cardH + 'px';
+  card.style.borderRadius = Math.round(cardW * 0.045) + 'px';
+  card.style.padding = Math.round(cardW * 0.10) + 'px ' + Math.round(cardW * 0.07) + 'px';
+
+  var k = document.getElementById('keyline');
+  k.style.inset = Math.round(cardW * 0.045) + 'px';
+  k.style.borderRadius = Math.round(cardW * 0.028) + 'px';
+
+  var u = cardW / 100;
+  function set(id, prop, v) { document.getElementById(id).style[prop] = (u * v) + 'px'; }
+
+  set('kicker', 'fontSize', 4.2);
+  document.getElementById('kicker').style.letterSpacing = (u * 0.5) + 'px';
+  set('kicker', 'marginBottom', 3.6);
+
+  set('q', 'fontSize', 7.2);
+  set('q', 'marginBottom', 6.0);
+
+  var opts = document.getElementById('opts');
+  opts.style.gap = (u * 3.4) + 'px';
+  opts.style.marginBottom = (u * 4.0) + 'px';
+
+  [].forEach.call(document.querySelectorAll('.opt'), function (el) {
+    var l = el.querySelector('.letter');
+    l.style.width = (u * 8.0) + 'px';
+    l.style.height = (u * 8.0) + 'px';
+    l.style.fontSize = (u * 4.6) + 'px';
+    l.style.marginBottom = (u * 2.0) + 'px';
+    var t = el.querySelector('.txt');
+    t.style.fontSize = (u * 5.2) + 'px';
+    t.style.marginBottom = (u * 2.2) + 'px';
+    // Der Code ist der einzige Grund, warum jemand stehen bleibt — er bekommt
+    // so viel Platz, wie die Spalte hergibt.
+    var q = el.querySelector('.qr');
+    var side = u * 25.5;
+    q.style.width = side + 'px';
+    q.style.height = side + 'px';
+    q.style.padding = (u * 1.0) + 'px';
+    q.style.borderRadius = (u * 1.2) + 'px';
+  });
+
+  set('scan', 'fontSize', 3.4);
+  set('scan', 'marginBottom', 5.0);
+
+  var r = document.getElementById('rule');
+  r.style.width = (u * 26) + 'px';
+  r.style.height = Math.max(2, u * 0.28) + 'px';
+  r.style.marginBottom = (u * 5.0) + 'px';
+
+  set('when', 'fontSize', 6.2);
+  set('when', 'marginBottom', 1.6);
+  set('where', 'fontSize', 3.9);
+  set('where', 'marginBottom', 3.2);
+  set('url', 'fontSize', 4.2);
+  set('url', 'marginBottom', 5.4);
+
+  var foot = document.getElementById('foot');
+  foot.style.gap = (u * 2.2) + 'px';
+  document.getElementById('logo').style.height = (u * 5.4) + 'px';
+  document.getElementById('foottxt').style.fontSize = (u * 2.5) + 'px';
+})();
+</script>
+</body>
+</html>

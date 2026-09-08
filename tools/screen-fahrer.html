@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<title>Wirtshausquiz – Screen für Autofahrer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;600&display=swap">
+<style>
+  /* Screen-Motiv für Autofahrer im Kreisverkehr.
+
+     Ein Blick, zwei Sekunden, kein Anhalten. Deshalb: kein QR-Code, keine
+     Frage, keine Erklärung — nur Anlass, Datum, Ort. Wer sich später an
+     „Wirtshausquiz" und „16. Oktober" erinnert, wenn er den Post sieht, hat
+     genug mitgenommen.
+
+     Dieselbe Bildwelt wie das Fußgänger-Motiv, nur radikal reduziert. */
+
+  :root {
+    --red: #e51324;
+    --board: #f2ebdc; --board-sh: #ddd2bc;
+    --ink: #3d342a; --ink-soft: #6d6153;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; overflow: hidden; }
+
+  .stage { position: relative; overflow: hidden; display: grid; place-items: center;
+           background: #33241a; }
+
+  .wood, .wood-photo, .vignette { position: absolute; inset: 0; }
+  .wood {
+    background:
+      repeating-linear-gradient(91.5deg,
+        rgba(0,0,0,.07) 0, rgba(0,0,0,.07) 3px,
+        rgba(255,255,255,.014) 3px, rgba(255,255,255,.014) 9px,
+        rgba(0,0,0,.035) 9px, rgba(0,0,0,.035) 23px),
+      linear-gradient(163deg, #63483a 0%, #4a3527 48%, #33241a 100%);
+  }
+  .wood-photo {
+    background-image: url("wood.jpg"); background-size: cover; background-position: center;
+    filter: brightness(1.06) saturate(1.04);
+  }
+  .vignette {
+    background: radial-gradient(ellipse at 50% 45%,
+      rgba(255,232,190,.10) 0%, rgba(0,0,0,0) 55%, rgba(0,0,0,.45) 100%);
+  }
+
+  .card {
+    position: relative; z-index: 2;
+    background: var(--board);
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center;
+    box-shadow: 0 3px 0 var(--board-sh), 0 5px 2px rgba(0,0,0,.3),
+                0 40px 70px rgba(0,0,0,.55);
+  }
+  .card::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background-image: var(--noise); opacity: .45; mix-blend-mode: multiply;
+  }
+  .card::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(155deg, rgba(255,255,255,.45), rgba(0,0,0,0) 34%, rgba(0,0,0,.05));
+  }
+  .keyline { position: absolute; border: 3px solid var(--red); opacity: .5; }
+  .inner { position: relative; z-index: 3; width: 100%;
+           display: flex; flex-direction: column; align-items: center; }
+
+  .title { font-family: 'Patua One', Georgia, serif; color: var(--red);
+           line-height: .92; letter-spacing: -.01em; }
+  .rule { background: var(--ink); opacity: .18; }
+  .when { font-family: 'Patua One', Georgia, serif; color: var(--ink); line-height: 1.1; }
+  .where { font-family: Rubik, sans-serif; font-weight: 500; color: var(--ink); }
+  .url { font-family: Rubik, sans-serif; font-weight: 600; color: var(--ink-soft); }
+
+  .foot { display: flex; align-items: center; justify-content: center; }
+  .foot img { display: block; }
+  .foot span { font-family: Rubik, sans-serif; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="wood"></div>
+  <div class="wood-photo"></div>
+  <div class="vignette"></div>
+
+  <div class="card" id="card">
+    <div class="keyline" id="keyline"></div>
+    <div class="inner" id="inner">
+      <h1 class="title" id="title">Wirtshaus<br>quiz</h1>
+      <div class="rule" id="rule"></div>
+      <p class="when" id="when">Freitag<br>16. Oktober</p>
+      <p class="where" id="where">Gasthaus Burchhart<br>Atzelsdorf</p>
+      <p class="url" id="url">quiz.team-michelhausen.at</p>
+      <div class="foot" id="foot">
+        <img id="logo" src="../logo.png" alt="">
+        <span id="foottxt">Eine Einladung von Team Michelhausen</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var p = new URLSearchParams(location.search);
+  var W = parseInt(p.get('w'), 10) || 1080;
+  var H = parseInt(p.get('h'), 10) || 1920;
+
+  var stage = document.getElementById('stage');
+  stage.style.width = W + 'px';
+  stage.style.height = H + 'px';
+
+  var cardW = Math.round(W * 0.90);
+  var cardH = Math.round(H * 0.88);
+  var card = document.getElementById('card');
+  card.style.width = cardW + 'px';
+  card.style.height = cardH + 'px';
+  card.style.borderRadius = Math.round(cardW * 0.045) + 'px';
+  card.style.padding = Math.round(cardW * 0.10) + 'px ' + Math.round(cardW * 0.07) + 'px';
+
+  var k = document.getElementById('keyline');
+  k.style.inset = Math.round(cardW * 0.045) + 'px';
+  k.style.borderRadius = Math.round(cardW * 0.028) + 'px';
+
+  var u = cardW / 100;
+  function set(id, prop, v) { document.getElementById(id).style[prop] = (u * v) + 'px'; }
+
+  // Deutlich größer als beim Fußgänger-Motiv: aus dem Auto ist die Fläche
+  // klein, und es bleiben zwei Sekunden.
+  set('title', 'fontSize', 19.5);
+  set('title', 'marginBottom', 7.0);
+
+  var r = document.getElementById('rule');
+  r.style.width = (u * 34) + 'px';
+  r.style.height = Math.max(3, u * 0.5) + 'px';
+  r.style.marginBottom = (u * 7.0) + 'px';
+
+  set('when', 'fontSize', 12.5);
+  set('when', 'marginBottom', 5.4);
+  set('where', 'fontSize', 6.4);
+  set('where', 'marginBottom', 7.5);
+  set('url', 'fontSize', 4.0);
+  set('url', 'marginBottom', 6.0);
+
+  var foot = document.getElementById('foot');
+  foot.style.gap = (u * 2.2) + 'px';
+  document.getElementById('logo').style.height = (u * 5.4) + 'px';
+  document.getElementById('foottxt').style.fontSize = (u * 2.5) + 'px';
+})();
+</script>
+</body>
+</html>
