@@ -15,6 +15,7 @@
   var W = window.WQ;
   var S = null, EVENT = {}, POOL = [], BY_ID = {};
   var PF = { q: '', type: '' };
+  var OPEN = {}; // questionId -> true: expanded to show the whole question
   var saveTimer = null, pending = false, saving = false, again = false;
   var stateText = '', stateErr = false;
 
@@ -217,9 +218,11 @@
       + '<button type="button" class="icon-btn" data-act="rq-down"' + (j === r.questions.length - 1 ? ' disabled' : '') + ' aria-label="Nach unten">↓</button>'
       + '<button type="button" class="icon-btn" data-act="rq-del" aria-label="Aus der Runde nehmen">✕</button></span>';
     if (!q) return '<li class="rq rq--missing" data-j="' + j + '"><span class="rq__no">' + (j + 1) + '.</span><span class="rq__prompt">Diese Frage gibt es nicht mehr</span>' + tools + '</li>';
-    return '<li class="rq" data-j="' + j + '"><span class="rq__no">' + (j + 1) + '.</span>'
+    var open = !!OPEN[q.id];
+    return '<li class="rq' + (open ? ' is-open' : '') + '" data-j="' + j + '"><span class="rq__no">' + (j + 1) + '.</span>'
       + '<span class="rq__icon" title="' + esc(LABEL[q.type] || q.type) + '">' + (ICON[q.type] || '❓') + '</span>'
-      + '<a class="rq__prompt" href="#fragen/' + esc(q.id) + '" title="' + esc(q.prompt) + '">' + esc(q.prompt) + '</a>'
+      + '<button type="button" class="rq__prompt" data-open="' + esc(q.id) + '" aria-expanded="' + open + '" title="Antippen: ganze Frage anzeigen">'
+      + esc(q.prompt) + '</button>'
       + (q.status === 'DRAFT' ? '<span class="badge badge--wait">Entwurf</span>' : '')
       + (needsMedia(q) ? '<span class="badge badge--wait">ohne Datei</span>' : '')
       + '<button type="button" class="icon-btn clue-btn' + (rq.masterClue ? ' is-on' : '') + '" data-act="rq-clue" aria-pressed="'
@@ -229,6 +232,7 @@
       + '<span class="rq__eff">' + eff(rq, r) + ' P</span>' + tools
       + (rq.masterClue ? '<input class="tm-input rq__clue" data-act="rq-note" maxlength="200" value="' + esc(rq.clueNote || '')
         + '" placeholder="👑 Wofür steht dieser Hinweis? (nur für euch, z. B. „Hauptstadt“)" aria-label="Notiz zum Masterhinweis">' : '')
+      + (open ? qDetail(q) : '')
       + '</li>';
   }
 
@@ -294,13 +298,43 @@
       if (q && [x.prompt, x.answer, x.category, (x.tags || []).join(' ')].join(' ').toLowerCase().indexOf(q) < 0) return false;
       return true;
     });
-    $('pool-list').innerHTML = rows.length ? rows.map(poolItem).join('')
+    var list = $('pool-list'), top = list.scrollTop;
+    list.innerHTML = rows.length ? rows.map(poolItem).join('')
       : '<p class="round__empty">' + (POOL.length ? 'Keine freie Frage passt.' : 'Der Pool ist noch leer.') + '</p>';
+    list.scrollTop = top;
+  }
+
+  /** The whole question, unfolded under its row: answer, details, story, source. */
+  function qDetail(q) {
+    var p = q.payload || {}, h = '<div class="qd">';
+    h += '<p class="qd__answer">→ ' + esc(q.answer) + '</p>';
+    if (q.type === 'MULTIPLE_CHOICE' && p.options) {
+      h += '<ol class="qd__opts" type="A">' + p.options.map(function (o, i) {
+        return '<li' + (i === p.correctIndex ? ' class="ok"' : '') + '>' + esc(o) + '</li>';
+      }).join('') + '</ol>';
+    }
+    if (q.type === 'OPEN_TEXT' && p.acceptedAnswers && p.acceptedAnswers.length) h += '<p class="qd__fc">Zählt auch: ' + esc(p.acceptedAnswers.join(', ')) + '</p>';
+    if (q.type === 'ESTIMATE') {
+      h += '<p class="qd__fc">📏 ' + esc(p.value) + ' ' + esc(p.unit || '')
+        + (p.scoring === 'TOLERANCE' ? ' · gilt innerhalb ± ' + esc(p.tolerancePercent) + ' %' : ' · die nächste Schätzung gewinnt') + '</p>';
+    }
+    if (q.type === 'MAP' && p.lat != null) h += '<p class="qd__fc">🗺️ ' + esc(p.lat) + ', ' + esc(p.lng) + ' · Radius ' + esc(p.radiusKm) + ' km</p>';
+    if (q.type === 'AUDIO' || q.type === 'VIDEO') {
+      h += '<p class="qd__fc">' + (p.youtubeUrl || p.mediaUrl ? '🎵 Musik ist hinterlegt' : p.youtubeSearch ? '🎵 noch ohne Link — Vorschlag: ' + esc(p.youtubeSearch) : '🎵 noch ohne Musik') + '</p>';
+    }
+    if (q.type === 'IMAGE') h += p.imageUrl ? '<img class="qd__img" src="' + esc(p.imageUrl) + '" alt="">' : '<p class="qd__fc">🖼️ noch ohne Bild' + (p.imageSearch ? ' — Idee: ' + esc(p.imageSearch) : '') + '</p>';
+    if (q.background) h += '<p class="qd__bg">🎤 ' + esc(q.background) + '</p>';
+    if (q.factCheck) h += '<p class="qd__fc">🔎 ' + esc(q.factCheck) + '</p>';
+    h += '<a class="qd__edit" href="#fragen/' + esc(q.id) + '">✎ Bearbeiten</a></div>';
+    return h;
   }
 
   function poolItem(q) {
-    return '<div class="pq"><div class="pq__top"><span title="' + esc(LABEL[q.type]) + '">' + (ICON[q.type] || '❓') + '</span>'
-      + '<span class="pq__prompt" title="' + esc(q.prompt) + '">' + esc(q.prompt) + '</span></div>'
+    var open = !!OPEN[q.id];
+    return '<div class="pq' + (open ? ' is-open' : '') + '"><div class="pq__top"><span title="' + esc(LABEL[q.type]) + '">' + (ICON[q.type] || '❓') + '</span>'
+      + '<button type="button" class="pq__prompt" data-open="' + esc(q.id) + '" aria-expanded="' + open + '" title="Antippen: ganze Frage anzeigen">'
+      + esc(q.prompt) + '</button></div>'
+      + (open ? qDetail(q) : '')
       + '<div class="pq__meta"><span class="q-stars">' + stars(q.difficulty) + '</span><span>· ' + esc(q.points) + ' P</span>'
       + (q.category ? '<span>· ' + esc(q.category) + '</span>' : '')
       + (q.status === 'DRAFT' ? '<span class="badge badge--wait">Entwurf</span>' : '') + '</div>'
@@ -315,6 +349,13 @@
 
   function bind(root) {
     root.addEventListener('click', function (ev) {
+      var o = ev.target.closest('[data-open]');
+      if (o) {
+        var id = o.getAttribute('data-open');
+        if (OPEN[id]) delete OPEN[id]; else OPEN[id] = true;
+        if (o.closest('#pool-list')) renderPool(); else render();
+        return;
+      }
       var b = ev.target.closest('button[data-act], button[data-add]');
       if (!b || b.disabled) return;
       if (b.hasAttribute('data-add')) {
