@@ -134,10 +134,13 @@
 
   // ---- router --------------------------------------------------------------
   function route() {
-    var tab = location.hash.replace(/^#\/?/, '') || 'anmeldungen';
+    var parts = location.hash.replace(/^#\/?/, '').split('/');
+    var tab = parts[0] || 'anmeldungen';
     if (tab === 'benutzer' && SESSION.role !== 'ADMIN') tab = 'anmeldungen';
     [].forEach.call($tabs.querySelectorAll('a'), function (a) { a.classList.toggle('is-on', a.getAttribute('data-tab') === tab); });
+    window.scrollTo(0, 0);
     if (tab === 'benutzer') return viewUsers();
+    if (tab === 'fragen' && window.WQ.views.fragen) return window.WQ.views.fragen(parts);
     return viewRegistrations();
   }
 
@@ -325,6 +328,15 @@
       .then(function () { toast(okMsg); viewUsers(); })
       .catch(function (e) { toast(errText(e), true); viewUsers(); });
   }
+
+  // Shared with the other backoffice modules (fragen.js, …), which register
+  // their views on WQ.views and are loaded after this file.
+  window.WQ = {
+    api: api, esc: esc, toast: toast, fmtDate: fmtDate, errText: errText,
+    loading: loading, failView: failView, app: $app,
+    session: function () { return SESSION; },
+    views: {}
+  };
 
   boot();
 })();
