@@ -339,5 +339,13 @@
     views: {}
   };
 
-  boot();
+  // Start only after every script on the page has run. Booting right away
+  // lets a fast session.php answer route before fragen.js/abend.js have
+  // registered their views — the page then silently falls back to
+  // "Anmeldungen".
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 })();
