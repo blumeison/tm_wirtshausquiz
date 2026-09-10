@@ -410,7 +410,10 @@ Phase 2 kommt bewusst früh: Sie ist das Einzige, was die Werbung blockiert.
   Herkunfts-Auswertung pro Team und nach Kanal. Feste Admins in `config.php` → `admins`
   statt „erster Login wird ADMIN“. Google-Client-ID seit 10.09. gesetzt (bewusst kein
   Dev-Bypass — echte Personendaten).
-- [ ] **P4** Fragenpool und Editor für alle acht Typen
+- [x] **P4** Fragenpool und Editor für alle acht Typen — gebaut 10.09.
+  (`api/questions_lib.php`, `api/questions/*`, `api/upload.php`, `admin/assets/fragen.js`).
+  Strenger als das Original: keine leeren MC-Optionen, Kartenfrage braucht Zielort, kein SVG-Upload.
+  `delete.php` muss in P5 Fragen verweigern, die in einer Runde stecken.
 - [ ] **P5** Quizabende: Runden, Fragen ziehen, Multiplikatoren, Masterfrage
 - [ ] **P6** KI-Generator
 - [ ] **P7** Beamer-Ansicht
