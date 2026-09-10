@@ -16,6 +16,8 @@
   var S = null, EVENT = {}, POOL = [], BY_ID = {};
   var PF = { q: '', type: '' };
   var OPEN = {}; // questionId -> true: expanded to show the whole question
+  var POOL_OPEN = true; // the pool column can fold away to a slim tab
+  try { POOL_OPEN = localStorage.getItem('wq-pool-open') !== '0'; } catch (e) {}
   var saveTimer = null, pending = false, saving = false, again = false;
   var stateText = '', stateErr = false;
 
@@ -166,17 +168,22 @@
       + '</summary><ul>' + ch.map(function (c) {
         return '<li class="' + (c[0] ? 'ok' : 'todo') + '">' + (c[0] ? '✓ ' : '• ') + esc(c[1]) + '</li>';
       }).join('') + '</ul></details>'
-      + '<div class="builder"><div class="builder__main">'
+      + '<div class="builder' + (POOL_OPEN ? '' : ' pool-closed') + '"><div class="builder__main">'
       + settingsHtml()
       + S.rounds.map(roundHtml).join('')
       + '<div><button class="tm-btn tm-btn--ghost btn-sm" type="button" data-act="round-add"'
       + (S.rounds.length >= 8 ? ' disabled' : '') + '>+ Runde</button></div>'
       + finaleHtml()
-      + '</div><aside class="builder__pool">' + poolHtml() + '</aside></div></div>';
+      + '</div><aside class="builder__pool">'
+      + (POOL_OPEN ? poolHtml()
+        : '<button type="button" class="pool-tab" data-act="pool-toggle" title="Fragenpool öffnen" aria-expanded="false">📚 <span>Fragenpool</span></button>')
+      + '</aside></div></div>';
 
     bind($('abend'));
-    renderPool();
-    $('pool-list').scrollTop = poolScroll;
+    if (POOL_OPEN) {
+      renderPool();
+      $('pool-list').scrollTop = poolScroll;
+    }
     showState();
   }
 
@@ -283,7 +290,8 @@
   function poolHtml() {
     var types = [['', 'Alle Typen']].concat(Object.keys(LABEL).filter(function (t) { return t !== 'MASTER'; })
       .map(function (t) { return [t, ICON[t] + ' ' + LABEL[t]]; }));
-    return '<div class="pool"><h3 class="pool__h">Fragenpool — noch nicht verwendet</h3>'
+    return '<div class="pool"><div class="pool__head"><h3 class="pool__h">Fragenpool — noch nicht verwendet</h3>'
+      + '<button type="button" class="icon-btn" data-act="pool-toggle" title="Fragenpool einklappen" aria-label="Fragenpool einklappen" aria-expanded="true">⟩</button></div>'
       + '<input class="tm-input" id="pool-q" type="search" placeholder="Suchen …" value="' + esc(PF.q) + '" aria-label="Fragenpool durchsuchen">'
       + '<select class="tm-select" id="pool-type" aria-label="Fragetyp">' + options(types, PF.type) + '</select>'
       + '<div id="pool-list" class="pool__list"></div>'
@@ -298,7 +306,9 @@
       if (q && [x.prompt, x.answer, x.category, (x.tags || []).join(' ')].join(' ').toLowerCase().indexOf(q) < 0) return false;
       return true;
     });
-    var list = $('pool-list'), top = list.scrollTop;
+    var list = $('pool-list');
+    if (!list) return; // pool folded away
+    var top = list.scrollTop;
     list.innerHTML = rows.length ? rows.map(poolItem).join('')
       : '<p class="round__empty">' + (POOL.length ? 'Keine freie Frage passt.' : 'Der Pool ist noch leer.') + '</p>';
     list.scrollTop = top;
@@ -366,6 +376,12 @@
         return;
       }
       var act = b.getAttribute('data-act');
+      if (act === 'pool-toggle') {
+        POOL_OPEN = !POOL_OPEN;
+        try { localStorage.setItem('wq-pool-open', POOL_OPEN ? '1' : '0'); } catch (e) {}
+        render();
+        return;
+      }
       var sec = b.closest('[data-round]'), i = sec ? Number(sec.getAttribute('data-round')) : -1;
       var li = b.closest('[data-j]'), j = li ? Number(li.getAttribute('data-j')) : -1;
       var r = S.rounds[i];

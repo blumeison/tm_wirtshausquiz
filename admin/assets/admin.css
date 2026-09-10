@@ -281,6 +281,24 @@ details.cancelled-block > summary { cursor: pointer; color: var(--tm-text-soft);
   border-radius: var(--tm-radius-pill); padding: .15rem .65rem; font: inherit; font-size: var(--tm-fs-xs); font-weight: 700; cursor: pointer; }
 .chip-btn:hover { border-color: var(--tm-red); color: var(--tm-red); }
 
+/* ---- Builder: Spalten halten ---- */
+/* Grid items default to min-width:auto — a long, non-wrapping question text
+   then widened the round cards past their column and under the pool. */
+.builder__main, .round, .ed { grid-template-columns: minmax(0, 1fr); }
+.builder__main > *, .round > * { min-width: 0; }
+
+/* ---- Fragenpool einklappbar ---- */
+.builder.pool-closed { grid-template-columns: minmax(0, 1fr) 46px; }
+.pool__head { display: flex; align-items: center; justify-content: space-between; gap: var(--tm-space-2); }
+.pool-tab { writing-mode: vertical-rl; display: flex; align-items: center; gap: .5rem; width: 46px; padding: var(--tm-space-4) 0;
+  background: var(--tm-surface); border: 1px solid var(--tm-border); border-radius: var(--tm-radius-lg); box-shadow: var(--tm-shadow-sm);
+  font: inherit; font-size: var(--tm-fs-sm); font-weight: 700; color: var(--tm-text); cursor: pointer; }
+.pool-tab:hover { border-color: var(--tm-red); color: var(--tm-red); }
+@media (max-width: 900px) {
+  .builder.pool-closed { grid-template-columns: 1fr; }
+  .pool-tab { writing-mode: horizontal-tb; width: 100%; justify-content: center; padding: var(--tm-space-3); }
+}
+
 /* ---- Frage aufklappen (Pool + Runden) ---- */
 .pq__prompt, .rq__prompt { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: var(--tm-text);
   text-align: left; cursor: pointer; }
