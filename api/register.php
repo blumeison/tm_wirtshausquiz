@@ -60,7 +60,7 @@ $looking = !empty($in['lookingForPlayers']);
 // Most signups arrive without a referrer (QR camera scans, WhatsApp, typed URL),
 // so the self-reported answer is the one that actually carries information.
 $heardAllowed = ['freunde', 'facebook', 'instagram', 'schwarzesbrett', 'plakat',
-                 'zeitung', 'screen', 'wirt', 'sonstiges'];
+                 'zeitung', 'wirt', 'sonstiges'];
 $heardFrom = clean_str(isset($in['heardFrom']) ? $in['heardFrom'] : '', 20);
 if (!in_array($heardFrom, $heardAllowed, true)) {
     $heardFrom = '';

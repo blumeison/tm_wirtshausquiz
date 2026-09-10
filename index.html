@@ -15,6 +15,13 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://quiz.team-michelhausen.at/">
   <meta property="og:locale" content="de_AT">
+  <!-- Vorschaubild für WhatsApp/Facebook — der Link wird vor allem im
+       Schwarzen Brett (WhatsApp-Gruppe) und von Hand weitergeschickt. -->
+  <meta property="og:image" content="https://quiz.team-michelhausen.at/assets/og.jpg">
+  <meta property="og:image:width" content="1080">
+  <meta property="og:image:height" content="1080">
+  <meta property="og:image:alt" content="Wirtshausquiz – Anmeldung offen. Freitag, 16. Oktober, Gasthaus Burchhart, Atzelsdorf.">
+  <meta name="twitter:card" content="summary_large_image">
 
   <style>
     /* Page-specific bits. Everything else comes from tokens.css. */
@@ -77,28 +84,43 @@
       background-repeat: repeat;
       background-size: 420px 420px;
     }
+    /* Das Foto in echter Farbe: das warme Licht IST die Einladung. Wie viel
+       man davon sieht, regelt allein der rote Schleier darüber. */
     .wq-photo {
       background-image: url("assets/pub.jpg");
       background-size: cover;
       background-position: center right;
-      opacity: .34;
-      mix-blend-mode: luminosity;
     }
-    /* Roter Schleier: links dicht, damit der Text steht, rechts offen,
-       damit man das Wirtshaus noch sieht. */
+    /* Roter Schleier: links dicht genug, dass der weiße Text steht, rechts
+       weit offen, damit man ins Wirtshaus hineinschaut. */
     .wq-scrim {
       background: linear-gradient(100deg,
-        rgba(229,19,36,.94) 0%,
-        rgba(229,19,36,.86) 38%,
-        rgba(229,19,36,.55) 72%,
-        rgba(229,19,36,.34) 100%);
+        rgba(229,19,36,.86) 0%,
+        rgba(229,19,36,.74) 36%,
+        rgba(229,19,36,.4) 70%,
+        rgba(229,19,36,.2) 100%);
     }
-    /* Am Handy laeuft der Text ueber die volle Breite — dann deckt der
-       Schleier durchgehend. */
+    /* Am Handy läuft der Text über die volle Breite, der Schleier muss also
+       überall decken — aber nur so weit, dass das Foto noch zu erkennen ist.
+       Den Rest der Lesbarkeit übernimmt ein weicher Schatten hinter dem Text,
+       vor allem dort, wo die hellen Lampen durchscheinen. */
     @media (max-width: 860px) {
-      .wq-scrim { background: rgba(229,19,36,.9); }
-      .wq-photo { opacity: .26; }
+      .wq-photo { background-position: center; }
+      .wq-scrim { background: rgba(229,19,36,.58); }
+      .tm-hero > .tm-container { text-shadow: 0 1px 14px rgba(60,0,4,.5); }
     }
+    /* Am Handy passen Logo, Hell/Dunkel-Knopf und "Team anmelden" sonst nur
+       zweizeilig nebeneinander. */
+    @media (max-width: 560px) {
+      .tm-nav__inner { gap: var(--tm-space-3); }
+      .tm-nav .tm-btn { white-space: nowrap; padding: .6rem 1rem; font-size: .92rem; }
+    }
+
+    /* Header-Logo: logo-mark*.png ist auf das Zeichen zugeschnitten. Die
+       Originaldatei hat so viel leeren Rand, dass von 44px nur ~28px Logo
+       übrig blieben — zu wenig, damit man „SPÖ“ auf den ersten Blick liest. */
+    .tm-nav .tm-logo img { height: 58px; }
+    @media (max-width: 560px) { .tm-nav .tm-logo img { height: 48px; } }
 
     /* tokens.css pins h1 to 3.5rem with no mobile step-down. "Wirtshausquiz"
        is one unbreakable 13-letter word: at 56px it measures 357px and gets
@@ -123,8 +145,8 @@
     <div class="tm-container tm-nav__inner">
       <a class="tm-nav__brand" href="https://team-michelhausen.at/" aria-label="Team Michelhausen Startseite">
         <span class="tm-logo">
-          <img class="tm-logo__color" src="logo.png"       alt="SPÖ &amp; Unabhängige – Team Michelhausen">
-          <img class="tm-logo__white" src="logo-white.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+          <img class="tm-logo__color" src="logo-mark.png"       alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+          <img class="tm-logo__white" src="logo-mark-white.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
         </span>
       </a>
       <nav aria-label="Hauptmenü">
@@ -152,7 +174,7 @@
       <span class="wq-texture" aria-hidden="true"></span>
       <span class="tm-swoosh" aria-hidden="true"></span>
       <div class="tm-container tm-stack">
-        <p class="tm-eyebrow">Team Michelhausen lädt ein</p>
+        <p class="tm-eyebrow">SPÖ &amp; Unabhängige · Team Michelhausen lädt ein</p>
         <h1>Wirtshausquiz</h1>
         <p class="tm-hero__lead">
           Vier Runden, ein Tisch voller Leute, die's besser wissen wollen.
@@ -312,10 +334,9 @@
                   <option value="freunde">Von Freunden oder Bekannten</option>
                   <option value="facebook">Facebook</option>
                   <option value="instagram">Instagram</option>
-                  <option value="schwarzesbrett">Schwarzes Brett (Facebook-Gruppe)</option>
+                  <option value="schwarzesbrett">Schwarzes Brett (WhatsApp-Gruppe)</option>
                   <option value="plakat">Plakat</option>
                   <option value="zeitung">Unsere Zeitung</option>
-                  <option value="screen">Werbescreen in der Siedlung</option>
                   <option value="wirt">Im Gasthaus Burchhart</option>
                   <option value="sonstiges">Anders</option>
                 </select>
@@ -446,7 +467,7 @@
       } else if (c.spotsLeft <= 4) {
         dot.className = 'wq-dot wq-dot--warn';
         txt.textContent = 'Nur noch ' + c.spotsLeft + (c.spotsLeft === 1 ? ' Platz' : ' Plätze') + ' frei';
-      } else if (c.teamsTotal >= 3) {
+      } else if (c.teamsTotal >= 2) {
         dot.className = 'wq-dot';
         txt.textContent = 'Schon ' + c.teamsTotal + ' Teams dabei';
       } else if (p && p.enabled && p.left > 0) {

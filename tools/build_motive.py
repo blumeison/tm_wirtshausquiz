@@ -279,8 +279,6 @@ AUF_DIE_SEITE = (
     "wirtshausquiz-frage1-feed.jpg",
     "wirtshausquiz-frage1-story.jpg",
     "wirtshausquiz-frage1-quadrat.jpg",
-    "wirtshausquiz-screen-fussgeher.jpg",
-    "wirtshausquiz-screen-fahrer.jpg",
     "wirtshausquiz-plakat-a3-burchhart-kompakt.pdf",
     "wirtshausquiz-plakat-a3-billa-kompakt.pdf",
     "wirtshausquiz-plakat-a3-bahnhof-kompakt.pdf",
