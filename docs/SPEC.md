@@ -427,7 +427,11 @@ Phase 2 kommt bewusst früh: Sie ist das Einzige, was die Werbung blockiert.
   mit `background` (erzählt der Quizmaster) und `factCheck`. Musik: YouTube-Suchbegriff + Startsekunde,
   keine erfundenen URLs; Bildrunde: Bildidee. Import als DRAFT/AI direkt in die Runden.
   Key in `data/config.json` → `anthropic_api_key`. Host: CGI/FastCGI puffert die Antwort komplett
-  (kein Live-Streaming zum Browser), `set_time_limit` bis 300 s erlaubt.
+  (kein Live-Streaming zum Browser), `set_time_limit` bis 300 s erlaubt. **Der Proxy kappt jede
+  Anfrage nach 180 s (504), PHP läuft mit `ignore_user_abort` aber weiter** (am Server gemessen).
+  Eine Runde dauert 150–180 s → das Ergebnis wird unter `data/ai_jobs/` geparkt und über
+  `api/ai/job.php` abgeholt. Workflow: Rundenthemen setzen → „Masterfrage & roter Faden“ (1 👑-Hinweis
+  pro Runde) → Runden mit „Runde erzeugen“ oder eigenen Fragen auffüllen.
 - [ ] **P7** Beamer-Ansicht
 - [ ] **P8** Quizfrage-Landeseite und tm_go-Kurzlinks für die QR-Codes
 - [ ] **P9** Migration, `tm_wirtshausquiz_backoffice` archivieren

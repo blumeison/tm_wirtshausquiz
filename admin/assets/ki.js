@@ -38,6 +38,23 @@
     var s = CTX.session;
     return s.finale && s.finale.masterId ? CTX.byId[s.finale.masterId] : null;
   }
+  /** Answer of the 👑 clue already sitting in round ri, or null. */
+  function roundClue(ri) {
+    if (ri === '' || ri == null) return null;
+    var r = CTX.session.rounds[Number(ri)];
+    if (!r) return null;
+    for (var i = 0; i < r.questions.length; i++) {
+      var q = CTX.byId[r.questions[i].questionId];
+      if (r.questions[i].masterClue && q) return q.answer;
+    }
+    return null;
+  }
+  function allClues() {
+    var out = [];
+    CTX.session.rounds.forEach(function (r, i) { var a = roundClue(i); if (a) out.push(a); });
+    return out;
+  }
+
   function roundOptions(cur, poolLabel) {
     return '<option value="">' + poolLabel + '</option>' + CTX.session.rounds.map(function (r, i) {
       return '<option value="' + i + '"' + (String(cur) === String(i) ? ' selected' : '') + '>R' + (i + 1) + ' „' + esc(r.title) + '“'
@@ -95,6 +112,8 @@
       + (m
         ? '<label class="tm-check"><input type="checkbox" data-f="masterClue"' + (F.masterClue ? ' checked' : '') + '><span>👑 Einen Masterhinweis auf „'
           + esc(m.answer) + '“ einbauen</span></label>'
+          + (roundClue(F.roundIndex) ? '<p class="tm-hint">Diese Runde hat schon ihren Masterhinweis („' + esc(roundClue(F.roundIndex))
+            + '“) — ein zweiter ist nicht nötig.</p>' : '')
         : '<p class="tm-hint">Im Finale steht noch keine Masterfrage, deshalb gibt es auch keinen Masterhinweis. Den roten Faden baut „Masterfrage & roter Faden“.</p>')
       + field('Wünsche (optional)', '<input class="tm-input" data-f="notes" maxlength="500" value="' + esc(F.notes) + '" '
         + 'placeholder="z. B. „mit Bezug zum Tullnerfeld“, „keine Sportfragen“, „eine Frage über Mohn“">')
@@ -103,8 +122,12 @@
 
   function masterForm() {
     var m = master(), n = CTX.session.rounds.length;
+    var clues = allClues();
     return (m ? '<div class="info-note">Im Finale steht schon „<b>' + esc(m.answer) + '</b>“. Eine neue Masterfrage ersetzt sie nur, '
-        + 'wenn du beim Übernehmen „ins Finale setzen“ anhakst.</div>' : '')
+        + 'wenn du beim Übernehmen „ins Finale setzen“ anhakst.'
+        + (clues.length ? ' <strong>Achtung:</strong> Die Runden haben schon ' + clues.length + ' 👑 Hinweise dazu (' + esc(clues.join(', '))
+          + ') — die passen zu einer neuen Masterfrage nicht mehr. Im Abend bei diesen Fragen das 👑 wegnehmen.' : '')
+        + '</div>' : '')
       + field('Idee oder Richtung (optional)', '<input class="tm-input" data-f="idea" maxlength="300" value="' + esc(F.idea) + '" '
         + 'placeholder="leer = Claude überrascht euch · z. B. „ein Land in Afrika“, „eine Erfindung“, „jemand aus Niederösterreich“">')
       + '<div class="ed-grid">'
@@ -129,6 +152,8 @@
       var el = ev.target, k = el.getAttribute('data-f');
       if (!k || !el.closest('#ki-form')) return;
       F[k] = el.type === 'checkbox' ? el.checked : (k === 'count' || k === 'difficulty' ? Number(el.value) : el.value);
+      // One 👑 clue per round: preselect only where the round has none yet.
+      if (k === 'roundIndex') F.masterClue = !roundClue(F.roundIndex);
       if (el.hasAttribute('data-rerender')) $('ki-form').innerHTML = roundForm();
     });
     root.addEventListener('change', function (ev) {
