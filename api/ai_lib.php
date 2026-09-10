@@ -404,6 +404,46 @@ function ai_usage($usage)
     return ['inputTokens' => $usage['in'], 'outputTokens' => $usage['out'], 'usd' => round($usd, 3)];
 }
 
+// ---- Parked results (survive a cut connection) ------------------------------------------
+function ai_jobs_dir()
+{
+    $d = WQ_DATA_DIR . '/ai_jobs';
+    wq_ensure_dir($d);
+    return $d;
+}
+
+function ai_job_file($jobId)
+{
+    return ai_jobs_dir() . '/' . $jobId . '.json';
+}
+
+function ai_job_save($jobId, $email, $event)
+{
+    @file_put_contents(ai_job_file($jobId), json_encode(['owner' => $email, 'at' => time(), 'event' => $event],
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX);
+}
+
+function ai_job_load($jobId)
+{
+    $f = ai_job_file($jobId);
+    if (!is_file($f)) {
+        return null;
+    }
+    $j = json_decode((string)file_get_contents($f), true);
+    return is_array($j) ? $j : null;
+}
+
+/** Parked results are only needed for a few minutes; keep a day, then drop them. */
+function ai_job_cleanup()
+{
+    $files = glob(ai_jobs_dir() . '/*.json');
+    foreach ($files ? $files : [] as $f) {
+        if (filemtime($f) < time() - 86400) {
+            @unlink($f);
+        }
+    }
+}
+
 // ---- Mapping AI output -> our question format ----------------------------------------
 function ai_get($a, $k, $d = null)
 {

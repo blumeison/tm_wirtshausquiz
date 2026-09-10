@@ -157,7 +157,8 @@
       if (!run) return;
       var s = Math.round((Date.now() - t0) / 1000);
       run.innerHTML = '<div class="ki-progress"><div class="spin"></div><div><b>'
-        + (last.phase === 'writing' ? 'Claude schreibt die Fragen …' : 'Claude denkt nach …') + '</b><br>'
+        + (last.phase === 'collect' ? 'Die Verbindung ist abgerissen — Claude arbeitet am Server weiter, ich hole das Ergebnis ab …'
+          : last.phase === 'writing' ? 'Claude schreibt die Fragen …' : 'Claude denkt nach …') + '</b><br>'
         + '<span class="tm-hint">' + s + ' s' + (last.chars ? ' · ' + last.chars + ' Zeichen' : '')
         + ' · eine ganze Runde dauert meist 1 bis 3 Minuten</span></div></div>';
     }
@@ -171,10 +172,33 @@
       if (!errMsg) renderResult();
     }
 
+    var jobId = newJobId();
     var body = F.mode === 'round'
       ? { mode: 'round', topic: F.topic, roundIndex: F.roundIndex === '' ? null : Number(F.roundIndex), count: F.count,
           difficulty: F.difficulty, types: F.types, masterClue: F.masterClue, notes: F.notes }
       : { mode: 'master', idea: F.idea, difficulty: F.difficulty };
+    body.jobId = jobId;
+
+    // If the proxy cuts the connection, the server keeps working and parks the
+    // result — then collect it instead of reporting an error.
+    function collect() {
+      last = { phase: 'collect', chars: 0 };
+      var until = Date.now() + 6 * 60 * 1000;
+      function poll() {
+        return new Promise(function (res) { setTimeout(res, 5000); })
+          .then(function () { return W.api('ai/job.php?id=' + jobId); })
+          .then(function (d) {
+            if (d.pending) {
+              if (Date.now() > until) throw new Error('Claude braucht ungewöhnlich lange. Schau in ein paar Minuten nochmal vorbei oder erzeuge neu.');
+              return poll();
+            }
+            if (d.event.t === 'error') throw new Error(d.event.message);
+            RESULT = prepare(d.event);
+            persist();
+          });
+      }
+      return poll();
+    }
 
     fetch('../api/ai/generate.php', {
       method: 'POST', credentials: 'same-origin',
@@ -182,15 +206,16 @@
       body: JSON.stringify(body)
     }).then(function (r) {
       if ((r.headers.get('Content-Type') || '').indexOf('ndjson') < 0) {
+        if (r.status === 502 || r.status === 504) return collect(); // proxy gave up, PHP didn't
         return r.json().catch(function () { return {}; }).then(function (j) {
-          var e = new Error(j.error || ('HTTP ' + r.status)); e.status = r.status; throw e;
+          var e = new Error(j.error || ('HTTP ' + r.status)); e.status = r.status; e.final = true; throw e;
         });
       }
       var reader = r.body.getReader(), dec = new TextDecoder(), buf = '', got = false;
       function pump() {
         return reader.read().then(function (x) {
           if (x.done) {
-            if (!got) throw new Error('Die Verbindung wurde beendet, bevor Claude fertig war. Bitte nochmal versuchen.');
+            if (!got) return collect();
             return;
           }
           buf += dec.decode(x.value, { stream: true });
@@ -201,14 +226,22 @@
             if (!line) continue;
             var ev = JSON.parse(line);
             if (ev.t === 'beat') last = ev;
-            else if (ev.t === 'error') throw new Error(ev.message);
+            else if (ev.t === 'error') { var e = new Error(ev.message); e.final = true; throw e; }
             else if (ev.t === 'result') { got = true; RESULT = prepare(ev); persist(); }
           }
           return pump();
-        });
+        }, function () { return got ? null : collect(); }); // connection dropped mid-way
       }
       return pump();
+    }, function () {
+      return collect(); // the request itself failed (network, proxy)
     }).then(function () { finish(null); }, function (e) { finish(W.errText(e)); });
+  }
+
+  function newJobId() {
+    var a = new Uint8Array(12);
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    return Array.prototype.map.call(a, function (b) { return (b < 16 ? '0' : '') + b.toString(16); }).join('');
   }
 
   function prepare(ev) {

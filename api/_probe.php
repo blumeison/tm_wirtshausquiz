@@ -16,7 +16,7 @@ if ($mode === 'stream') {
     while (ob_get_level() > 0) {
         ob_end_flush();
     }
-    $secs = min(180, max(5, (int)(isset($_GET['s']) ? $_GET['s'] : 100)));
+    $secs = min(300, max(5, (int)(isset($_GET['s']) ? $_GET['s'] : 100)));
     $t0 = time();
     echo 'set_time_limit(0): ' . ($raised ? 'ok' : 'refused') . "\n";
     flush();

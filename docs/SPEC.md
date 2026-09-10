@@ -420,7 +420,14 @@ Phase 2 kommt bewusst früh: Sie ist das Einzige, was die Werbung blockiert.
   **Masterfrage = Finale im Countdown-Modus** (Hinweise vom schwersten zum leichtesten,
   Punkteleiter 50/40/30/20/10, ein Tipp pro Team) — abweichend vom alten `clueFragment`-Modell,
   das als Modus bleibt. Stechfrage = eine Schätzfrage außerhalb der Runden. Joker pro Abend an/aus.
-- [ ] **P6** KI-Generator
+- [x] **P6** KI-Generator — gebaut 10.09. (`api/ai_lib.php`, `api/ai/generate|import.php`,
+  `admin/assets/ki.js`). Claude Opus 5, adaptive thinking, effort high, strukturierte Ausgabe
+  (JSON-Schema), `fallbacks: "default"`. Modi: „Runde“ (Thema → Runde, optional ein 👑 Masterhinweis)
+  und „Masterfrage & roter Faden“ (Countdown-Masterfrage + pro Runde eine Hinweisfrage). Jede Frage
+  mit `background` (erzählt der Quizmaster) und `factCheck`. Musik: YouTube-Suchbegriff + Startsekunde,
+  keine erfundenen URLs; Bildrunde: Bildidee. Import als DRAFT/AI direkt in die Runden.
+  Key in `data/config.json` → `anthropic_api_key`. Host: CGI/FastCGI puffert die Antwort komplett
+  (kein Live-Streaming zum Browser), `set_time_limit` bis 300 s erlaubt.
 - [ ] **P7** Beamer-Ansicht
 - [ ] **P8** Quizfrage-Landeseite und tm_go-Kurzlinks für die QR-Codes
 - [ ] **P9** Migration, `tm_wirtshausquiz_backoffice` archivieren
