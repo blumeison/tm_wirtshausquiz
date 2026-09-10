@@ -13,7 +13,7 @@ return [
 
     // Google OAuth Client ID for the backoffice (P3). Not a secret.
     // Authorized JavaScript origin = https://quiz.team-michelhausen.at
-    'google_client_id' => '',
+    'google_client_id' => '998176618705-bbg6huvjl6l2ermrasgb4uho917dhkn6.apps.googleusercontent.com',
 
     // Backoffice: these Google accounts are always ADMIN and cannot be changed
     // from the backoffice. Everyone else lands as PENDING until an admin
