@@ -1,6 +1,6 @@
 <?php
 /** GET -> the whole question pool, newest change first. EDITOR and up. */
-require_once __DIR__ . '/../questions_lib.php';
+require_once __DIR__ . '/../sessions_lib.php';
 
 require_role('EDITOR');
 
@@ -13,4 +13,5 @@ ok([
     'questions' => $list,
     'types'     => question_types(),
     'uploadMax' => upload_max_bytes(),
+    'usage'     => (object)question_usage(),
 ]);

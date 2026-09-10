@@ -12,7 +12,7 @@
     AUDIO: { label: 'Musikfrage', icon: '🎵', hint: 'Song anspielen — Titel und/oder Interpret erraten.', points: 10 },
     VIDEO: { label: 'Videofrage', icon: '🎬', hint: 'Kurzen Clip zeigen — Frage dazu beantworten.', points: 10 },
     MAP: { label: 'Kartenfrage', icon: '🗺️', hint: 'Ort auf der Karte markieren — Punkte nach Entfernung.', points: 15 },
-    MASTER: { label: 'Masterfrage', icon: '👑', hint: 'Die Meta-Frage der Runde — die Hinweise stecken in den anderen Antworten.', points: 25 }
+    MASTER: { label: 'Masterfrage', icon: '👑', hint: 'Das Finale: Hinweise erscheinen nacheinander — wer früh richtig tippt, bekommt die meisten Punkte.', points: 50 }
   };
   var ORDER = ['MULTIPLE_CHOICE', 'OPEN_TEXT', 'ESTIMATE', 'IMAGE', 'AUDIO', 'VIDEO', 'MAP', 'MASTER'];
   var HOME = [48.287, 15.935]; // Michelhausen
@@ -22,6 +22,7 @@
   var POOL = [];
   var LOADED = false;
   var UPLOAD_MAX = 0;
+  var USAGE = {};  // questionId -> ['R2', 'Finale', …]
   var FILTER = { q: '', type: '', status: '', source: '' };
   var Q = null;    // question in the editor
   var MAP = null;  // {map, circle, marker}
@@ -58,14 +59,14 @@
       case 'IMAGE': return { imageUrl: '' };
       case 'AUDIO': case 'VIDEO': return { mediaUrl: '', youtubeUrl: '' };
       case 'MAP': return { lat: null, lng: null, radiusKm: 50, scoring: 'RADIUS' };
-      case 'MASTER': return { clueMode: 'ANSWERS_ARE_CLUES', clueExplanation: '' };
+      case 'MASTER': return { clueMode: 'COUNTDOWN', hints: ['', '', '', '', ''], clueExplanation: '' };
     }
     return {};
   }
 
   function load() {
     return W.api('questions/list.php').then(function (d) {
-      POOL = d.questions || []; UPLOAD_MAX = d.uploadMax || 0; LOADED = true;
+      POOL = d.questions || []; UPLOAD_MAX = d.uploadMax || 0; USAGE = d.usage || {}; LOADED = true;
     });
   }
 
@@ -140,6 +141,7 @@
       + '<span>· ' + esc(q.points) + ' P.</span>'
       + (q.status === 'DRAFT' ? '<span class="badge badge--wait">Entwurf</span>' : '')
       + (q.source === 'AI' ? '<span class="badge badge--ai">✨ KI</span>' : '')
+      + (USAGE[q.id] ? '<span class="badge badge--used">📍 ' + esc(USAGE[q.id].join(', ')) + '</span>' : '')
       + '</span></span>'
       + '<span class="q-row__date">' + esc(W.fmtDate(q.updatedAt)) + '</span></a>';
   }
@@ -280,15 +282,7 @@
           + '</div>';
         break;
       case 'MASTER':
-        box.innerHTML = '<div class="master-note">👑 Die Masterfrage ist die Meta-Frage einer Runde: Je mehr normale Fragen '
-          + 'ein Team richtig hat, desto mehr Hinweise hat es. Beim Einbau in eine Runde hinterlegst du pro Frage, '
-          + 'was sie zur Masterfrage beiträgt.</div>'
-          + field('Hinweis-Modus', select('clueMode', [
-              ['FIRST_LETTERS', 'Anfangsbuchstaben der Antworten ergeben die Lösung'],
-              ['ANSWERS_ARE_CLUES', 'Jede Antwort ist ein inhaltlicher Hinweis'],
-              ['CUSTOM', 'Eigene Logik (unten beschreiben)']], p.clueMode || 'ANSWERS_ARE_CLUES'))
-          + field('Erklärung für den Quizmaster', '<textarea class="tm-textarea" data-p="clueExplanation" rows="3" '
-            + 'placeholder="Wie genau führen die Antworten der Runde zur Lösung?">' + esc(p.clueExplanation || '') + '</textarea>');
+        box.innerHTML = masterHtml(p);
         break;
     }
     bindPayload(box);
@@ -300,6 +294,55 @@
     }
     if (Q.type === 'IMAGE' || Q.type === 'AUDIO' || Q.type === 'VIDEO') bindMedia(box);
     if (Q.type === 'MAP') mountMap();
+    if (Q.type === 'MASTER') bindMaster(box);
+  }
+
+  // master question (finale)
+  function masterHtml(p) {
+    var cd = (p.clueMode || 'COUNTDOWN') === 'COUNTDOWN';
+    var html = '<div class="master-note">👑 Die Masterfrage ist das Finale des Abends. Im <b>Countdown</b> erscheinen die '
+      + 'Hinweise einzeln am Beamer, vom schwersten zum leichtesten. Jedes Team darf <b>einmal</b> tippen — wer früh '
+      + 'richtig liegt, bekommt die meisten Punkte, falsch gibt 0.</div>'
+      + field('Modus', select('clueMode', [
+          ['COUNTDOWN', 'Countdown: Hinweise nacheinander, früher Tipp = mehr Punkte'],
+          ['ANSWERS_ARE_CLUES', 'Die Antworten einer Runde sind die Hinweise'],
+          ['FIRST_LETTERS', 'Anfangsbuchstaben der Antworten ergeben das Lösungswort'],
+          ['CUSTOM', 'Eigene Logik (unten beschreiben)']], p.clueMode || 'COUNTDOWN', ' data-rerender'));
+    if (cd) {
+      if (!p.hints || !p.hints.length) p.hints = ['', '', '', '', ''];
+      var n = p.hints.length;
+      html += '<div><span class="tm-label">Hinweise — vom schwersten zum leichtesten</span><div class="opt-list">'
+        + p.hints.map(function (h, i) {
+          return '<div class="opt-row"><span class="hint-pts">' + (n - i) * 10 + ' P</span>'
+            + '<input class="tm-input" data-hint="' + i + '" maxlength="300" placeholder="Hinweis ' + (i + 1)
+            + (i === 0 ? ' — der schwerste' : i === n - 1 ? ' — der leichteste' : '') + '" value="' + esc(h) + '">'
+            + '<button type="button" class="icon-btn" data-hrm="' + i + '"' + (n <= 2 ? ' disabled' : '')
+            + ' aria-label="Hinweis ' + (i + 1) + ' entfernen">✕</button></div>';
+        }).join('') + '</div>'
+        + '<button type="button" class="tm-btn tm-btn--ghost btn-sm" id="hint-add"' + (n >= 8 ? ' disabled' : '') + '>+ Hinweis</button>'
+        + '<span class="tm-hint" style="display:block;margin-top:.5rem">Leere Zeilen werden beim Speichern weggelassen; die Punkte richten sich dann nach der Zahl der Hinweise.</span></div>';
+    }
+    html += field(cd ? 'Auflösung für den Quizmaster' : 'Erklärung für den Quizmaster',
+      '<textarea class="tm-textarea" data-p="clueExplanation" rows="3" placeholder="'
+      + (cd ? 'Was steckt hinter den Hinweisen? Das liest der Quizmaster bei der Auflösung vor.'
+            : 'Wie genau führen die Antworten zur Lösung?') + '">' + esc(p.clueExplanation || '') + '</textarea>');
+    return html;
+  }
+  function bindMaster(box) {
+    var p = Q.payload;
+    [].forEach.call(box.querySelectorAll('[data-hint]'), function (el) {
+      el.addEventListener('input', function () { p.hints[Number(el.getAttribute('data-hint'))] = el.value; });
+    });
+    [].forEach.call(box.querySelectorAll('[data-hrm]'), function (el) {
+      el.addEventListener('click', function () { p.hints.splice(Number(el.getAttribute('data-hrm')), 1); renderTypeSection(); });
+    });
+    var add = $('hint-add');
+    if (add) add.addEventListener('click', function () {
+      p.hints.push('');
+      renderTypeSection();
+      var inputs = box.querySelectorAll('[data-hint]');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
   }
 
   function bindPayload(box) {

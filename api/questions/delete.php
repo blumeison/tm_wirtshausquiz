@@ -3,7 +3,7 @@
  * POST {id} -> remove a question from the pool.
  * P5 (quiz nights) must refuse this for questions that sit in a round.
  */
-require_once __DIR__ . '/../questions_lib.php';
+require_once __DIR__ . '/../sessions_lib.php';
 
 require_role('EDITOR');
 require_method('POST');
@@ -12,6 +12,10 @@ $in = read_json_body();
 $id = isset($in['id']) && is_string($in['id']) ? clean_str($in['id'], 40) : '';
 if ($id === '') {
     fail(400, 'Keine Frage angegeben');
+}
+$usage = question_usage();
+if (!empty($usage[$id])) {
+    fail(409, 'Diese Frage steckt im Abend (' . implode(', ', $usage[$id]) . ') — erst dort herausnehmen, dann löschen.');
 }
 
 $res = null;

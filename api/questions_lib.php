@@ -28,6 +28,19 @@ function question_types()
     ];
 }
 
+/**
+ * Points per clue in the countdown finale: the first (hardest) clue is worth
+ * the most, every further clue 10 less — 5 clues = 50 · 40 · 30 · 20 · 10.
+ */
+function master_ladder($hintCount)
+{
+    $out = [];
+    for ($i = $hintCount; $i >= 1; $i--) {
+        $out[] = $i * 10;
+    }
+    return $out;
+}
+
 // ---- Generic JSON list file (flock) ----------------------------------------
 function read_json_list_file($file)
 {
@@ -226,11 +239,31 @@ function validate_payload($type, $p)
             ], null];
 
         case 'MASTER':
-            $mode = $g('clueMode', 'ANSWERS_ARE_CLUES');
-            if (!in_array($mode, ['FIRST_LETTERS', 'ANSWERS_ARE_CLUES', 'CUSTOM'], true)) {
-                $mode = 'ANSWERS_ARE_CLUES';
+            // COUNTDOWN is the finale format: clues appear one by one, each
+            // team gets one guess, an early right guess scores the most.
+            $mode = $g('clueMode', 'COUNTDOWN');
+            if (!in_array($mode, ['COUNTDOWN', 'FIRST_LETTERS', 'ANSWERS_ARE_CLUES', 'CUSTOM'], true)) {
+                $mode = 'COUNTDOWN';
             }
-            return [['clueMode' => $mode, 'clueExplanation' => q_str($g('clueExplanation', ''), 2000)], null];
+            $out = ['clueMode' => $mode, 'clueExplanation' => q_str($g('clueExplanation', ''), 2000)];
+            if ($mode === 'COUNTDOWN') {
+                $hints = [];
+                foreach ((array)$g('hints', []) as $h) {
+                    $h = q_str($h, 300);
+                    if ($h !== '') {
+                        $hints[] = $h;
+                    }
+                }
+                if (count($hints) < 2) {
+                    return [null, 'Countdown: mindestens 2 Hinweise, vom schwersten zum leichtesten.'];
+                }
+                if (count($hints) > 8) {
+                    return [null, 'Höchstens 8 Hinweise.'];
+                }
+                $out['hints'] = $hints;
+                $out['ladder'] = master_ladder(count($hints));
+            }
+            return [$out, null];
     }
     return [null, 'Unbekannter Fragetyp'];
 }
@@ -275,6 +308,9 @@ function validate_question($in)
     list($payload, $err) = validate_payload($type, isset($in['payload']) ? $in['payload'] : []);
     if ($err !== null) {
         return [null, $err];
+    }
+    if ($type === 'MASTER' && isset($payload['ladder'][0])) {
+        $points = (float)$payload['ladder'][0]; // the countdown starts at the top of the ladder
     }
 
     return [[
