@@ -41,7 +41,7 @@
   function roundOptions(cur, poolLabel) {
     return '<option value="">' + poolLabel + '</option>' + CTX.session.rounds.map(function (r, i) {
       return '<option value="' + i + '"' + (String(cur) === String(i) ? ' selected' : '') + '>R' + (i + 1) + ' „' + esc(r.title) + '“'
-        + (r.kind === 'HANDOUT' ? ' (Handout)' : '') + ' · ' + r.questions.length + ' Fragen</option>';
+        + (r.kind === 'HANDOUT' ? ' (Handout)' : '') + ' · ' + r.questions.length + (r.questions.length === 1 ? ' Frage' : ' Fragen') + '</option>';
     }).join('');
   }
 

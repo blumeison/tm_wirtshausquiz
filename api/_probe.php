@@ -10,6 +10,13 @@ $mode = isset($_GET['mode']) ? $_GET['mode'] : 'ini';
 
 if ($mode === 'stream') {
     $raised = @set_time_limit(0);
+    // Does PHP survive the proxy cutting the connection? With ?mark=1 the
+    // probe keeps running after an abort and leaves data/_probe_done.txt.
+    $mark = !empty($_GET['mark']);
+    if ($mark) {
+        ignore_user_abort(true);
+        @unlink(WQ_DATA_DIR . '/_probe_done.txt');
+    }
     header('Content-Type: text/plain; charset=utf-8');
     header('X-Accel-Buffering: no');
     header('Cache-Control: no-store');
@@ -26,6 +33,9 @@ if ($mode === 'stream') {
         sleep(5);
     }
     echo 'done ' . (time() - $t0) . "\n";
+    if ($mark) {
+        @file_put_contents(WQ_DATA_DIR . '/_probe_done.txt', 'done after ' . (time() - $t0) . 's, aborted=' . (connection_aborted() ? 'yes' : 'no') . ' at ' . now_iso());
+    }
     exit;
 }
 
