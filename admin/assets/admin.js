@@ -212,7 +212,7 @@
       }).join('');
       if (extra) body += '<tr class="src-muted"><td>' + esc(extra[0]) + '</td><td>' + extra[1] + '</td></tr>';
       if (!body) body = '<tr class="src-muted"><td>—</td><td></td></tr>';
-      return '<table class="src-table"><caption>' + esc(title) + '</caption><tbody>' + body + '</tbody></table>';
+      return '<div><p class="src-title">' + esc(title) + '</p><table class="src-table"><tbody>' + body + '</tbody></table></div>';
     }
     var old = noData ? ['vor dem 10.09. (nicht erfasst)', noData] : null;
     return '<div class="origin-grid">'

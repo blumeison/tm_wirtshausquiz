@@ -66,8 +66,8 @@
 .origin-grid { display: grid; gap: var(--tm-space-4); grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 .src-table { width: 100%; border-collapse: collapse; background: var(--tm-surface);
   border: 1px solid var(--tm-border); border-radius: var(--tm-radius); overflow: hidden; }
-.src-table caption { text-align: left; font-size: var(--tm-fs-xs); text-transform: uppercase;
-  letter-spacing: .06em; color: var(--tm-text-soft); padding-bottom: var(--tm-space-2); }
+.src-title { font-size: var(--tm-fs-xs); text-transform: uppercase; letter-spacing: .06em;
+  color: var(--tm-text-soft); margin: 0 0 var(--tm-space-2); }
 .src-table th, .src-table td { padding: var(--tm-space-2) var(--tm-space-4); text-align: left;
   border-bottom: 1px solid var(--tm-border); font-size: var(--tm-fs-sm); }
 .src-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; width: 4.5em; }
