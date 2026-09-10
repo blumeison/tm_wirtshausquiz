@@ -151,7 +151,13 @@ function validate_session_input($in, $qById)
             if ($po !== null && ($po < 1 || $po > 100)) {
                 $po = null;
             }
-            $qs[] = ['questionId' => $qid, 'pointsOverride' => $po === null ? null : (int)round($po)];
+            $qs[] = [
+                'questionId'     => $qid,
+                'pointsOverride' => $po === null ? null : (int)round($po),
+                // The answer is announced as a 👑 clue towards the finale's master question.
+                'masterClue'     => !empty($rq['masterClue']),
+                'clueNote'       => q_str(isset($rq['clueNote']) ? $rq['clueNote'] : '', 200),
+            ];
         }
         if (count($qs) > 20) {
             return [null, 'Höchstens 20 Fragen pro Runde.'];

@@ -71,6 +71,18 @@
     return u;
   }
 
+  /** Answers announced as 👑 clues over the evening, in play order. */
+  function masterClues() {
+    var out = [];
+    S.rounds.forEach(function (r, i) {
+      r.questions.forEach(function (rq) {
+        var q = BY_ID[rq.questionId];
+        if (rq.masterClue && q) out.push({ round: i + 1, q: q, note: rq.clueNote || '' });
+      });
+    });
+    return out;
+  }
+
   function needsMedia(q) {
     var p = q.payload || {};
     if (q.type === 'IMAGE') return !p.imageUrl;
@@ -95,6 +107,12 @@
     });
     var m = S.finale.masterId ? BY_ID[S.finale.masterId] : null;
     out.push([!!m, m ? 'Masterfrage fürs Finale: „' + short(m.answer, 30) + '“' : 'Masterfrage fürs Finale fehlt']);
+    var clues = masterClues(), withClue = {};
+    clues.forEach(function (c) { withClue[c.round] = true; });
+    var covered = Object.keys(withClue).length;
+    out.push([S.rounds.length > 0 && covered === S.rounds.length,
+      '👑 ' + clues.length + (clues.length === 1 ? ' Masterhinweis' : ' Masterhinweise') + ' — in ' + covered + ' von ' + S.rounds.length + ' Runden'
+      + (covered < S.rounds.length ? ' (am besten einer pro Runde)' : '')]);
     if (m) {
       var p = m.payload || {}, h = p.hints || [];
       out.push([p.clueMode === 'COUNTDOWN' && h.length >= 3,
@@ -204,9 +222,14 @@
       + '<a class="rq__prompt" href="#fragen/' + esc(q.id) + '" title="' + esc(q.prompt) + '">' + esc(q.prompt) + '</a>'
       + (q.status === 'DRAFT' ? '<span class="badge badge--wait">Entwurf</span>' : '')
       + (needsMedia(q) ? '<span class="badge badge--wait">ohne Datei</span>' : '')
+      + '<button type="button" class="icon-btn clue-btn' + (rq.masterClue ? ' is-on' : '') + '" data-act="rq-clue" aria-pressed="'
+      + (rq.masterClue ? 'true' : 'false') + '" title="Die Antwort ist ein Hinweis auf die Masterfrage">👑</button>'
       + '<input class="tm-input rq__pts" type="number" min="1" max="100" data-act="rq-pts" placeholder="' + esc(q.points) + '" value="'
       + (rq.pointsOverride != null ? esc(rq.pointsOverride) : '') + '" title="Punkte — leer lassen für den Standard der Frage" aria-label="Punkte">'
-      + '<span class="rq__eff">' + eff(rq, r) + ' P</span>' + tools + '</li>';
+      + '<span class="rq__eff">' + eff(rq, r) + ' P</span>' + tools
+      + (rq.masterClue ? '<input class="tm-input rq__clue" data-act="rq-note" maxlength="200" value="' + esc(rq.clueNote || '')
+        + '" placeholder="👑 Wofür steht dieser Hinweis? (nur für euch, z. B. „Hauptstadt“)" aria-label="Notiz zum Masterhinweis">' : '')
+      + '</li>';
   }
 
   function finaleHtml() {
@@ -219,11 +242,25 @@
       + field('Masterfrage', '<select class="tm-select" data-fin="masterId"><option value="">— auswählen —</option>'
         + options(masters.map(function (q) { return [q.id, short(q.answer, 30) + ' — ' + short(q.prompt, 50)]; }), S.finale.masterId) + '</select>',
         masters.length ? '' : 'Noch keine Masterfrage im Pool — <a href="#fragen/neu">neue Frage anlegen</a> und Typ „Masterfrage“ wählen.')
+      + tafelHtml()
       + (m ? masterPreview(m) : '')
       + field('Stechfrage bei Gleichstand', '<select class="tm-select" data-fin="tiebreakId"><option value="">— auswählen —</option>'
         + options(ests.map(function (q) { return [q.id, short(q.prompt, 70)]; }), S.finale.tiebreakId) + '</select>',
         'Eine Schätzfrage, die in keiner Runde steckt — die nächste Zahl gewinnt.')
       + '</section>';
+  }
+
+  function tafelHtml() {
+    var clues = masterClues();
+    return '<div class="master-prev"><p><b>👑 Masterfrage-Tafel</b> — diese Antworten sagt der Quizmaster über den Abend '
+      + 'als Hinweise an, am Beamer sammeln sie sich auf der Tafel:</p>'
+      + (clues.length
+        ? '<ol class="ladder">' + clues.map(function (c) {
+            return '<li><span class="ladder__pts">R' + c.round + '</span><span><b>' + esc(c.q.answer) + '</b>'
+              + (c.note ? ' <span class="tm-hint">— ' + esc(c.note) + '</span>' : '') + '</span></li>';
+          }).join('') + '</ol>'
+        : '<p class="tm-hint">Noch keine. Tipp in einer Runde bei einer Frage auf 👑, wenn ihre Antwort ein Hinweis auf die Masterfrage ist.</p>')
+      + '</div>';
   }
 
   function masterPreview(m) {
@@ -304,6 +341,7 @@
         case 'rq-up': swap(r.questions, j, j - 1); break;
         case 'rq-down': swap(r.questions, j, j + 1); break;
         case 'rq-del': r.questions.splice(j, 1); break;
+        case 'rq-clue': r.questions[j].masterClue = !r.questions[j].masterClue; break;
         default: return;
       }
       changed(true);
@@ -313,6 +351,11 @@
       var el = ev.target;
       if (el.hasAttribute('data-s') && el.type !== 'checkbox') { S[el.getAttribute('data-s')] = el.value; changed(false); return; }
       if (el.getAttribute('data-r') === 'title') { S.rounds[roundOf(el)].title = el.value; changed(false); return; }
+      if (el.getAttribute('data-act') === 'rq-note') {
+        S.rounds[roundOf(el)].questions[Number(el.closest('[data-j]').getAttribute('data-j'))].clueNote = el.value;
+        changed(false);
+        return;
+      }
       if (el.id === 'pool-q') { PF.q = el.value; renderPool(); }
     });
 

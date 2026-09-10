@@ -248,6 +248,12 @@ details.cancelled-block > summary { cursor: pointer; color: var(--tm-text-soft);
 .rq__pts { width: 4.2rem; padding: .3rem .45rem; font-size: var(--tm-fs-sm); flex: none; }
 .rq__eff { width: 3.2rem; text-align: right; font-weight: 700; font-size: var(--tm-fs-sm); flex: none; }
 .rq--missing .rq__prompt { color: var(--tm-red); }
+.rq { flex-wrap: wrap; }
+.clue-btn { filter: grayscale(1); opacity: .4; }
+.clue-btn:hover:not(:disabled) { opacity: .8; background: #fff4d1; }
+.clue-btn.is-on { filter: none; opacity: 1; background: #fff4d1; }
+.rq__clue { flex: 1 1 100%; margin-left: 3.7rem; padding: .3rem .5rem; font-size: var(--tm-fs-sm); }
+@media (max-width: 620px) { .rq__clue { margin-left: 2rem; } }
 @media (max-width: 620px) {
   .rq { flex-wrap: wrap; }
   .rq__prompt { flex-basis: calc(100% - 4rem); white-space: normal; }
