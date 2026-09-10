@@ -57,7 +57,7 @@
     m += 15;    // final standings, tie-break, prizes
     return Math.round(m);
   }
-  function dur(m) { return Math.floor(m / 60) + ' h ' + pad(m % 60) + ' min'; }
+  function dur(m) { return Math.floor(m / 60) + ':' + pad(m % 60) + ' h'; }
   function clock(start, m) {
     var p = String(start || '18:30').split(':'), t = Number(p[0]) * 60 + Number(p[1]) + m;
     return pad(Math.floor(t / 60) % 24) + ':' + pad(t % 60);

@@ -414,7 +414,12 @@ Phase 2 kommt bewusst früh: Sie ist das Einzige, was die Werbung blockiert.
   (`api/questions_lib.php`, `api/questions/*`, `api/upload.php`, `admin/assets/fragen.js`).
   Strenger als das Original: keine leeren MC-Optionen, Kartenfrage braucht Zielort, kein SVG-Upload.
   `delete.php` muss in P5 Fragen verweigern, die in einer Runde stecken.
-- [ ] **P5** Quizabende: Runden, Fragen ziehen, Multiplikatoren, Masterfrage
+- [x] **P5** Quizabende: Runden, Fragen ziehen, Multiplikatoren, Masterfrage — gebaut 10.09.
+  (`api/sessions_lib.php`, `api/sessions/get|save.php`, `admin/assets/abend.js`). Ein Abend =
+  `data/sessions/<session_id>.json`, `rev` gegen Überschreiben. Rundenarten NORMAL/HANDOUT.
+  **Masterfrage = Finale im Countdown-Modus** (Hinweise vom schwersten zum leichtesten,
+  Punkteleiter 50/40/30/20/10, ein Tipp pro Team) — abweichend vom alten `clueFragment`-Modell,
+  das als Modus bleibt. Stechfrage = eine Schätzfrage außerhalb der Runden. Joker pro Abend an/aus.
 - [ ] **P6** KI-Generator
 - [ ] **P7** Beamer-Ansicht
 - [ ] **P8** Quizfrage-Landeseite und tm_go-Kurzlinks für die QR-Codes
