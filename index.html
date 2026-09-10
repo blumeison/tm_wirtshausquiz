@@ -306,6 +306,23 @@
               </div>
 
               <div class="tm-field">
+                <label class="tm-label" for="heardFrom">Wie habt ihr vom Quiz erfahren? <span class="tm-text-muted">(optional)</span></label>
+                <select class="tm-select" id="heardFrom" name="heardFrom">
+                  <option value="">Bitte wählen …</option>
+                  <option value="freunde">Von Freunden oder Bekannten</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="schwarzesbrett">Schwarzes Brett (Facebook-Gruppe)</option>
+                  <option value="plakat">Plakat</option>
+                  <option value="zeitung">Unsere Zeitung</option>
+                  <option value="screen">Werbescreen in der Siedlung</option>
+                  <option value="wirt">Im Gasthaus Burchhart</option>
+                  <option value="sonstiges">Anders</option>
+                </select>
+                <p class="tm-hint">Hilft uns zu wissen, wo wir das nächste Mal Bescheid geben.</p>
+              </div>
+
+              <div class="tm-field">
                 <label class="tm-check">
                   <input type="checkbox" id="consent" name="consent" required>
                   <span>Ich bin einverstanden, dass die Daten für diesen Quizabend gespeichert werden.
@@ -442,11 +459,11 @@
       }
       wrap.classList.remove('is-hidden');
 
-      if (p && p.enabled) {
+      // Nur zeigen, solange es noch etwas zu holen gibt. "Leider schon weg"
+      // direkt über dem Formular bremst, statt zu helfen.
+      if (p && p.enabled && p.left > 0) {
         $('wq-promo-label').textContent = p.label;
-        $('wq-promo-left').textContent = p.left > 0
-          ? ' Noch ' + p.left + ' von ' + p.teams + ' zu haben.'
-          : ' Die Freirunden sind vergeben — angemeldet werden kann weiterhin.';
+        $('wq-promo-left').textContent = ' Noch ' + p.left + ' von ' + p.teams + ' zu haben.';
         $('wq-promo').classList.add('is-on');
       }
     }
@@ -483,6 +500,8 @@
       if (first) { first.focus(); first.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
     }
 
+    var landing = new URLSearchParams(location.search);
+
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
       clearErrors();
@@ -496,7 +515,13 @@
         lookingForPlayers: $('lookingForPlayers').checked,
         note: $('note').value,
         consent: $('consent').checked,
-        website: $('website').value
+        website: $('website').value,
+        heardFrom: $('heardFrom').value,
+        // tm_go hängt tm_src/tm_ch an, wenn jemand über einen Kurzlink oder
+        // QR-Code kommt. Der Referrer fängt Links von anderen Seiten.
+        tmSrc: landing.get('tm_src') || '',
+        tmCh: landing.get('tm_ch') || '',
+        referrer: document.referrer || ''
       };
 
       submit.disabled = true;

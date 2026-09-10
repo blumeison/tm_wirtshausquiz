@@ -40,11 +40,12 @@ GO_BASE = "https://go.team-michelhausen.at/" + GO_SLUG
 # Ein Kurzlink, mehrere Tracking-Varianten — so ist tm_go gebaut. Jede Variante
 # bekommt ihren eigenen QR-Code, das Ziel bleibt fuer alle dasselbe und laesst
 # sich spaeter aendern, ohne neu zu drucken.
-# Die Schluessel muessen den Labels im tm_go-Backoffice entsprechen: dort wird
-# aus dem Label per slugify der Schluessel, "Nahversorger" -> nahversorger.
+# Die Schluessel muessen den Quellen des Links "quiz" im tm_go-Backoffice
+# entsprechen — sonst landen die Scans in der Statistik unter einem rohen
+# Schluessel neben leeren Zeilen fuer die angelegten Orte.
 PLAKAT_ORTE = [
-    ("wirtshaus", "Wirtshaus"),
-    ("nahversorger", "Nahversorger"),
+    ("burchhart", "Burchhart"),
+    ("billa", "Billa"),
     ("bahnhof", "Bahnhof"),
 ]
 
@@ -280,8 +281,8 @@ AUF_DIE_SEITE = (
     "wirtshausquiz-frage1-quadrat.jpg",
     "wirtshausquiz-screen-fussgeher.jpg",
     "wirtshausquiz-screen-fahrer.jpg",
-    "wirtshausquiz-plakat-a3-wirtshaus-kompakt.pdf",
-    "wirtshausquiz-plakat-a3-nahversorger-kompakt.pdf",
+    "wirtshausquiz-plakat-a3-burchhart-kompakt.pdf",
+    "wirtshausquiz-plakat-a3-billa-kompakt.pdf",
     "wirtshausquiz-plakat-a3-bahnhof-kompakt.pdf",
 )
 

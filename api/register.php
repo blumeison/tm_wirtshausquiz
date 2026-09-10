@@ -55,6 +55,23 @@ if ($size < $min || $size > $max) {
 $note = clean_str(isset($in['note']) ? $in['note'] : '', 500);
 $looking = !empty($in['lookingForPlayers']);
 
+// Where the team heard about the quiz. Self-reported answer from a fixed list,
+// plus what the browser tells us: the tm_go short-link channel and the referrer.
+// Most signups arrive without a referrer (QR camera scans, WhatsApp, typed URL),
+// so the self-reported answer is the one that actually carries information.
+$heardAllowed = ['freunde', 'facebook', 'instagram', 'schwarzesbrett', 'plakat',
+                 'zeitung', 'screen', 'wirt', 'sonstiges'];
+$heardFrom = clean_str(isset($in['heardFrom']) ? $in['heardFrom'] : '', 20);
+if (!in_array($heardFrom, $heardAllowed, true)) {
+    $heardFrom = '';
+}
+$tmSrc = preg_replace('/[^a-z0-9_-]/', '', strtolower(clean_str(isset($in['tmSrc']) ? $in['tmSrc'] : '', 40)));
+$tmCh  = preg_replace('/[^a-z0-9_-]/', '', strtolower(clean_str(isset($in['tmCh']) ? $in['tmCh'] : '', 40)));
+$referrer = clean_str(isset($in['referrer']) ? $in['referrer'] : '', 300);
+if ($referrer !== '' && !preg_match('#^https?://#i', $referrer)) {
+    $referrer = '';
+}
+
 if (empty($in['consent'])) {
     $errors['consent'] = 'Ohne Zustimmung zur Datenschutzerklärung können wir die Anmeldung nicht speichern.';
 }
@@ -72,7 +89,8 @@ $sessionId = $cfg['session_id'];
 $result    = null;
 
 with_registrations($sessionId, function ($list, &$result) use (
-    $cfg, $teamName, $captainName, $email, $phone, $size, $note, $looking
+    $cfg, $teamName, $captainName, $email, $phone, $size, $note, $looking,
+    $heardFrom, $tmSrc, $tmCh, $referrer
 ) {
     // Duplicate check inside the lock, so two simultaneous submits can't both pass.
     $emailKey = norm_key($email);
@@ -113,6 +131,10 @@ with_registrations($sessionId, function ($list, &$result) use (
         'size'              => $size,
         'lookingForPlayers' => $looking,
         'note'              => $note,
+        'heardFrom'         => $heardFrom,
+        'tmSrc'             => $tmSrc,
+        'tmCh'              => $tmCh,
+        'referrer'          => $referrer,
         'status'            => 'ACTIVE',
         'cancelToken'       => gen_token(),
         'createdAt'         => now_iso(),
@@ -162,7 +184,10 @@ if (!empty($cfg['notify_to'])) {
         . ' · ' . $n['email'] . ($n['phone'] !== '' ? ' · ' . $n['phone'] : '')
         . ' · ' . $result['slot']
         . ($result['promoRank'] > 0 ? ' · Freirunde #' . $result['promoRank'] : '')
-        . ($n['note'] !== '' ? "\r\nAnmerkung: " . $n['note'] : '');
+        . ($n['note'] !== '' ? "\r\nAnmerkung: " . $n['note'] : '')
+        . "\r\nErfahren über: " . ($n['heardFrom'] !== '' ? $n['heardFrom'] : 'keine Angabe')
+        . ($n['tmCh'] !== '' || $n['tmSrc'] !== '' ? ' · QR/Kurzlink: ' . $n['tmSrc'] . '/' . $n['tmCh'] : '')
+        . ($n['referrer'] !== '' ? ' · von: ' . $n['referrer'] : '');
     send_mail(
         $cfg['notify_to'],
         'Neue Quiz-Anmeldung: ' . $n['teamName'],
