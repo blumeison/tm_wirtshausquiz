@@ -38,8 +38,12 @@ return [
 
     // ---- Free-round promo --------------------------------------------------
     // ON: agreed 2026-09-07. Team Michelhausen covers it if the Wirt doesn't.
+    // Both free rounds went to word-of-mouth signups before any post was out
+    // (08.09./10.09.). Decision 2026-09-10: no further promo and no public
+    // mention at all — those two keep theirs, nobody can move up afterwards.
     'promo_enabled' => true,
     'promo_teams'   => 2,
+    'promo_until'   => '2026-09-10T16:15:20+02:00', // = second signup, "Psychochicken"
     'promo_label'   => 'Die ersten 2 Teams bekommen die erste Runde aufs Haus.',
 
     // ---- Quizfrage auf Werbescreen und Plakat ------------------------------

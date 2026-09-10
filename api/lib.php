@@ -253,6 +253,11 @@ function standings($list, $cfg)
 
     $capacity   = (int)$cfg['capacity_teams'];
     $promoTeams = !empty($cfg['promo_enabled']) ? (int)$cfg['promo_teams'] : 0;
+    // After promo_until nobody new can get a free round — not even by moving up
+    // when an earlier team cancels. Teams who already have one keep it.
+    $promoUntil = !empty($cfg['promo_until']) ? strtotime($cfg['promo_until']) : false;
+    $promoOpen  = ($promoUntil === false) || (time() <= $promoUntil);
+    $promoGiven = 0;
 
     $out = [];
     $people = 0;
@@ -261,7 +266,14 @@ function standings($list, $cfg)
         $i++;
         $r['position']  = $i;
         $r['slot']      = ($i <= $capacity) ? 'CONFIRMED' : 'WAITLIST';
-        $r['promoRank'] = ($i <= $promoTeams) ? $i : 0;
+        $inTime = ($promoUntil === false)
+            || (isset($r['createdAt']) && strtotime($r['createdAt']) <= $promoUntil);
+        if ($promoGiven < $promoTeams && $inTime) {
+            $promoGiven++;
+            $r['promoRank'] = $promoGiven;
+        } else {
+            $r['promoRank'] = 0;
+        }
         if ($r['slot'] === 'CONFIRMED') {
             $people += (int)$r['size'];
         }
@@ -275,7 +287,7 @@ function standings($list, $cfg)
         'teamsWaitlist' => max(0, count($out) - $capacity),
         'peopleConfirmed' => $people,
         'spotsLeft'     => max(0, $capacity - count($out)),
-        'promoLeft'     => max(0, $promoTeams - count($out)),
+        'promoLeft'     => $promoOpen ? max(0, $promoTeams - $promoGiven) : 0,
     ];
 }
 
