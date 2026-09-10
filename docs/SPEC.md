@@ -408,8 +408,8 @@ Phase 2 kommt bewusst früh: Sie ist das Einzige, was die Werbung blockiert.
 - [~] **P3** Admin-Shell mit SSO und Whitelist, Anmeldungsverwaltung, CSV-Export —
   gebaut 10.09. (`admin/`, `api/auth.php`, `api/auth/google.php`, `api/admin/*`), dazu
   Herkunfts-Auswertung pro Team und nach Kanal. Feste Admins in `config.php` → `admins`
-  statt „erster Login wird ADMIN“. **Wartet auf die Google-Client-ID**; bis dahin ist das
-  Backoffice gesperrt (bewusst kein Dev-Bypass — echte Personendaten).
+  statt „erster Login wird ADMIN“. Google-Client-ID seit 10.09. gesetzt (bewusst kein
+  Dev-Bypass — echte Personendaten).
 - [ ] **P4** Fragenpool und Editor für alle acht Typen
 - [ ] **P5** Quizabende: Runden, Fragen ziehen, Multiplikatoren, Masterfrage
 - [ ] **P6** KI-Generator
