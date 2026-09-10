@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>(function(){try{var s=localStorage.getItem('tm-theme');if(s==='light'||s==='dark')document.documentElement.setAttribute('data-theme',s);}catch(e){}})();</script>
+  <title>Backoffice – Wirtshausquiz</title>
+  <meta name="color-scheme" content="light dark">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="../logo-mark.png">
+  <link rel="stylesheet" href="../tokens.css">
+  <link rel="stylesheet" href="assets/admin.css?v=1">
+</head>
+<body class="admin-app">
+
+  <header class="admin-bar">
+    <a class="admin-bar__logo" href="../" aria-label="Zur Quizseite">
+      <img src="../logo-mark-white.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+    </a>
+    <span class="admin-bar__title">Wirtshausquiz · Backoffice</span>
+    <nav id="tabs" class="admin-tabs" aria-label="Bereiche" hidden>
+      <a href="#anmeldungen" data-tab="anmeldungen">Anmeldungen</a>
+      <a href="#benutzer" data-tab="benutzer" data-admin hidden>Benutzer</a>
+    </nav>
+    <span class="admin-bar__spacer"></span>
+    <span id="me" class="admin-me"></span>
+  </header>
+
+  <!-- Login gate -->
+  <section id="gate" class="gate" hidden>
+    <div class="gate__card">
+      <div class="tm-flag"></div>
+      <div class="gate__body">
+        <div class="tm-eyebrow">Backoffice</div>
+        <h2 id="gate-title">Anmelden</h2>
+        <p id="gate-text" class="tm-text-muted">Bitte mit dem freigeschalteten Google-Konto anmelden.</p>
+        <div id="gsi-btn" class="gate__btn"></div>
+        <p id="gate-msg" class="gate__msg"></p>
+      </div>
+    </div>
+  </section>
+
+  <main id="app" class="admin-wrap" hidden></main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="assets/admin.js?v=1"></script>
+</body>
+</html>

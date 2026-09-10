@@ -15,6 +15,13 @@ return [
     // Authorized JavaScript origin = https://quiz.team-michelhausen.at
     'google_client_id' => '',
 
+    // Backoffice: these Google accounts are always ADMIN and cannot be changed
+    // from the backoffice. Everyone else lands as PENDING until an admin
+    // approves them under "Benutzer". Extendable via data/config.json.
+    'admins' => [
+        'markus.blumei@gmail.com',
+    ],
+
     // ---- The event ---------------------------------------------------------
     // Change these in data/config.json to move the date without a deploy.
     'session_id'   => 's_premiere',

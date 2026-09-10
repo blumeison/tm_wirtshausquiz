@@ -405,7 +405,11 @@ Phase 2 kommt bewusst früh: Sie ist das Einzige, was die Werbung blockiert.
 - [x] **P0** Repos zusammenlegen, Deploy-Action, `api/health.php` gegen die Subdomain verifizieren, Google-OAuth-Client anlegen
 - [x] **P1** `api/lib.php`: JSON-Store mit flock, Session, Google-JWT-Verify, Upload, Mail — größtenteils aus HTS portiert
 - [x] **P2** Öffentliche Anmeldung: Startseite, Formular, `register.php`, Bestätigungsmail, Zähler, Warteliste, Absage → **ab hier kann geworben werden**
-- [ ] **P3** Admin-Shell mit SSO und Whitelist, Anmeldungsverwaltung, CSV-Export
+- [~] **P3** Admin-Shell mit SSO und Whitelist, Anmeldungsverwaltung, CSV-Export —
+  gebaut 10.09. (`admin/`, `api/auth.php`, `api/auth/google.php`, `api/admin/*`), dazu
+  Herkunfts-Auswertung pro Team und nach Kanal. Feste Admins in `config.php` → `admins`
+  statt „erster Login wird ADMIN“. **Wartet auf die Google-Client-ID**; bis dahin ist das
+  Backoffice gesperrt (bewusst kein Dev-Bypass — echte Personendaten).
 - [ ] **P4** Fragenpool und Editor für alle acht Typen
 - [ ] **P5** Quizabende: Runden, Fragen ziehen, Multiplikatoren, Masterfrage
 - [ ] **P6** KI-Generator

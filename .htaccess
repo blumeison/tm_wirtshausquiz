@@ -19,5 +19,5 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^api/phpmailer/ - [F,L]
-    RewriteRule ^api/(lib|config|mail_templates)\.php$ - [F,L]
+    RewriteRule ^api/(lib|config|mail_templates|auth)\.php$ - [F,L]
 </IfModule>
