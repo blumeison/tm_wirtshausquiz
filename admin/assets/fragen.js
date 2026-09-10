@@ -150,7 +150,7 @@
   function openEditor(id) {
     if (!id) {
       Q = { type: 'MULTIPLE_CHOICE', prompt: '', answer: '', points: 10, difficulty: 2, category: '', tags: '',
-            status: 'READY', payload: defaultPayload('MULTIPLE_CHOICE') };
+            status: 'READY', background: '', factCheck: '', payload: defaultPayload('MULTIPLE_CHOICE') };
       renderEditor();
       if (!LOADED) load().catch(function () {}); // upload limit + categories, in the background
       return;
@@ -191,6 +191,10 @@
       + '<section class="ed-card ed-stack">'
       + field('Frage *', '<textarea class="tm-textarea" data-f="prompt" rows="3" maxlength="2000" placeholder="Die Frage, wie sie der Quizmaster vorliest …">' + esc(Q.prompt) + '</textarea>')
       + field('Antwort / Lösung *', '<input class="tm-input" data-f="answer" maxlength="2000" placeholder="Die richtige Antwort" value="' + esc(Q.answer) + '">')
+      + field('Hintergrund für den Quizmaster', '<textarea class="tm-textarea" data-f="background" rows="3" maxlength="1500" '
+        + 'placeholder="Die Geschichte hinter der Antwort — erzählt der Quizmaster bei der Auflösung">' + esc(Q.background || '') + '</textarea>')
+      + field('Quelle / Faktencheck', '<input class="tm-input" data-f="factCheck" maxlength="500" '
+        + 'placeholder="Woran man die Antwort nachprüfen kann" value="' + esc(Q.factCheck || '') + '">')
       + '<div class="ed-grid">'
       + field('Punkte', '<input class="tm-input" type="number" min="1" max="100" data-f="points" data-num value="' + esc(Q.points) + '">')
       + field('Schwierigkeit', '<select class="tm-select" data-f="difficulty" data-num>'
@@ -405,8 +409,24 @@
       + '<input type="file" accept="' + kind + '/*" data-file="' + key + '" data-kind="' + kind + '" hidden>'
       + '<button type="button" class="tm-btn tm-btn--ghost btn-sm" data-pick="' + key + '">Hochladen</button></div>'
       + (UPLOAD_MAX ? '<span class="tm-hint">Bis ' + mb(UPLOAD_MAX) + ' pro Datei.</span>' : '')
+      + searchHint(key)
       + '<div class="media-prev" id="prev-' + key + '">' + previewHtml(kind, Q.payload[key]) + '</div></div>';
   }
+  /** Suggestions from the AI generator: what to look for, and a search link. */
+  function searchHint(key) {
+    var p = Q.payload;
+    if (key === 'mediaUrl' && p.youtubeSearch) {
+      return '<span class="tm-hint">🎵 Vorschlag: <a href="https://www.youtube.com/results?search_query=' + encodeURIComponent(p.youtubeSearch)
+        + '" target="_blank" rel="noopener">auf YouTube suchen: „' + esc(p.youtubeSearch) + '“</a>'
+        + (p.startSeconds ? ' — ab Sekunde ' + esc(p.startSeconds) : '') + '. Den Video-Link unten einfügen.</span>';
+    }
+    if (key === 'imageUrl' && p.imageSearch) {
+      return '<span class="tm-hint">🖼️ Bildidee: ' + esc(p.imageSearch) + ' — <a href="https://www.google.com/search?tbm=isch&q='
+        + encodeURIComponent(p.imageSearch) + '" target="_blank" rel="noopener">Bilder suchen</a>. Auf die Bildrechte achten.</span>';
+    }
+    return '';
+  }
+
   function previewHtml(kind, url) {
     if (!url) return '';
     var u = esc(url);
@@ -516,7 +536,8 @@
     btn.disabled = true; btn.textContent = 'Speichert …';
     W.api('questions/save.php', { method: 'POST', body: {
       id: Q.id || '', type: Q.type, prompt: Q.prompt, answer: Q.answer, points: Q.points,
-      difficulty: Q.difficulty, category: Q.category, tags: Q.tags, status: Q.status, payload: Q.payload
+      difficulty: Q.difficulty, category: Q.category, tags: Q.tags, status: Q.status, payload: Q.payload,
+      background: Q.background || '', factCheck: Q.factCheck || ''
     } }).then(function () {
       W.toast(Q.id ? 'Gespeichert.' : 'Frage angelegt.');
       location.hash = '#fragen';

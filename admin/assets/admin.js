@@ -142,6 +142,7 @@
     if (tab === 'benutzer') return viewUsers();
     if (tab === 'fragen' && window.WQ.views.fragen) return window.WQ.views.fragen(parts);
     if (tab === 'abend' && window.WQ.views.abend) return window.WQ.views.abend(parts);
+    if (tab === 'ki' && window.WQ.views.ki) return window.WQ.views.ki(parts);
     return viewRegistrations();
   }
 

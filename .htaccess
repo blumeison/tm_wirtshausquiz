@@ -19,7 +19,7 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^api/phpmailer/ - [F,L]
-    RewriteRule ^api/(lib|config|mail_templates|auth|questions_lib|sessions_lib)\.php$ - [F,L]
+    RewriteRule ^api/(lib|config|mail_templates|auth|questions_lib|sessions_lib|ai_lib)\.php$ - [F,L]
     # Uploads are media only. Nothing in there may ever run as a script.
     RewriteRule ^uploads/.*\.(php[0-9]?|phtml|phar|pl|cgi|sh)$ - [F,L,NC]
 </IfModule>

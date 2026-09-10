@@ -202,7 +202,12 @@ function validate_payload($type, $p)
             if ($u === null) {
                 return [null, 'Bild: nur http(s)-Adressen oder hochgeladene Dateien.'];
             }
-            return [['imageUrl' => $u], null];
+            $out = ['imageUrl' => $u];
+            $search = q_str($g('imageSearch', ''), 300); // picture idea from the AI generator
+            if ($search !== '') {
+                $out['imageSearch'] = $search;
+            }
+            return [$out, null];
 
         case 'AUDIO':
         case 'VIDEO':
@@ -212,6 +217,10 @@ function validate_payload($type, $p)
                 return [null, 'Nur http(s)-Adressen oder hochgeladene Dateien.'];
             }
             $out = ['mediaUrl' => $m, 'youtubeUrl' => $y];
+            $search = q_str($g('youtubeSearch', ''), 200); // search phrase from the AI generator
+            if ($search !== '') {
+                $out['youtubeSearch'] = $search;
+            }
             foreach (['startSeconds', 'clipSeconds'] as $k) {
                 $n = q_num($g($k));
                 if ($n !== null && $n > 0) {
@@ -321,6 +330,9 @@ function validate_question($in)
         'points'     => (int)$points,
         'difficulty' => $difficulty,
         'category'   => q_str(isset($in['category']) ? $in['category'] : '', 80),
+        // Told by the quizmaster at the reveal; factCheck is where to verify it.
+        'background' => q_str(isset($in['background']) ? $in['background'] : '', 1500),
+        'factCheck'  => q_str(isset($in['factCheck']) ? $in['factCheck'] : '', 500),
         'tags'       => array_slice($tags, 0, 15),
         'status'     => (isset($in['status']) && $in['status'] === 'DRAFT') ? 'DRAFT' : 'READY',
     ], null];
