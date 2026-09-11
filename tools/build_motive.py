@@ -47,6 +47,7 @@ PLAKAT_ORTE = [
     ("burchhart", "Burchhart"),
     ("billa", "Billa"),
     ("bahnhof", "Bahnhof"),
+    ("pixendorf", "Bushaltestelle Pixendorf"),
 ]
 
 # Die drei Antworten der Screen-Frage brauchen DREI EIGENE Kurzlinks, keine
@@ -284,6 +285,7 @@ AUF_DIE_SEITE = (
     "wirtshausquiz-plakat-a3-burchhart-kompakt.pdf",
     "wirtshausquiz-plakat-a3-billa-kompakt.pdf",
     "wirtshausquiz-plakat-a3-bahnhof-kompakt.pdf",
+    "wirtshausquiz-plakat-a3-pixendorf-kompakt.pdf",
 )
 
 
