@@ -190,6 +190,63 @@
   .legal { padding: 26px 0 60px; font-size: .8rem; color: var(--faint); }
   .legal a { color: var(--faint); }
 
+  /* ---- Drei Ansichten statt einer endlosen Seite ---- */
+  [hidden] { display: none !important; }
+  header.top { padding: 26px 0 20px; }
+  header.top h1 { font-size: clamp(1.7rem, 4.5vw, 2.4rem); margin-bottom: 8px; }
+  .tabs { position: sticky; top: 0; z-index: 10; background: var(--bg);
+          border-bottom: 1px solid var(--line); box-shadow: 0 6px 16px rgba(0,0,0,.05); }
+  .tabs__inner { display: flex; gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+  .tab { flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+         padding: 12px 10px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface);
+         color: var(--text); font: 500 .98rem var(--font-body); text-decoration: none; cursor: pointer; }
+  .tab:hover { border-color: var(--accent); }
+  .tab.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tab--link { flex: 0 0 auto; padding: 12px 14px; white-space: nowrap; }
+  @media (max-width: 520px) {
+    .tab { flex-direction: column; gap: 2px; font-size: .76rem; padding: 8px 4px; }
+    .tab span { white-space: nowrap; }
+  }
+  section[data-view] { padding-top: 28px; }
+
+  /* ---- Als Nächstes ---- */
+  .next__when { display: inline-block; background: var(--accent); color: #fff; font-weight: 600;
+                border-radius: 999px; padding: 3px 14px; font-size: .9rem; margin: 0 0 10px; }
+  .next__title { margin-bottom: 2px; }
+  .next__meta { color: var(--muted); margin: 0 0 18px; }
+  .next__todo { border: 1.5px dashed var(--accent); border-radius: 12px; padding: 14px 18px; margin: 0 0 18px; }
+  .next__todo ul, .next__after ul { margin: 8px 0 0; }
+  .next__who { color: var(--faint); font-size: .88rem; }
+  .next__after { margin: 22px 0 0; }
+  .next__print { margin: 18px 0 0; color: var(--muted); }
+
+  /* ---- Aufklappbare Blöcke ---- */
+  details.fold > summary { list-style: none; cursor: pointer; }
+  details.fold > summary::-webkit-details-marker { display: none; }
+  details.fold > summary h2 { display: inline; }
+  details.fold > summary::after { content: '  ▾'; color: var(--faint); font-size: 1.2rem; }
+  details.fold[open] > summary::after { content: '  ▴'; }
+  details.fold[open] > summary { margin-bottom: 22px; }
+  .fold__sub { display: block; color: var(--muted); margin-top: 4px; }
+
+  /* ---- Posts zugeklappt ---- */
+  .post { scroll-margin-top: 96px; }
+  .post .post__body { display: none; }
+  .post.is-open .post__body { display: block; }
+  .posts .post__head { cursor: pointer; border-bottom: 0; }
+  .post.is-open .post__head { border-bottom: 1px solid var(--line-soft); }
+  .post__chev { margin-left: auto; color: var(--faint); transition: transform .15s; }
+  .post.is-open .post__chev { transform: rotate(180deg); }
+  .post.is-past { opacity: .62; }
+  .post.is-upnext { border-color: var(--accent); border-width: 2px; }
+  .done, .upnext { font: 600 .68rem var(--font-body); letter-spacing: .06em; text-transform: uppercase;
+                   padding: 2px 8px; border-radius: 999px; vertical-align: middle; white-space: nowrap; }
+  .done { color: var(--ok-fg); background: var(--ok-bg); }
+  .upnext { color: #fff; background: var(--accent); }
+  .share { font: 500 .82rem var(--font-body); background: none; border: 0; color: var(--accent);
+           cursor: pointer; padding: 0; margin: 0 0 16px; }
+  .share:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -197,31 +254,36 @@
 <div class="flag"></div>
 <div class="wrap">
   <div class="sitebar">
-    <img src="../logo.png" alt="SPOe &amp; Unabhaengige &ndash; Team Michelhausen">
+    <img src="../logo.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
     <a href="/">Zur Quizseite</a>
   </div>
 </div>
 
-
 <header class="top">
   <div class="wrap">
-    <p class="eyebrow">Team Michelhausen · Wirtshausquiz</p>
-    <h1>Posting-Fahrplan</h1>
-    <p class="lede">Fünfzehn Posts vom 10. September bis 20. Oktober. Pro Post: wann, wo, welches
-      Bild, fertiger Text zum Kopieren und was danach zu tun ist. Zielgruppe sind vor allem
-      die Zugezogenen in Pixendorf — danach ist jeder Text geschrieben.</p>
-    <div class="stamp">
-      <span>Für das Social-Media-Team</span>
-      <span>Instagram &amp; Facebook</span>
-      <span>Quizabend: Fr 16. Oktober 2026</span>
-    </div>
+    <p class="eyebrow">Team Michelhausen · Wirtshausquiz · Fr 16. Oktober 2026</p>
+    <h1>Posts &amp; Drucksachen</h1>
+    <p class="lede">Bilder zum Herunterladen, Texte zum Kopieren, Plakate zum Drucken — und was wann dran ist.</p>
   </div>
 </header>
 
-<section>
+<nav class="tabs" aria-label="Bereiche">
+  <div class="wrap tabs__inner">
+    <a href="#next" class="tab">⏭️ <span>Als Nächstes</span></a>
+    <a href="#social" class="tab">📱 <span>Social Media</span></a>
+    <a href="#druck" class="tab">🖨️ <span>Druck</span></a>
+    <button type="button" class="tab tab--link" id="share-view" title="Link zu diesem Bereich kopieren">🔗</button>
+  </div>
+</nav>
+
+<section id="next" data-view="next">
+  <div class="wrap" id="next-box"></div>
+</section>
+
+<section data-view="social">
   <div class="wrap">
-    <h2>Sechs Regeln, die für jeden Post gelten</h2>
-    <p class="sub">Wenn ihr sonst nichts lest — das hier entscheidet, ob die Posts ankommen.</p>
+    <details class="fold">
+    <summary><h2>Die sieben Regeln für jeden Post</h2><span class="fold__sub">Wenn ihr sonst nichts lest — das hier entscheidet, ob die Posts ankommen.</span></summary>
 
     <div class="rules">
       <div class="rule">
@@ -273,14 +335,15 @@
       <strong>10:30</strong>. Nicht vormittags unter der Woche — da erreicht ihr niemanden.
       Wenn ein Termin nicht ausgeht, lieber am selben Tag später als am nächsten Tag.
     </div>
+    </details>
   </div>
 </section>
 
-<section>
+<section data-view="social">
   <div class="wrap">
     <h2>Die fünfzehn Posts</h2>
-    <p class="sub">Die Bilddateien kommen aus <code>tools/out/</code> im Repo. Was noch fehlt, ist
-      als solches markiert — dort steht auch, was dafür gebraucht wird.</p>
+    <p class="sub">Antippen klappt einen Post auf. Vergangene sind abgehakt, der nächste ist rot markiert.
+      Mit „🔗 Link zu diesem Post kopieren“ lässt sich ein einzelner Post in WhatsApp weitergeben.</p>
 
     <div class="posts">
 
@@ -592,7 +655,7 @@ Und wer's beim Quizabend live wissen will: Freitag, 16. Oktober beim Burchhart. 
 📝 Um 18:30 geht's los. Vier Runden, jede mit einem Thema.
 🤫 Ihr beratet euch am Tisch und schreibt eure Antwort auf. Handys bleiben in der Tasche — das ist die einzige Regel.
 🎵 Es gibt nicht nur Fragen: Bilder, Musik zum Erraten, Schätzfragen und eine Karte, auf der ihr einen Ort markieren müsst.
-👑 Am Ende jeder Runde die Masterfrage. Ihre Lösung steckt in den Antworten davor versteckt.
+👑 Und zum Schluss die Masterfrage: Die Hinweise darauf sammelt ihr über den ganzen Abend — wer den roten Faden früh erkennt, räumt richtig ab.
 
 Vorbereiten muss man nichts. In jedem Team weiß irgendwer irgendwas — genau darum geht's.
 
@@ -747,7 +810,7 @@ quiz.team-michelhausen.at</pre>
 
 Irgendwas davon kann jeder. Und was ihr nicht könnt, kann wer anderer am Tisch — darum spielt man ja im Team.
 
-Am Ende jeder Runde wartet noch die Masterfrage. Deren Lösung steckt in den Antworten davor versteckt.
+Und zum Schluss die Masterfrage — die Hinweise darauf sammelt ihr über den ganzen Abend.
 
 Freitag, 16. Oktober, Gasthaus Burchhart.
 quiz.team-michelhausen.at</pre>
@@ -950,7 +1013,7 @@ Anmeldung wie gehabt: quiz.team-michelhausen.at</pre>
   </div>
 </section>
 
-<section>
+<section data-view="druck">
   <div class="wrap">
     <h2>Plakate</h2>
     <p class="sub">Nicht f&uuml;r Social Media. Die Plakate h&auml;ngen im Gasthaus Burchhart, beim Billa, am Bahnhof und an der Bushaltestelle Pixendorf &mdash; jedes mit eigenem QR-Code. Die Plakate sehen gleich aus &mdash; vor dem Aufh&auml;ngen den QR-Code kurz scannen: Der Link endet auf <code>?s=burchhart</code>, <code>?s=billa</code>, <code>?s=bahnhof</code> oder <code>?s=pixendorf</code>. Nicht vertauschen, sonst stimmt die Z&auml;hlung nicht.</p>
@@ -988,11 +1051,10 @@ Anmeldung wie gehabt: quiz.team-michelhausen.at</pre>
   </div>
 </section>
 
-<section>
+<section data-view="social">
   <div class="wrap">
-    <h2>Was noch fehlt</h2>
-    <p class="sub">Fünf von fünfzehn Posts hängen an Material, das noch nicht da ist. Ohne das
-      fallen sie aus — und zwar die aus der zweiten Hälfte, wo die Verknappung wirkt.</p>
+    <details class="fold">
+    <summary><h2>Was noch fehlt</h2><span class="fold__sub">Fünf von fünfzehn Posts hängen an Material, das noch nicht da ist.</span></summary>
 
     <div class="scroll">
       <table>
@@ -1043,12 +1105,13 @@ Anmeldung wie gehabt: quiz.team-michelhausen.at</pre>
       den Link an drei Leute persönlich.</strong> In einer Gemeinde, in der die Hälfte erst
       zugezogen ist, schlägt eine persönliche Nachricht jeden Post.
     </div>
+    </details>
   </div>
 </section>
 
 <footer class="end">
   <div class="wrap">
-    Wirtshausquiz · Team Michelhausen · Stand 7. September 2026 · quiz.team-michelhausen.at
+    Wirtshausquiz · Team Michelhausen · Stand 11. September 2026 · quiz.team-michelhausen.at
   </div>
 </footer>
 
@@ -1083,9 +1146,141 @@ Anmeldung wie gehabt: quiz.team-michelhausen.at</pre>
       setTimeout(function () { btn.textContent = 'Kopieren'; }, 2600);
     }
   });
+
+  // ---- Drei Ansichten, aufklappbare Posts, „Als Nächstes“ ----------------------
+  // Der Fahrplan steht in den Post-Köpfen („Do 17.09.“) — daraus rechnet die Seite
+  // selbst aus, was vorbei ist und was als Nächstes dran ist.
+  (function () {
+    var YEAR = 2026;
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var posts = [].slice.call(document.querySelectorAll('.posts article.post'));
+
+    function esc(s) {
+      return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+    }
+    function parseDate(txt) {
+      var m = /(\d{1,2})\.(\d{1,2})\./.exec(txt || '');
+      return m ? new Date(YEAR, Number(m[2]) - 1, Number(m[1])) : null;
+    }
+    function titleOf(p) { return p.querySelector('.post__title').firstChild.textContent.trim(); }
+    function whenOf(p) { return p.querySelector('.post__when').textContent + ' · ' + p.querySelector('.post__time').textContent; }
+    function copyLink(text, btn) {
+      var label = btn.textContent;
+      function ok() { btn.textContent = '✓ Link kopiert'; setTimeout(function () { btn.textContent = label; }, 1800); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(ok, function () { window.prompt('Link kopieren:', text); });
+      } else {
+        window.prompt('Link kopieren:', text);
+      }
+    }
+    function setOpen(p, open) {
+      p.classList.toggle('is-open', open);
+      var h = p.querySelector('.post__head');
+      if (h && h.hasAttribute('role')) h.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    var next = null;
+    posts.forEach(function (p, i) {
+      var n = i + 1;
+      p.id = 'post-' + n;
+      p.setAttribute('data-n', n);
+      var head = p.querySelector('.post__head');
+      head.setAttribute('role', 'button');
+      head.setAttribute('tabindex', '0');
+      head.setAttribute('aria-expanded', 'false');
+      head.insertAdjacentHTML('beforeend', '<span class="post__chev" aria-hidden="true">▾</span>');
+      p.querySelector('.post__body').insertAdjacentHTML('afterbegin',
+        '<button type="button" class="share" data-share="#social/' + n + '">🔗 Link zu diesem Post kopieren</button>');
+      p._date = parseDate(p.querySelector('.post__when').textContent);
+      if (p._date && p._date < today) {
+        p.classList.add('is-past');
+        p.querySelector('.post__title').insertAdjacentHTML('beforeend', ' <span class="done">✓ vorbei</span>');
+      } else if (!next) {
+        next = p;
+        p.classList.add('is-upnext');
+        p.querySelector('.post__title').insertAdjacentHTML('beforeend', ' <span class="upnext">als Nächstes</span>');
+      }
+    });
+
+    // „Als Nächstes“: der nächste Post komplett, was bis dahin fehlt, was danach kommt.
+    var box = document.getElementById('next-box');
+    if (!next) {
+      box.innerHTML = '<h2>Alles erledigt 🎉</h2><p class="sub">Alle Posts sind durch — danke fürs Mittun!</p>';
+    } else {
+      var days = Math.round((next._date - today) / 86400000);
+      var html = '<p class="next__when">' + (days === 0 ? 'Heute' : days === 1 ? 'Morgen' : 'In ' + days + ' Tagen') + '</p>'
+        + '<h2 class="next__title">' + esc(titleOf(next)) + '</h2>'
+        + '<p class="next__meta">' + esc(whenOf(next)) + '</p>';
+      var due = [].slice.call(document.querySelectorAll('table tbody tr')).filter(function (r) {
+        var d = parseDate(r.cells[0].textContent);
+        return d && d >= today && d <= next._date;
+      });
+      if (due.length) {
+        html += '<div class="next__todo"><b>Bis dahin erledigen</b><ul>' + due.map(function (r) {
+          return '<li>' + esc(r.cells[1].textContent.trim()) + ' <span class="next__who">— ' + esc(r.cells[3].textContent.trim()) + '</span></li>';
+        }).join('') + '</ul></div>';
+      }
+      box.innerHTML = html;
+      var c = next.cloneNode(true);
+      c.removeAttribute('id');
+      c.classList.remove('is-upnext');
+      c.classList.add('is-open');
+      ['.post__chev', '.upnext'].forEach(function (sel) { var el = c.querySelector(sel); if (el) el.remove(); });
+      var hd = c.querySelector('.post__head');
+      hd.removeAttribute('role');
+      hd.removeAttribute('tabindex');
+      hd.removeAttribute('aria-expanded');
+      box.appendChild(c);
+      var idx = posts.indexOf(next), after = posts.slice(idx + 1, idx + 3);
+      if (after.length) {
+        box.insertAdjacentHTML('beforeend', '<div class="next__after"><b>Danach</b><ul>' + after.map(function (p) {
+          return '<li><a href="#social/' + p.getAttribute('data-n') + '">' + esc(whenOf(p)) + ' — ' + esc(titleOf(p)) + '</a></li>';
+        }).join('') + '</ul></div>');
+      }
+      box.insertAdjacentHTML('beforeend', '<p class="next__print">🖨️ Plakate zum Drucken gibt es unter <a href="#druck">Druck</a>.</p>');
+    }
+
+    document.addEventListener('click', function (ev) {
+      var s = ev.target.closest('[data-share]');
+      if (s) { copyLink(location.origin + location.pathname + s.getAttribute('data-share'), s); return; }
+      var h = ev.target.closest('.posts .post__head');
+      if (h) { var p = h.closest('.post'); setOpen(p, !p.classList.contains('is-open')); }
+    });
+    document.addEventListener('keydown', function (ev) {
+      var h = ev.target.closest && ev.target.closest('.posts .post__head');
+      if (h && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); h.click(); }
+    });
+
+    // Ansichten über den Link: #next, #social, #social/4 (ein Post), #druck
+    var sections = [].slice.call(document.querySelectorAll('[data-view]'));
+    var tabs = [].slice.call(document.querySelectorAll('.tabs a.tab'));
+    function route() {
+      var parts = location.hash.replace(/^#/, '').split('/');
+      var view = /^(next|social|druck)$/.test(parts[0]) ? parts[0] : 'next';
+      sections.forEach(function (s) { s.hidden = s.getAttribute('data-view') !== view; });
+      tabs.forEach(function (a) {
+        var on = a.getAttribute('href') === '#' + view;
+        a.classList.toggle('is-on', on);
+        if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      });
+      var target = parts[1] ? document.getElementById('post-' + parts[1]) : null;
+      if (target) {
+        setOpen(target, true);
+        setTimeout(function () { target.scrollIntoView({ block: 'start' }); }, 0);
+      } else {
+        window.scrollTo(0, 0);
+      }
+    }
+    window.addEventListener('hashchange', route);
+    route();
+    document.getElementById('share-view').addEventListener('click', function () {
+      copyLink(location.origin + location.pathname + (location.hash || '#next'), this);
+    });
+  })();
 </script>
 <div class="wrap">
-  <p class="legal">Interne Arbeitsunterlage des Social-Media-Teams &middot; SPOe &amp; Unabhaengige &ndash; Team Michelhausen &middot; <a href="https://team-michelhausen.at/impressum/">Impressum</a> &middot; <a href="https://team-michelhausen.at/datenschutz/">Datenschutz</a></p>
+  <p class="legal">Interne Arbeitsunterlage des Social-Media-Teams &middot; SPÖ &amp; Unabhängige &ndash; Team Michelhausen &middot; <a href="https://team-michelhausen.at/impressum/">Impressum</a> &middot; <a href="https://team-michelhausen.at/datenschutz/">Datenschutz</a></p>
 </div>
 
 </body>
