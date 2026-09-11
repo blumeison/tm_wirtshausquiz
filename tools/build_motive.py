@@ -176,8 +176,10 @@ def qr_datauri(url):
 
 def build(name, spec, browser, noise, qr, ort=None, suffix="", extra_vars=None):
     tpl = (ROOT / spec["template"]).read_text(encoding="utf-8")
-    # Verrät am Plakatfuß, welche Variante das ist — damit beim Aufhängen
-    # nicht der Bahnhof-Code im Wirtshaus landet. Auf Lesedistanz unsichtbar.
+    # Der Aushangort wird bewusst NICHT aufs Plakat gedruckt: direkt hinter dem
+    # Impressum wirkte er wie ein Teil davon. Welches Plakat wohin gehört,
+    # verrät der QR-Code (?s=burchhart/billa/bahnhof) — vor dem Aufhängen scannen.
+    # Der Platzhalter bleibt nur für Vorlagen, die ihn ausdrücklich wollen.
     tpl = tpl.replace("<!--ORT-->", (" · " + ort) if ort else "")
     # Bewusst Verkettung statt .format(): die CSS-Klammer in ":root {" wäre
     # sonst eine Formatangabe.
