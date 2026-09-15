@@ -50,10 +50,16 @@
   // ---- origin labels ---------------------------------------------------------
   var HEARD = {
     freunde: 'Freunde / Bekannte', facebook: 'Facebook', instagram: 'Instagram',
-    schwarzesbrett: 'Schwarzes Brett (WhatsApp)', plakat: 'Plakat', zeitung: 'Zeitung',
-    screen: 'Werbescreen', wirt: 'Im Gasthaus', sonstiges: 'Anders'
+    schwarzesbrett: 'Schwarzes Brett (WhatsApp)', plakat: 'Plakat', flyer: 'Flyer im Postkasten',
+    zeitung: 'Zeitung', screen: 'Werbescreen', wirt: 'Im Gasthaus', sonstiges: 'Anders',
+    telefon: 'Telefonisch angemeldet'
   };
-  var CHANNEL = { burchhart: 'Plakat Burchhart', billa: 'Plakat Billa', bahnhof: 'Plakat Bahnhof' };
+  var CHANNEL = {
+    burchhart: 'Plakat Burchhart', billa: 'Plakat Billa', bahnhof: 'Plakat Bahnhof',
+    pixendorf: 'Plakat Bushaltestelle Pixendorf',
+    'flyer-pixendorf': 'Flyer Pixendorf Wohnblocks', 'flyer-michelhausen': 'Flyer Michelhausen',
+    'flyer-atzelsdorf': 'Flyer Atzelsdorf', 'flyer-andere': 'Flyer Andere'
+  };
 
   function qrLabel(r) {
     if (!r.tmSrc && !r.tmCh) return '';
@@ -168,7 +174,9 @@
       + '<p>' + c.teamsConfirmed + ' von ' + d.capacity + ' Plätzen vergeben'
       + (c.teamsWaitlist ? ' · ' + c.teamsWaitlist + ' auf der Warteliste' : '') + '</p></div>'
       + '<div class="btn-row"><button class="tm-btn tm-btn--ghost btn-sm" type="button" id="reload">Aktualisieren</button>'
-      + '<a class="tm-btn tm-btn--primary btn-sm" href="../api/admin/registrations.php?format=csv">CSV-Export</a></div></div>'
+      + '<a class="tm-btn tm-btn--ghost btn-sm" href="../api/admin/registrations.php?format=csv">CSV-Export</a>'
+      + '<button class="tm-btn tm-btn--primary btn-sm" type="button" id="add-team-btn">+ Team eintragen</button></div></div>'
+      + manualForm()
       + '<div class="kpi-grid">'
       + kpi(c.teamsTotal, 'Teams') + kpi(c.peopleConfirmed, 'Personen fix')
       + kpi(c.spotsLeft, 'Plätze frei') + kpi(c.teamsWaitlist, 'Warteliste') + kpi(c.cancelled, 'Abgesagt')
@@ -191,6 +199,77 @@
     [].forEach.call($app.querySelectorAll('[data-cancel]'), function (b) {
       b.onclick = function () { cancelTeam(b.getAttribute('data-cancel'), b.getAttribute('data-name')); };
     });
+    bindManualForm();
+  }
+
+  // ---- manual signup (phone number on the flyer) ------------------------------
+  function manualForm() {
+    var heard = ['telefon', 'flyer', 'plakat', 'freunde', 'schwarzesbrett', 'facebook', 'instagram', 'zeitung', 'wirt', 'sonstiges'];
+    function fld(id, label, input) {
+      return '<div class="tm-field"><label class="tm-label" for="mt-' + id + '">' + label + '</label>' + input
+        + '<p class="fld-err" data-err="' + id + '"></p></div>';
+    }
+    return '<form class="ed manual" id="manual-form" hidden novalidate><div class="ed-card">'
+      + '<h3>Team händisch eintragen</h3>'
+      + '<div class="ed-grid">'
+      + fld('teamName', 'Teamname', '<input class="tm-input" id="mt-teamName" maxlength="60" required>')
+      + fld('captainName', 'Kontaktperson', '<input class="tm-input" id="mt-captainName" maxlength="60" required>')
+      + fld('phone', 'Telefon', '<input class="tm-input" id="mt-phone" type="tel" maxlength="40">')
+      + fld('email', 'E-Mail <span class="tm-text-muted">(optional)</span>', '<input class="tm-input" id="mt-email" type="email" maxlength="120">')
+      + fld('size', 'Personen', '<select class="tm-select" id="mt-size"><option>3</option><option>4</option><option selected>5</option></select>')
+      + fld('heardFrom', 'Herkunft', '<select class="tm-select" id="mt-heardFrom">' + heard.map(function (k) {
+          return '<option value="' + k + '">' + esc(k === 'telefon' ? 'über Telefon angemeldet' : HEARD[k]) + '</option>';
+        }).join('') + '</select>')
+      + '</div>'
+      + fld('note', 'Anmerkung <span class="tm-text-muted">(optional)</span>', '<input class="tm-input" id="mt-note" maxlength="500">')
+      + '<label class="chk"><input type="checkbox" id="mt-looking"> Sucht noch Mitspieler</label>'
+      + '<label class="chk"><input type="checkbox" id="mt-mail"> Bestätigungsmail schicken <span class="tm-text-muted">(nur mit E-Mail)</span></label>'
+      + '<div class="btn-row"><button class="tm-btn tm-btn--primary btn-sm" type="submit">Eintragen</button>'
+      + '<button class="tm-btn tm-btn--ghost btn-sm" type="button" id="manual-close">Abbrechen</button></div>'
+      + '</div></form>';
+  }
+
+  function bindManualForm() {
+    var form = document.getElementById('manual-form');
+    var val = function (id) { return document.getElementById('mt-' + id).value.trim(); };
+    document.getElementById('add-team-btn').onclick = function () {
+      form.hidden = !form.hidden;
+      if (!form.hidden) document.getElementById('mt-teamName').focus();
+    };
+    document.getElementById('manual-close').onclick = function () { form.hidden = true; };
+    document.getElementById('mt-email').oninput = function () {
+      document.getElementById('mt-mail').checked = this.value.trim() !== '';
+    };
+    form.onsubmit = function (ev) {
+      ev.preventDefault();
+      [].forEach.call(form.querySelectorAll('[data-err]'), function (p) { p.textContent = ''; });
+      var btn = form.querySelector('[type=submit]'); btn.disabled = true;
+      var body = {
+        action: 'create', teamName: val('teamName'), captainName: val('captainName'), phone: val('phone'),
+        email: val('email'), size: +val('size'), heardFrom: val('heardFrom'), note: val('note'),
+        lookingForPlayers: document.getElementById('mt-looking').checked,
+        sendMail: document.getElementById('mt-mail').checked
+      };
+      fetch('../api/admin/registrations.php', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { r: r, j: j }; }); })
+        .then(function (x) {
+          btn.disabled = false;
+          if (x.r.ok && x.j.ok !== false) {
+            toast('„' + x.j.teamName + '" eingetragen' + (x.j.slot === 'WAITLIST' ? ' — auf der Warteliste.' : '.')
+              + (body.sendMail ? (x.j.mailSent ? ' Mail ist raus.' : ' Mail ging NICHT raus.') : ''), body.sendMail && !x.j.mailSent);
+            viewRegistrations();
+            return;
+          }
+          var fields = x.j.fields || {};
+          Object.keys(fields).forEach(function (k) {
+            var p = form.querySelector('[data-err="' + k + '"]'); if (p) p.textContent = fields[k];
+          });
+          toast(errText(new Error(x.j.error || ('HTTP ' + x.r.status))), true);
+        })
+        .catch(function (e) { btn.disabled = false; toast(errText(e), true); });
+    };
   }
 
   function kpi(v, label) {
@@ -242,10 +321,11 @@
       : '<span class="tm-text-muted">Herkunft nicht erfasst (vor dem 10.09.)</span>';
 
     var who = esc(r.captainName)
-      + ' · <a href="mailto:' + esc(r.email) + '">' + esc(r.email) + '</a>'
+      + (r.email ? ' · <a href="mailto:' + esc(r.email) + '">' + esc(r.email) + '</a>' : '')
       + (r.phone ? ' · <a href="tel:' + esc(String(r.phone).replace(/[^0-9+]/g, '')) + '">' + esc(r.phone) + '</a>' : '');
 
     var meta = 'Angemeldet ' + esc(fmtDate(r.createdAt))
+      + (r.createdBy ? ' · eingetragen von ' + esc(r.createdBy) : '')
       + (cancelled ? ' · abgesagt ' + esc(fmtDate(r.cancelledAt)) + (r.cancelledBy ? ' von ' + esc(r.cancelledBy) : ' (selbst)') : '')
       + (r.ip ? ' · IP ' + esc(r.ip) : '');
 

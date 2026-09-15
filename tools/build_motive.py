@@ -50,6 +50,17 @@ PLAKAT_ORTE = [
     ("pixendorf", "Bushaltestelle Pixendorf"),
 ]
 
+# Postwurf-Flyer: eine Fassung je Verteilgebiet, gleicher Kurzlink "quiz".
+# Die Schluessel tragen "flyer-", damit sie in der Statistik nicht mit dem
+# Plakat an der Bushaltestelle Pixendorf ("pixendorf") verwechselt werden.
+# Im Dateinamen faellt das doppelte "flyer" weg: ...-flyer-a6-4fach-pixendorf.pdf
+FLYER_GEBIETE = [
+    ("flyer-pixendorf", "Flyer Pixendorf Wohnblocks"),
+    ("flyer-michelhausen", "Flyer Michelhausen"),
+    ("flyer-atzelsdorf", "Flyer Atzelsdorf"),
+    ("flyer-andere", "Flyer Andere"),
+]
+
 # Die drei Antworten der Screen-Frage brauchen DREI EIGENE Kurzlinks, keine
 # Varianten: jede Antwort führt auf ein anderes Ziel (quizfrage.html?a=1|2|3).
 # Beim Anmelde-Plakat war es umgekehrt — dort ein Link mit drei Varianten.
@@ -110,6 +121,19 @@ MOTIVE = {
         "scale": 3,
         "pdf": "wirtshausquiz-plakat-a3",
         "orte": PLAKAT_ORTE,
+    },
+    # Vier A6-Karten auf einem A4-Bogen, Gerry druckt und schneidet selbst.
+    # Auf die Seite kommt hier das Chrome-PDF, nicht die Kompakt-Fassung: ohne
+    # Bildfilter bleibt es klein (~0,6 MB) und der Text scharf.
+    "flyer": {
+        "template": "flyer.html",
+        "renders": [("wirtshausquiz-flyer-a6-4fach", 794, 1123, "A4 mit 4x A6")],
+        "scale": 3,
+        "pdf": "wirtshausquiz-flyer-a6-4fach",
+        "paper_w_in": 8.27,
+        # Eine Karte oben links als Vorschaubild fuer die Sujet-Seite.
+        "preview": "wirtshausquiz-flyer-vorschau.jpg",
+        "orte": FLYER_GEBIETE,
     },
 }
 
@@ -231,6 +255,14 @@ def build(name, spec, browser, noise, qr, ort=None, suffix="", extra_vars=None):
             else:
                 print("  FEHLGESCHLAGEN:", target.name)
 
+        if spec.get("preview"):
+            # Alle Fassungen sehen gleich aus, die letzte ueberschreibt einfach.
+            im = Image.open(OUT / (spec["renders"][0][0] + suffix + ".png")).convert("RGB")
+            m = round(im.width * 5 / 210)  # 5 mm weisser Rand
+            card = im.crop((m, m, im.width // 2, im.height // 2))
+            card.thumbnail((700, 1000))
+            card.save(OUT / spec["preview"], "JPEG", quality=86, optimize=True, progressive=True)
+
         if spec.get("pdf"):
             pdf = OUT / (spec["pdf"] + suffix + ".pdf")
             subprocess.run(
@@ -247,7 +279,7 @@ def build(name, spec, browser, noise, qr, ort=None, suffix="", extra_vars=None):
                 timeout=180,
             )
             if pdf.is_file():
-                print("  {:<44} {:>27.1f} MB  A3-PDF, Text vektoriell".format(
+                print("  {:<44} {:>27.1f} MB  PDF, Text vektoriell".format(
                     pdf.name, pdf.stat().st_size / 1048576))
             else:
                 print("  FEHLGESCHLAGEN:", pdf.name)
@@ -261,8 +293,8 @@ def build(name, spec, browser, noise, qr, ort=None, suffix="", extra_vars=None):
             if png.is_file():
                 slim = OUT / (spec["pdf"] + suffix + "-kompakt.pdf")
                 im = Image.open(png).convert("RGB")
-                im.save(slim, "PDF", resolution=round(im.width / 11.69), quality=88)
-                print("  {:<44} {:>27.1f} MB  A3-PDF zum Verschicken".format(
+                im.save(slim, "PDF", resolution=round(im.width / spec.get("paper_w_in", 11.69)), quality=88)
+                print("  {:<44} {:>27.1f} MB  PDF zum Verschicken".format(
                     slim.name, slim.stat().st_size / 1048576))
     finally:
         built.unlink(missing_ok=True)
@@ -286,6 +318,11 @@ AUF_DIE_SEITE = (
     "wirtshausquiz-plakat-a3-billa-kompakt.pdf",
     "wirtshausquiz-plakat-a3-bahnhof-kompakt.pdf",
     "wirtshausquiz-plakat-a3-pixendorf-kompakt.pdf",
+    "wirtshausquiz-flyer-a6-4fach-pixendorf.pdf",
+    "wirtshausquiz-flyer-a6-4fach-michelhausen.pdf",
+    "wirtshausquiz-flyer-a6-4fach-atzelsdorf.pdf",
+    "wirtshausquiz-flyer-a6-4fach-andere.pdf",
+    "wirtshausquiz-flyer-vorschau.jpg",
 )
 
 
@@ -338,7 +375,7 @@ def main():
             url = GO_BASE + "?s=" + key
             print("  [{}] QR -> {}".format(label, url))
             build(name, spec, browser, noise, qr_datauri(url),
-                  ort=label, suffix="-" + key)
+                  ort=label, suffix="-" + key.replace("flyer-", ""))
 
     auf_die_seite()
 

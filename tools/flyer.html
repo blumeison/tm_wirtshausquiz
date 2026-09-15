@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<title>Wirtshausquiz – Flyer A6, 4 auf A4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+  /* Postwurf-Flyer im Plakat-Look: vier Karten auf einem A4-Bogen, zum selber
+     Drucken und Schneiden. 5 mm weißer Rand, weil Heimdrucker nicht randlos
+     drucken — jede Karte ist dadurch 100 x 143,5 mm statt 105 x 148 mm.
+     Die Schriftgrößen sind eigens für A6 gesetzt, nicht vom Plakat verkleinert:
+     nichts unter 2,1 mm (≈ 6 pt), Telefonnummer und QR bewusst groß.
+     Beim Drucken „Tatsächliche Größe / 100 %“ wählen, nicht „An Seite anpassen“. */
+
+  @page { size: A4 portrait; margin: 0; }
+
+  :root {
+    --red:      #e51324;
+    --green:    #3aaa35;
+    --yellow:   #ffcc00;
+    --magenta:  #e6007e;
+    --board:    #f0e8d8;
+    --board-sh: #ddd2bc;
+    --ink:      #4a4034;
+    --margin:   5mm;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { width: 210mm; height: 297mm; overflow: hidden; background: #fff; }
+
+  .page { position: relative; width: 210mm; height: 297mm; }
+
+  /* Ein Holzbild für den ganzen Bogen statt vier — hält das PDF klein. */
+  .bed {
+    position: absolute; inset: var(--margin);
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+    background: #3f2c20 url("wood.jpg") center / cover;
+  }
+  .bed::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(91.5deg,
+        rgba(0,0,0,.07) 0, rgba(0,0,0,.07) 1px,
+        rgba(255,255,255,.014) 1px, rgba(255,255,255,.014) 3px);
+  }
+
+  /* Schnittlinien zwischen den Karten + Marken im weißen Rand. */
+  .cut-v, .cut-h { position: absolute; z-index: 5; background: rgba(255,255,255,.7); }
+  .cut-v { left: 50%; top: 0; bottom: 0; width: .2mm; margin-left: -.1mm; }
+  .cut-h { top: 50%; left: 0; right: 0; height: .2mm; margin-top: -.1mm; }
+  .mark { position: absolute; background: #999; }
+  .mark--t, .mark--b { left: 105mm; width: .2mm; height: 3.5mm; margin-left: -.1mm; }
+  .mark--t { top: 0; } .mark--b { bottom: 0; }
+  .mark--l, .mark--r { top: 148.5mm; height: .2mm; width: 3.5mm; margin-top: -.1mm; }
+  .mark--l { left: 0; } .mark--r { right: 0; }
+
+  .card {
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 5mm 5mm 3.2mm;
+  }
+  .card::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 38%,
+      rgba(255,232,190,.12) 0%, rgba(0,0,0,0) 55%, rgba(0,0,0,.42) 100%);
+  }
+
+  /* ---- Bierdeckel ---- */
+  .mat {
+    position: relative; z-index: 2;
+    width: 78mm; height: 76mm;
+    background: var(--board);
+    border-radius: 4.5mm;
+    display: grid; place-items: center; text-align: center;
+    transform: rotate(-1.8deg);
+    box-shadow: 0 .5mm 0 var(--board-sh), 0 .8mm .5mm rgba(0,0,0,.32), 0 4mm 8mm rgba(0,0,0,.5);
+  }
+  .mat::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background-image: var(--noise); background-size: 20mm; opacity: .5; mix-blend-mode: multiply;
+  }
+  .keyline { position: absolute; inset: 3.4mm; border: .3mm solid var(--red); border-radius: 2.5mm; opacity: .85; }
+  .mat .inner { position: relative; z-index: 2; padding: 0 5mm; }
+
+  .logo  { display: block; height: 18mm; width: auto; margin: 0 auto 1.6mm; }
+  .kicker {
+    font: 600 2.5mm/1.2 Rubik, sans-serif; color: var(--ink);
+    text-transform: uppercase; letter-spacing: .35mm; margin-bottom: 1.8mm;
+  }
+  .title { font: 400 12.4mm/.88 'Patua One', Georgia, serif; color: var(--red); letter-spacing: -.15mm; margin-bottom: 2.6mm; }
+  .flagbar {
+    width: 26mm; height: 1.2mm; margin: 0 auto 2.8mm; border-radius: 99mm;
+    background: linear-gradient(90deg, var(--red) 0 45%, var(--green) 45% 63.3%,
+                var(--yellow) 63.3% 81.6%, var(--magenta) 81.6% 100%);
+  }
+  .date  { font: 400 5mm/1.05 'Patua One', Georgia, serif; color: var(--ink); margin-bottom: 1.3mm; }
+  .venue { font: 500 3mm/1.3 Rubik, sans-serif; color: var(--ink); opacity: .88; margin-bottom: .9mm; }
+  .times { font: 600 3mm/1.3 Rubik, sans-serif; color: var(--red); }
+
+  /* ---- Anmelde-Box ---- */
+  .band {
+    position: relative; z-index: 2; width: 100%;
+    background: rgba(255,255,255,.97); border-radius: 3mm;
+    padding: 3mm 3.2mm;
+    display: grid; grid-template-columns: 27mm 1fr; column-gap: 3.2mm; align-items: center;
+    box-shadow: 0 2mm 5mm rgba(0,0,0,.4);
+  }
+  .qr { width: 27mm; height: 27mm; }
+  .qr img { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  .cta  { font: 400 4.6mm/1.05 'Patua One', Georgia, serif; color: var(--red); margin-bottom: .9mm; }
+  .url  { font: 600 2.6mm/1.2 Rubik, sans-serif; color: var(--ink); white-space: nowrap; letter-spacing: -.05mm; }
+  .or   { font: 500 2.4mm/1.2 Rubik, sans-serif; color: var(--ink); opacity: .8;
+          border-top: .25mm solid #e4dccd; margin-top: 1.8mm; padding-top: 1.6mm; }
+  .phone { font: 700 4.9mm/1.1 Rubik, sans-serif; color: var(--ink); white-space: nowrap; letter-spacing: -.05mm; margin: .4mm 0 .2mm; }
+  .phone::before { content: "☎"; color: var(--red); font-weight: 400; margin-right: 1mm; }
+  .who  { font: 500 2.6mm/1.2 Rubik, sans-serif; color: var(--ink); }
+  .meta {
+    grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 2mm;
+    margin-top: 2.4mm; font: 500 2.4mm/1.25 Rubik, sans-serif; color: var(--ink);
+  }
+  .promo {
+    flex: none; background: var(--yellow); color: #5a4200;
+    font: 700 2.3mm/1.2 Rubik, sans-serif; padding: .8mm 1.8mm; border-radius: 99mm; white-space: nowrap;
+  }
+
+  .nb { white-space: nowrap; }
+  .imprint {
+    position: relative; z-index: 2; margin-top: 2.4mm;
+    font: 400 2.1mm/1.35 Rubik, sans-serif; color: rgba(255,255,255,.82); text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="bed" id="bed">
+      <div class="cut-v"></div><div class="cut-h"></div>
+    </div>
+    <i class="mark mark--t"></i><i class="mark mark--b"></i><i class="mark mark--l"></i><i class="mark mark--r"></i>
+  </div>
+
+  <template id="card">
+    <div class="card">
+      <div class="mat">
+        <div class="keyline"></div>
+        <div class="inner">
+          <img class="logo" src="logo-trim.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+          <p class="kicker">lädt ein zum</p>
+          <h1 class="title">Wirtshaus<br>quiz</h1>
+          <div class="flagbar"></div>
+          <p class="date">Freitag, 16. Oktober 2026</p>
+          <p class="venue">Gasthaus Burchhart · Atzelsdorf</p>
+          <p class="times">Ab 17:30 · Quizstart 18:30</p>
+        </div>
+      </div>
+
+      <div class="band">
+        <div class="qr"><img class="qr-img" src="" alt="QR-Code zur Anmeldung"></div>
+        <div>
+          <p class="cta">Jetzt Team anmelden</p>
+          <p class="url">quiz.team-michelhausen.at</p>
+          <p class="or">oder einfach anrufen:</p>
+          <p class="phone">0677 6199 1478</p>
+          <p class="who">Daniel Bartsch</p>
+        </div>
+        <div class="meta">
+          <span>3 bis 5 Personen · kostenlos</span>
+          <span class="promo">Kein Team? Wir setzen euch dazu</span>
+        </div>
+      </div>
+
+      <!-- Impressum wie am Plakat (Hausform der Fraktionszeitung), kein Verteilgebiet. -->
+      <p class="imprint">
+        Für den Inhalt verantwortlich: GGR Mag. Gerald Fröhlich, Gemeinderatsfraktion des
+        Team Michelhausen – SPÖ &amp; Unabhängige, <span class="nb">Getreidegasse 10, 3451 Pixendorf</span> ·
+        <span class="nb">office@team-michelhausen.at</span> · <span class="nb">www.team-michelhausen.at</span> ·
+        <span class="nb">Druck: Eigendruck, 3451 Pixendorf</span>
+      </p>
+    </div>
+  </template>
+
+  <script>
+    // Vier gleiche Karten; der QR-Code kommt beim Bauen als data-URI in --qr.
+    var qr = getComputedStyle(document.documentElement).getPropertyValue('--qr').trim()
+      .replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+    var bed = document.getElementById('bed'), tpl = document.getElementById('card');
+    for (var i = 0; i < 4; i++) {
+      var c = tpl.content.cloneNode(true);
+      if (qr) { c.querySelector('.qr-img').src = qr; }
+      bed.appendChild(c);
+    }
+  </script>
+</body>
+</html>

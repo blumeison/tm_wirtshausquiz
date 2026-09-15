@@ -1050,6 +1050,54 @@ Anmeldung wie gehabt: quiz.team-michelhausen.at</pre>
   </div>
 </section>
 
+<section data-view="druck">
+  <div class="wrap">
+    <h2>Flyer f&uuml;r den Postkasten</h2>
+    <p class="sub">A6-Flyer mit QR-Code und Telefonnummer (Daniel Bartsch, 0677&nbsp;6199&nbsp;1478) &mdash; vier St&uuml;ck auf einem A4-Blatt zum Selberschneiden. Eine Datei je Verteilgebiet, jede mit eigenem QR-Code: Die Flyer sehen gleich aus, also <strong>Stapel nicht mischen</strong>. Wer unsicher ist, scannt: Der Link endet auf <code>?s=flyer-pixendorf</code>, <code>-michelhausen</code>, <code>-atzelsdorf</code> oder <code>-andere</code>.</p>
+    <div class="note" style="margin:0 0 22px">
+      <strong>Drucken:</strong> A4, Hochformat, <strong>&bdquo;Tats&auml;chliche Gr&ouml;&szlig;e&ldquo; / 100&nbsp;%</strong> &mdash; nicht &bdquo;An Seite anpassen&ldquo;.
+      Dann entlang der hellen Linien schneiden (die Striche im wei&szlig;en Rand zeigen die Mitte). Jede Karte hat 10&nbsp;&times;&nbsp;14,35&nbsp;cm, knapp unter A6, weil der Drucker einen Rand braucht.
+      Der Holzhintergrund braucht ordentlich Farbe &mdash; vorher eine Seite testen.
+    </div>
+    <div class="assets">
+      <figure class="asset">
+        <img src="wirtshausquiz-flyer-vorschau.jpg" alt="Vorschau Flyer A6" loading="lazy">
+        <figcaption class="asset__bar">
+          <span class="asset__name"><b>Vorschau</b><br>eine Karte</span>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="pdfbox" aria-hidden="true">&#128196;</div>
+        <figcaption class="asset__bar">
+          <span class="asset__name"><b>Pixendorf Wohnblocks</b><br>A4, 4&times; A6</span>
+          <a class="dl" href="wirtshausquiz-flyer-a6-4fach-pixendorf.pdf" download>Herunterladen</a>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="pdfbox" aria-hidden="true">&#128196;</div>
+        <figcaption class="asset__bar">
+          <span class="asset__name"><b>Michelhausen</b><br>A4, 4&times; A6</span>
+          <a class="dl" href="wirtshausquiz-flyer-a6-4fach-michelhausen.pdf" download>Herunterladen</a>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="pdfbox" aria-hidden="true">&#128196;</div>
+        <figcaption class="asset__bar">
+          <span class="asset__name"><b>Atzelsdorf</b><br>A4, 4&times; A6</span>
+          <a class="dl" href="wirtshausquiz-flyer-a6-4fach-atzelsdorf.pdf" download>Herunterladen</a>
+        </figcaption>
+      </figure>
+      <figure class="asset">
+        <div class="pdfbox" aria-hidden="true">&#128196;</div>
+        <figcaption class="asset__bar">
+          <span class="asset__name"><b>Andere</b><br>A4, 4&times; A6</span>
+          <a class="dl" href="wirtshausquiz-flyer-a6-4fach-andere.pdf" download>Herunterladen</a>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
 <section data-view="social">
   <div class="wrap">
     <details class="fold">
@@ -1110,7 +1158,7 @@ Anmeldung wie gehabt: quiz.team-michelhausen.at</pre>
 
 <footer class="end">
   <div class="wrap">
-    Wirtshausquiz · Team Michelhausen · Stand 11. September 2026 · quiz.team-michelhausen.at
+    Wirtshausquiz · Team Michelhausen · Stand 15. September 2026 · quiz.team-michelhausen.at
   </div>
 </footer>
 
@@ -1237,7 +1285,7 @@ Anmeldung wie gehabt: quiz.team-michelhausen.at</pre>
           return '<li><a href="#social/' + p.getAttribute('data-n') + '">' + esc(whenOf(p)) + ' — ' + esc(titleOf(p)) + '</a></li>';
         }).join('') + '</ul></div>');
       }
-      box.insertAdjacentHTML('beforeend', '<p class="next__print">🖨️ Plakate zum Drucken gibt es unter <a href="#druck">Druck</a>.</p>');
+      box.insertAdjacentHTML('beforeend', '<p class="next__print">🖨️ Plakate und Postkasten-Flyer zum Drucken gibt es unter <a href="#druck">Druck</a>.</p>');
     }
 
     document.addEventListener('click', function (ev) {

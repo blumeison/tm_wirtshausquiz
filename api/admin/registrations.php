@@ -5,12 +5,129 @@
  *   GET                  -> list with derived position/slot/free round + counters
  *   GET ?format=csv      -> the same list as CSV (Excel-friendly: ; and BOM)
  *   POST {action:"cancel", id} -> cancel a team (waitlist moves up by itself)
+ *   POST {action:"create", …}  -> enter a team by hand (phone signups)
  */
 require_once __DIR__ . '/../auth.php';
 
 $me  = require_role('EDITOR');
 $cfg = wq_config();
 $sessionId = $cfg['session_id'];
+
+/**
+ * A team entered by hand, typically after a phone call to the number on the flyer.
+ * Unlike the public form: e-mail is optional (phone or e-mail is enough), no consent
+ * checkbox (the caller agreed on the phone), no rate limit and no hard stop at the
+ * waitlist limit — whoever types it in knows what they are doing. The confirmation
+ * mail only goes out when asked for and an address exists.
+ */
+function create_manual($in, $cfg, $me)
+{
+    require_once __DIR__ . '/../mail_templates.php';
+
+    $errors = [];
+    $teamName = clean_str(isset($in['teamName']) ? $in['teamName'] : '', 60);
+    if (mb_strlen($teamName) < 2) {
+        $errors['teamName'] = 'Teamname fehlt (mindestens 2 Zeichen).';
+    }
+    $captainName = clean_str(isset($in['captainName']) ? $in['captainName'] : '', 60);
+    if (mb_strlen($captainName) < 2) {
+        $errors['captainName'] = 'Name der Kontaktperson fehlt.';
+    }
+    $emailRaw = clean_str(isset($in['email']) ? $in['email'] : '', 120);
+    $email = $emailRaw === '' ? '' : clean_email($emailRaw);
+    if ($emailRaw !== '' && $email === '') {
+        $errors['email'] = 'Diese E-Mail-Adresse sieht nicht richtig aus.';
+    }
+    $phoneRaw = clean_str(isset($in['phone']) ? $in['phone'] : '', 40);
+    $phone = $phoneRaw === '' ? '' : clean_phone($phoneRaw);
+    if ($phoneRaw !== '' && $phone === '') {
+        $errors['phone'] = 'Diese Telefonnummer sieht nicht richtig aus.';
+    }
+    if ($email === '' && $phone === '' && !isset($errors['email']) && !isset($errors['phone'])) {
+        $errors['phone'] = 'Telefonnummer oder E-Mail — sonst erreicht ihr das Team nicht.';
+    }
+    $size = (int)(isset($in['size']) ? $in['size'] : 0);
+    if ($size < (int)$cfg['team_min'] || $size > (int)$cfg['team_max']) {
+        $errors['size'] = 'Ein Team hat ' . (int)$cfg['team_min'] . ' bis ' . (int)$cfg['team_max'] . ' Personen.';
+    }
+    $heardAllowed = ['telefon', 'freunde', 'facebook', 'instagram', 'schwarzesbrett', 'plakat',
+                     'flyer', 'zeitung', 'wirt', 'sonstiges'];
+    $heardFrom = clean_str(isset($in['heardFrom']) ? $in['heardFrom'] : '', 20);
+    if (!in_array($heardFrom, $heardAllowed, true)) {
+        $heardFrom = 'telefon';
+    }
+    $note = clean_str(isset($in['note']) ? $in['note'] : '', 500);
+    $looking = !empty($in['lookingForPlayers']);
+    $sendMail = !empty($in['sendMail']) && $email !== '';
+
+    if (count($errors) > 0) {
+        fail(422, 'Bitte die markierten Felder prüfen.', ['fields' => $errors]);
+    }
+
+    $res = null;
+    with_registrations($cfg['session_id'], function ($list, &$res) use (
+        $cfg, $me, $teamName, $captainName, $email, $phone, $size, $note, $looking, $heardFrom
+    ) {
+        foreach ($list as $r) {
+            if ((isset($r['status']) ? $r['status'] : 'ACTIVE') === 'CANCELLED') {
+                continue;
+            }
+            if ($email !== '' && norm_key(isset($r['email']) ? $r['email'] : '') === norm_key($email)) {
+                $res = ['error' => 'Mit dieser E-Mail-Adresse ist schon „' . $r['teamName'] . '" angemeldet.'];
+                return null;
+            }
+            if (norm_key(isset($r['teamName']) ? $r['teamName'] : '') === norm_key($teamName)) {
+                $res = ['error' => 'Den Teamnamen „' . $teamName . '" gibt es schon.'];
+                return null;
+            }
+        }
+        $reg = [
+            'id'                => gen_id('reg_'),
+            'sessionId'         => $cfg['session_id'],
+            'teamName'          => $teamName,
+            'captainName'       => $captainName,
+            'email'             => $email,
+            'phone'             => $phone,
+            'size'              => $size,
+            'lookingForPlayers' => $looking,
+            'note'              => $note,
+            'heardFrom'         => $heardFrom,
+            'tmSrc'             => '',
+            'tmCh'              => '',
+            'referrer'          => '',
+            'status'            => 'ACTIVE',
+            'cancelToken'       => gen_token(),
+            'createdAt'         => now_iso(),
+            'createdBy'         => $me['email'],
+        ];
+        $list[] = $reg;
+        $st = standings($list, $cfg);
+        $slot = 'CONFIRMED';
+        foreach ($st['entries'] as $e) {
+            if ($e['id'] === $reg['id']) {
+                $slot = $e['slot'];
+            }
+        }
+        $res = ['reg' => $reg, 'slot' => $slot];
+        return $list;
+    }, $res);
+
+    if (isset($res['error'])) {
+        fail(409, $res['error']);
+    }
+    if (!isset($res['reg'])) {
+        fail(500, 'Konnte nicht gespeichert werden.');
+    }
+
+    $mailSent = false;
+    if ($sendMail) {
+        $cancelUrl = rtrim($cfg['site_url'], '/') . '/absage.html?t=' . $res['reg']['cancelToken'];
+        // Manual entries never get the (frozen) free round, so promoRank is 0.
+        $mail = wq_confirmation_mail($res['reg'], $res['slot'], 0, $cfg, $cancelUrl);
+        $mailSent = (bool)send_mail($email, $mail['subject'], $mail['html'], $mail['text']);
+    }
+    ok(['teamName' => $teamName, 'slot' => $res['slot'], 'mailSent' => $mailSent]);
+}
 
 $method = strtoupper(isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET');
 
@@ -20,6 +137,9 @@ if ($method === 'POST') {
     $action = isset($in['action']) ? $in['action'] : '';
     $id = clean_str(isset($in['id']) ? $in['id'] : '', 40);
 
+    if ($action === 'create') {
+        create_manual($in, $cfg, $me);
+    }
     if ($action !== 'cancel' || $id === '') {
         fail(400, 'Unbekannte Aktion');
     }
@@ -59,7 +179,7 @@ foreach ($st['entries'] as $e) {
 
 // cancelToken is a capability (whoever has it can cancel) — it never leaves the server.
 $pick = ['id', 'teamName', 'captainName', 'email', 'phone', 'size', 'lookingForPlayers', 'note',
-         'status', 'createdAt', 'cancelledAt', 'cancelledBy', 'heardFrom', 'tmSrc', 'tmCh', 'referrer', 'ip'];
+         'status', 'createdAt', 'createdBy', 'cancelledAt', 'cancelledBy', 'heardFrom', 'tmSrc', 'tmCh', 'referrer', 'ip'];
 $rows = [];
 foreach ($list as $r) {
     $row = [];
@@ -91,7 +211,7 @@ usort($rows, function ($a, $b) {
 if (isset($_GET['format']) && $_GET['format'] === 'csv') {
     $heard = ['freunde' => 'Freunde/Bekannte', 'facebook' => 'Facebook', 'instagram' => 'Instagram',
               'schwarzesbrett' => 'Schwarzes Brett (WhatsApp)', 'plakat' => 'Plakat', 'zeitung' => 'Zeitung',
-              'screen' => 'Werbescreen', 'wirt' => 'Im Gasthaus', 'sonstiges' => 'Anders'];
+              'flyer' => 'Flyer im Postkasten', 'telefon' => 'Telefonisch angemeldet', 'wirt' => 'Im Gasthaus', 'sonstiges' => 'Anders'];
     // A cell starting with = + - @ would run as a formula in Excel.
     $cell = function ($v) {
         $v = str_replace(["\r", "\n"], ' ', (string)$v);

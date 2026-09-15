@@ -356,3 +356,14 @@ details.cancelled-block > summary { cursor: pointer; color: var(--tm-text-soft);
 .ki-opts li.ok { color: #1f6b33; font-weight: 700; }
 .ki-import { position: sticky; bottom: 0; display: flex; gap: var(--tm-space-2); flex-wrap: wrap; padding: var(--tm-space-3) 0;
   background: var(--tm-surface-2); border-top: 1px solid var(--tm-border); }
+
+/* ---- Team händisch eintragen ---- */
+.manual { margin-bottom: var(--tm-space-5); }
+.manual .ed-card { display: grid; gap: var(--tm-space-3); }
+.manual h3 { margin: 0; }
+.manual .ed-grid { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.manual .tm-select { width: 100%; }
+.fld-err { margin: 0; font-size: var(--tm-fs-xs); color: var(--tm-red); min-height: 0; }
+.fld-err:empty { display: none; }
+.chk { display: flex; gap: .5rem; align-items: center; font-size: var(--tm-fs-sm); cursor: pointer; }
+.chk input { width: 1.1rem; height: 1.1rem; accent-color: var(--tm-red); }
