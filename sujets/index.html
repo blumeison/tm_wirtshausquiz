@@ -140,6 +140,10 @@
   .copy:hover { color: var(--accent); border-color: var(--accent); }
   .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .copy.is-done { color: var(--ok-fg); border-color: var(--ok-fg); }
+  /* Mehrere Kanäle: eine Knopfreihe über dem Text statt eines Knopfs in der Ecke. */
+  .copies { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+  .copies .copy { position: static; margin: 0; }
+  .copies__hint { flex-basis: 100%; font-size: .74rem; color: var(--faint); }
 
   .todo { margin: 0; padding-left: 1.15em; font-size: .92rem; color: var(--muted); }
   .todo li { margin-bottom: 5px; }
@@ -289,8 +293,10 @@
       <div class="rule">
         <h3>Der Link gehört in die Bio</h3>
         <p>Auf Instagram sind Links im Text <strong>nicht klickbar</strong>. Ab 17. September muss
-          <code>quiz.team-michelhausen.at</code> im Profil-Link stehen, und im Text der Hinweis
-          „Link in der Bio“. In Stories immer den <strong>Link-Sticker</strong> setzen.</p>
+          <code>go.team-michelhausen.at/quiz?s=instagram</code> im Profil-Link stehen, und im Text der Hinweis
+          „Link in der Bio“. In Stories immer den <strong>Link-Sticker</strong> setzen, mit
+          <code>go.team-michelhausen.at/quiz?s=instagram-story</code>. Auf Facebook und WhatsApp
+          setzen die Kopier-Knöpfe den passenden Link selbst ein — so sehen wir, welcher Kanal Anmeldungen bringt.</p>
       </div>
       <div class="rule">
         <h3>Die erste Stunde entscheidet</h3>
@@ -507,8 +513,9 @@ Anmeldung: quiz.team-michelhausen.at</pre>
 
           <ul class="todo">
             <li><strong>Vorher:</strong> Link in der Instagram-Bio auf
-              <code>quiz.team-michelhausen.at</code> setzen. Ohne das läuft der Post ins Leere.</li>
-            <li><strong>Story mit Link-Sticker</strong> posten und als Highlight speichern.</li>
+              <code>go.team-michelhausen.at/quiz?s=instagram</code> setzen. Ohne das läuft der Post ins Leere.</li>
+            <li><strong>Story mit Link-Sticker</strong> posten und als Highlight speichern. Link im Sticker:
+              <code>go.team-michelhausen.at/quiz?s=instagram-story</code></li>
             <li><strong>Am selben Tag:</strong> die vier A3-Plakate aufhängen — Gasthaus,
               Nahversorger, Bahnhof, Bushaltestelle Pixendorf. Jedes hat seinen eigenen QR-Code — vor dem
               Aufhängen kurz scannen, der Link verrät, welches wohin gehört (…?s=burchhart, …?s=billa,
@@ -555,7 +562,7 @@ Link unten 👇</pre>
           <ul class="todo">
             <li>Vorher auf <code>quiz.team-michelhausen.at</code> die aktuelle Zahl nachschauen.
               Der Zähler auf der Seite ist live.</li>
-            <li>Link-Sticker nicht vergessen.</li>
+            <li>Link-Sticker nicht vergessen: <code>go.team-michelhausen.at/quiz?s=instagram-story</code></li>
           </ul>
         </div>
       </article>
@@ -1111,7 +1118,7 @@ Anmeldung wie gehabt: quiz.team-michelhausen.at</pre>
         <tbody>
           <tr>
             <td>vor 17.09.</td>
-            <td>Link in der Instagram-Bio setzen</td>
+            <td>Link in der Instagram-Bio setzen: <code>go.team-michelhausen.at/quiz?s=instagram</code></td>
             <td>Anmeldung offen — und alle danach</td>
             <td>Social-Media-Team</td>
           </tr>
@@ -1166,32 +1173,94 @@ Anmeldung wie gehabt: quiz.team-michelhausen.at</pre>
   document.addEventListener('click', function (ev) {
     var btn = ev.target.closest('.copy');
     if (!btn) { return; }
-    var pre = btn.parentNode.querySelector('pre');
+    var cap = btn.closest('.caption');
+    var pre = cap && cap.querySelector('pre');
     if (!pre) { return; }
+    var ch = btn.getAttribute('data-ch');
+    var text = ch ? channelText(pre.getAttribute('data-plain') || pre.textContent, ch) : pre.textContent;
+    var old = btn.textContent;
 
     function done() {
-      var old = btn.textContent;
       btn.textContent = 'Kopiert';
       btn.classList.add('is-done');
       setTimeout(function () { btn.textContent = old; btn.classList.remove('is-done'); }, 1600);
     }
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(pre.textContent).then(done, fallback);
+      navigator.clipboard.writeText(text).then(done, fallback);
     } else {
       fallback();
     }
 
     // Ohne Zwischenablage-Rechte bleibt der Text wenigstens markiert.
     function fallback() {
+      // Den Kanaltext sichtbar machen, damit genau der markiert wird.
+      if (ch) { pre.textContent = text; }
       var r = document.createRange();
       r.selectNodeContents(pre);
       var sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(r);
       btn.textContent = 'Markiert — mit Strg+C kopieren';
-      setTimeout(function () { btn.textContent = 'Kopieren'; }, 2600);
+      setTimeout(function () { btn.textContent = old; }, 2600);
     }
+  });
+
+  // ---- Kurzlink je Kanal ---------------------------------------------------------
+  // In den Texten steht die schlichte Adresse. Beim Kopieren setzt die Seite den
+  // tm_go-Kurzlink des Kanals ein (?s=facebook, ?s=whatsapp, ?s=email), damit im
+  // Backoffice sichtbar wird, welcher Kanal Anmeldungen bringt — WhatsApp-Klicks
+  // kommen sonst ohne jede Herkunft an. Für Instagram wird daraus „Link in der Bio“,
+  // weil Links im Text dort nicht klickbar sind. Die Schlüssel sind als Quellen des
+  // tm_go-Links "quiz" angelegt.
+  var PLAIN = 'quiz.team-michelhausen.at';
+  var CHANNELS = {
+    facebook:  { label: 'Facebook',  repl: 'go.team-michelhausen.at/quiz?s=facebook' },
+    whatsapp:  { label: 'WhatsApp',  repl: 'go.team-michelhausen.at/quiz?s=whatsapp' },
+    instagram: { label: 'Instagram', repl: 'Link in der Bio' },
+    email:     { label: 'E-Mail',    repl: 'go.team-michelhausen.at/quiz?s=email' }
+  };
+  function channelText(text, ch) {
+    return CHANNELS[ch] ? text.split(PLAIN).join(CHANNELS[ch].repl) : text;
+  }
+  function channelsIn(t) {
+    t = t.toLowerCase();
+    var out = [];
+    if (t.indexOf('facebook') > -1) { out.push('facebook'); }
+    if (t.indexOf('schwarzes brett') > -1 || t.indexOf('whatsapp') > -1) { out.push('whatsapp'); }
+    if (/instagram (feed|reel)/.test(t)) { out.push('instagram'); }
+    if (t.indexOf('e-mail') > -1) { out.push('email'); }
+    return out;
+  }
+  [].forEach.call(document.querySelectorAll('.caption'), function (cap) {
+    var pre = cap.querySelector('pre'), btn = cap.querySelector('.copy');
+    if (!pre || !btn || pre.textContent.indexOf(PLAIN) < 0) { return; }
+    var label = cap.querySelector('.caption__label');
+    // Ein Text mit Kanal im Titel („— Facebook“) gilt nur für diesen Kanal,
+    // sonst für alle Kanäle, die beim Post unter „Wo“ stehen.
+    var chs = channelsIn(label ? label.textContent : '');
+    if (!chs.length) {
+      var post = cap.closest('.post');
+      chs = channelsIn(post ? [].map.call(post.querySelectorAll('.chan'), function (c) { return c.textContent; }).join(' ') : '');
+    }
+    if (!chs.length) { return; }
+    pre.setAttribute('data-plain', pre.textContent);
+    var row = document.createElement('div');
+    row.className = 'copies';
+    chs.forEach(function (ch) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'copy';
+      b.setAttribute('data-ch', ch);
+      b.textContent = 'Kopieren für ' + CHANNELS[ch].label;
+      row.appendChild(b);
+    });
+    var hint = document.createElement('span');
+    hint.className = 'copies__hint';
+    hint.textContent = 'Der Link wird beim Kopieren passend zum Kanal eingesetzt.';
+    row.appendChild(hint);
+    btn.parentNode.replaceChild(row, btn);
+    pre.parentNode.insertBefore(row, pre);
   });
 
   // ---- Drei Ansichten, aufklappbare Posts, „Als Nächstes“ ----------------------

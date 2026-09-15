@@ -58,7 +58,9 @@
     burchhart: 'Plakat Burchhart', billa: 'Plakat Billa', bahnhof: 'Plakat Bahnhof',
     pixendorf: 'Plakat Bushaltestelle Pixendorf',
     'flyer-pixendorf': 'Flyer Pixendorf Wohnblocks', 'flyer-michelhausen': 'Flyer Michelhausen',
-    'flyer-atzelsdorf': 'Flyer Atzelsdorf', 'flyer-andere': 'Flyer Andere'
+    'flyer-atzelsdorf': 'Flyer Atzelsdorf', 'flyer-andere': 'Flyer Andere',
+    facebook: 'Link aus Facebook-Post', whatsapp: 'Link aus WhatsApp', email: 'Link aus E-Mail',
+    instagram: 'Instagram-Bio', 'instagram-story': 'Instagram-Story-Sticker'
   };
 
   function qrLabel(r) {
