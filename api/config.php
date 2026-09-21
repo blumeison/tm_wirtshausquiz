@@ -20,6 +20,7 @@ return [
     // approves them under "Benutzer". Extendable via data/config.json.
     'admins' => [
         'markus.blumei@gmail.com',
+        'daniel.bartsch@live.at',
     ],
 
     // ---- The event ---------------------------------------------------------
