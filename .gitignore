@@ -7,3 +7,4 @@ assets/netcup.config.json
 Thumbs.db
 tools/out/
 tools/_sujet.built.html
+__pycache__/

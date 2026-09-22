@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<title>Bewegte Auflösung – Story-Vorlage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;700&display=swap">
+<style>
+  /* Vorlage für die bewegten Auflösungen der „Frage der Woche“ als
+     Story-Video (1080x1920). Texte und Zahlen kommen als window.CFG aus
+     build_video.py — für eine neue Auflösung dort einen Eintrag anlegen,
+     hier nichts ändern.
+
+     Kein CSS-Timing: render(t) setzt jeden Zustand aus der Zeit t, damit
+     build_video.py Bild für Bild exakt gleich rendern kann.
+
+     CI (tm-design) auf der Kampagnen-Bildwelt (Bierdeckel auf Holz):
+     Patua One + Rubik (400/500/700), Ink #3f3f3e, Rot nur als Signal (Kurve,
+     Kernzahl, Kicker, Weiter-Pille), das Trio nur im Flaggenbalken (Rot
+     vorne) und Grün als „richtig“. Du-Form. */
+
+  :root {
+    --tm-red: #e51324; --tm-red-soft: #fce8ea;
+    --tm-green: #3aaa35; --tm-yellow: #ffcc00; --tm-magenta: #e6007e;
+    --tm-ink: #3f3f3e; --tm-text-soft: #6b6b6a;
+    --tm-font-head: 'Patua One', Georgia, serif;
+    --tm-font-body: 'Rubik', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    --tm-flag-gradient: linear-gradient(90deg, #e51324 0 45%, #3aaa35 45% 63.3%,
+                                        #ffcc00 63.3% 81.6%, #e6007e 81.6% 100%);
+    --board: #f0e8d8; --board-sh: #ddd2bc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; overflow: hidden; }
+
+  .stage { position: relative; overflow: hidden; width: 1080px; height: 1920px; background: #3f2c20; }
+  .wood, .wood-photo, .vignette { position: absolute; inset: 0; }
+  .wood {
+    background:
+      repeating-linear-gradient(91.5deg,
+        rgba(0,0,0,.07) 0, rgba(0,0,0,.07) 3px,
+        rgba(255,255,255,.014) 3px, rgba(255,255,255,.014) 9px,
+        rgba(0,0,0,.035) 9px, rgba(0,0,0,.035) 23px),
+      linear-gradient(163deg, #63483a 0%, #4a3527 48%, #33241a 100%);
+  }
+  .wood-photo { background-image: url("wood.jpg"); background-size: cover; background-position: center;
+                filter: brightness(1.12) saturate(1.06); }
+  .vignette { background: radial-gradient(ellipse at 50% 42%,
+      rgba(255,232,190,.13) 0%, rgba(0,0,0,0) 52%, rgba(0,0,0,.38) 100%); }
+
+  /* Deckel: oben und unten bleibt Platz für die Instagram-Leisten (~250 px). */
+  .mat { position: absolute; left: 70px; top: 240px; width: 940px; height: 1440px;
+         background: var(--board); border-radius: 42px; text-align: center;
+         box-shadow: 0 2px 0 var(--board-sh), 0 3px 1px rgba(0,0,0,.35), 0 26px 50px rgba(0,0,0,.55); }
+  .mat::before { content: ""; position: absolute; inset: 0; border-radius: inherit;
+                 background-image: var(--noise); opacity: .5; mix-blend-mode: multiply; }
+  .mat::after { content: ""; position: absolute; inset: 0; border-radius: inherit;
+                background: linear-gradient(145deg, rgba(255,255,255,.5), rgba(0,0,0,0) 38%, rgba(0,0,0,.06)); }
+  .keyline { position: absolute; inset: 42px; border: 2px solid var(--tm-red); border-radius: 24px; opacity: .85; }
+
+  /* Senkrechter Fluss statt absoluter Positionen — nichts kann sich überlappen. */
+  .content { position: absolute; inset: 42px; z-index: 2; padding: 36px 48px 36px;
+             display: flex; flex-direction: column; align-items: center; }
+
+  .kicker { font: 500 32px var(--tm-font-body); letter-spacing: 4px; color: var(--tm-red);
+            text-transform: uppercase; }
+  .h { margin-top: 18px; font: 400 58px/1.15 var(--tm-font-head); color: var(--tm-ink); text-wrap: balance; }
+
+  .counter { margin-top: 26px; font: 400 124px/1 var(--tm-font-head); color: var(--tm-red);
+             font-variant-numeric: tabular-nums; }
+  .counter-sub { margin-top: 10px; font: 500 30px var(--tm-font-body); color: var(--tm-text-soft); }
+
+  .chart { position: relative; margin-top: 14px; width: 760px; height: 380px; }
+  .chart svg { display: block; overflow: visible; }
+  .ax { font: 500 23px var(--tm-font-body); fill: var(--tm-text-soft); }
+  .pt { font: 700 26px var(--tm-font-body); fill: var(--tm-ink); }
+
+  /* Links oben ist die Fläche frei, solange die Kurve steigt. */
+  .badge { position: absolute; left: 104px; top: 4px; background: var(--tm-red-soft); color: var(--tm-red);
+           font: 700 44px var(--tm-font-body); padding: 10px 26px; border-radius: 999px; }
+
+  .answer { margin-top: 18px; display: inline-flex; align-items: center; gap: 20px;
+            font: 500 38px var(--tm-font-body); color: var(--tm-ink); }
+  .answer b { display: grid; place-items: center; width: 70px; height: 70px; border-radius: 50%;
+              background: var(--tm-green); color: #fff; font: 700 38px var(--tm-font-body); }
+
+  .foot { margin-top: auto; width: 100%; }
+  .fact { font: 400 29px/1.4 var(--tm-font-body); color: var(--tm-ink); text-wrap: balance; }
+  .cta { margin-top: 14px; font: 400 40px/1.2 var(--tm-font-head); color: var(--tm-ink); text-wrap: balance; }
+
+  /* Weiter-Pille: In der nächsten Story liegt der Link-Sticker. Pfeil nach
+     rechts, weil man in Storys rechts tippt, um weiterzukommen. */
+  .next { margin: 20px auto 0; display: inline-flex; align-items: center; gap: 16px;
+          background: var(--tm-red); color: #fff; font: 700 36px var(--tm-font-body);
+          padding: 16px 30px 16px 36px; border-radius: 999px;
+          box-shadow: 0 8px 20px rgba(229,19,36,.3); }
+  .next svg { display: block; }
+
+  .flagbar { width: 225px; height: 12px; margin: 22px auto 0; border-radius: 99px; background: var(--tm-flag-gradient); }
+  .src { margin-top: 12px; font: 400 20px var(--tm-font-body); color: var(--tm-text-soft); }
+  .logo { display: block; height: 80px; margin: 12px auto 0; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="wood"></div>
+  <div class="wood-photo"></div>
+  <div class="vignette"></div>
+
+  <div class="mat" id="mat">
+    <div class="keyline"></div>
+    <div class="content" id="content">
+      <p class="kicker" id="kicker"></p>
+      <h1 class="h" id="h"></h1>
+
+      <p class="counter" id="counter"></p>
+      <p class="counter-sub" id="csub"></p>
+
+      <div class="chart" id="chart">
+        <svg id="svg" width="760" height="380" viewBox="0 0 760 380">
+          <defs>
+            <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#e51324" stop-opacity=".22"/>
+              <stop offset="1" stop-color="#e51324" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <g id="axes"></g>
+          <path id="area" fill="url(#fill)"/>
+          <path id="line" fill="none" stroke="#e51324" stroke-width="9"
+                stroke-linecap="round" stroke-linejoin="round"/>
+          <g id="dots"></g>
+          <circle id="head" r="15" fill="#e51324" stroke="#f0e8d8" stroke-width="6"/>
+        </svg>
+        <div class="badge" id="badge"></div>
+      </div>
+
+      <div class="answer" id="answer"><b id="ansLetter"></b><span id="ansText"></span></div>
+
+      <div class="foot" id="foot">
+        <p class="fact" id="fact"></p>
+        <p class="cta" id="cta"></p>
+        <div class="next" id="next"><span id="nextText"></span>
+          <svg id="arrow" width="46" height="34" viewBox="0 0 46 34">
+            <path d="M3 17 H39 M26 4 L40 17 L26 30" fill="none" stroke="#fff"
+                  stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="flagbar"></div>
+        <p class="src" id="src"></p>
+        <img class="logo" src="logo-trim.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var CFG = window.CFG;
+function txt(id, s) { document.getElementById(id).textContent = s || ''; }
+txt('kicker', CFG.kicker);
+txt('h', CFG.headline);
+txt('badge', CFG.badge);
+txt('ansLetter', CFG.answer.letter);
+txt('ansText', CFG.answer.text);
+txt('fact', CFG.fact);
+txt('cta', CFG.cta);
+txt('nextText', CFG.next);
+txt('src', CFG.source);
+if (!CFG.next) document.getElementById('next').style.display = 'none';
+
+var DATA = CFG.data;
+var W = 760, H = 380, PL = 92, PR = 30, PT = 56, PB = 50;
+var X0 = CFG.x[0], X1 = CFG.x[1], Y0 = CFG.y[0], Y1 = CFG.y[1];
+function sx(x) { return PL + (x - X0) / (X1 - X0) * (W - PL - PR); }
+function sy(y) { return PT + (1 - (y - Y0) / (Y1 - Y0)) * (H - PT - PB); }
+function fmt(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+var NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, text) {
+  var e = document.createElementNS(NS, tag);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  if (text) e.textContent = text;
+  return e;
+}
+
+var axes = document.getElementById('axes');
+CFG.grid.forEach(function (v) {
+  axes.appendChild(el('line', { x1: PL, x2: W - PR, y1: sy(v), y2: sy(v),
+    stroke: '#3f3f3e', 'stroke-opacity': .14, 'stroke-width': 2, 'stroke-dasharray': '6 8' }));
+  axes.appendChild(el('text', { x: PL - 16, y: sy(v) + 8, 'text-anchor': 'end', 'class': 'ax' }, fmt(v)));
+});
+axes.appendChild(el('line', { x1: PL, x2: W - PR, y1: H - PB, y2: H - PB,
+  stroke: '#3f3f3e', 'stroke-opacity': .3, 'stroke-width': 2 }));
+DATA.forEach(function (d) {
+  if (d.axis !== false) axes.appendChild(el('text', { x: sx(d.x), y: H - PB + 36, 'text-anchor': 'middle', 'class': 'ax' }, d.label));
+});
+
+var dots = document.getElementById('dots');
+var dotEls = DATA.map(function (d, i) {
+  var g = el('g', {});
+  g.appendChild(el('circle', { cx: sx(d.x), cy: sy(d.y), r: 9, fill: '#e51324' }));
+  // Nur Anfang und Ende beschriften, sonst wird's eng.
+  if (i === 0) g.appendChild(el('text', { x: sx(d.x) - 8, y: sy(d.y) - 26, 'text-anchor': 'start', 'class': 'pt' }, fmt(d.y)));
+  if (i === DATA.length - 1) g.appendChild(el('text', { x: sx(d.x) + 4, y: sy(d.y) - 30, 'text-anchor': 'end', 'class': 'pt' }, fmt(d.y)));
+  dots.appendChild(g);
+  return g;
+});
+
+function clamp(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+function span(t, a, b) { return clamp((t - a) / (b - a)); }
+function easeOut(p) { return 1 - Math.pow(1 - p, 3); }
+function easeInOut(p) { return p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; }
+function pop(p) { // kleiner Überschwinger beim Erscheinen
+  if (p <= 0) return 0;
+  var c = 1.70158 * 1.4;
+  return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2);
+}
+function show(id, p, dy) {
+  var e = document.getElementById(id);
+  e.style.opacity = p;
+  e.style.transform = 'translateY(' + ((1 - p) * (dy || 24)) + 'px)';
+}
+
+// Wert auf der Kurve an Stelle x (lineare Verbindung der Messpunkte).
+function valueAt(x) {
+  for (var i = 1; i < DATA.length; i++) {
+    if (x <= DATA[i].x) {
+      var a = DATA[i - 1], b = DATA[i];
+      return a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x);
+    }
+  }
+  return DATA[DATA.length - 1].y;
+}
+
+var FIRST = DATA[0], LAST = DATA[DATA.length - 1];
+window.DURATION = 14;
+
+window.render = function (t) {
+  var mp = easeOut(span(t, 0, .7));
+  var mat = document.getElementById('mat');
+  mat.style.opacity = mp;
+  mat.style.transform = 'translateY(' + ((1 - mp) * 80) + 'px) rotate(' + (-1 + (1 - mp) * -2) + 'deg)';
+
+  show('kicker', easeOut(span(t, .4, 1.0)));
+  show('h', easeOut(span(t, .6, 1.3)));
+  show('counter', easeOut(span(t, 1.0, 1.6)));
+  show('csub', easeOut(span(t, 1.0, 1.6)));
+  document.getElementById('chart').style.opacity = easeOut(span(t, 1.1, 1.7));
+
+  // Linie zeichnen: 1,6 s bis 6,6 s
+  var lp = easeInOut(span(t, 1.6, 6.6));
+  var xNow = FIRST.x + (LAST.x - FIRST.x) * lp;
+  var pts = [];
+  DATA.forEach(function (d, i) {
+    if (d.x <= xNow) pts.push([sx(d.x), sy(d.y)]);
+    dotEls[i].style.opacity = d.x <= xNow + 1e-6 ? 1 : 0;
+  });
+  var yNow = valueAt(xNow);
+  pts.push([sx(xNow), sy(yNow)]);
+  var dLine = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0] + ' ' + p[1]; }).join(' ');
+  document.getElementById('line').setAttribute('d', dLine);
+  document.getElementById('area').setAttribute('d',
+    dLine + ' L' + sx(xNow) + ' ' + (H - PB) + ' L' + sx(FIRST.x) + ' ' + (H - PB) + ' Z');
+  var head = document.getElementById('head');
+  head.setAttribute('cx', sx(xNow));
+  head.setAttribute('cy', sy(yNow));
+
+  // Zwischenwerte sind interpoliert, keine Messwerte — daher beim Hochzählen
+  // kein Jahr dazu, sonst liest man „3.239 Einwohner 2018“ als Tatsache.
+  document.getElementById('counter').textContent = fmt(yNow);
+  document.getElementById('csub').textContent = lp <= 0 ? CFG.unit + ' ' + FIRST.label
+    : lp >= 1 ? CFG.unit + ' ' + (CFG.lastLabel || LAST.label) : CFG.unit;
+
+  var bp = pop(span(t, 6.8, 7.3));
+  var badge = document.getElementById('badge');
+  badge.style.opacity = bp > 0 ? 1 : 0;
+  badge.style.transform = 'scale(' + bp + ') rotate(-4deg)';
+
+  var ap = pop(span(t, 7.6, 8.1));
+  var ans = document.getElementById('answer');
+  ans.style.opacity = ap > 0 ? 1 : 0;
+  ans.style.transform = 'scale(' + ap + ')';
+
+  show('foot', easeOut(span(t, 8.4, 9.2)), 30);
+
+  // Weiter-Pille springt ein, danach stupst der Pfeil im Sekundentakt nach rechts.
+  var np = pop(span(t, 9.4, 9.9));
+  var next = document.getElementById('next');
+  next.style.transform = 'scale(' + np + ')';
+  var nudge = t > 9.9 ? Math.pow(Math.max(0, Math.sin((t - 9.9) * Math.PI * 1.6)), 2) : 0;
+  document.getElementById('arrow').style.transform = 'translateX(' + (nudge * 14) + 'px)';
+};
+
+// Passt der Inhalt in den Deckel? build_video.py bricht ab, wenn nicht.
+window.overflow = function () {
+  var c = document.getElementById('content');
+  return c.scrollHeight - c.clientHeight;
+};
+window.render(window.DURATION);
+</script>
+</body>
+</html>
