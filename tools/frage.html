@@ -85,6 +85,29 @@
   .flagbar { margin-inline: auto; border-radius: 99px;
              background: linear-gradient(90deg, var(--red) 0 45%, var(--green) 45% 63.3%,
                          var(--yellow) 63.3% 81.6%, var(--magenta) 81.6% 100%); }
+
+  /* ---- Story mit Umfrage-Sticker (?umfrage=1) ----
+     Instagram-Storys haben keine Kommentare. Die Antworten kommen deshalb
+     nicht aufs Bild, sondern in einen Umfrage-Sticker, den das Social-Media-
+     Team beim Posten drüberlegt. Das Bild hält dafür ein freies Feld frei —
+     hochkant-Bierdeckel, damit Frage, Feld und Absender untereinander passen
+     und rundum noch Deckelrand zu sehen ist. Oben und unten bleibt die
+     Instagram-Leiste (Profil, Antwortfeld) frei von Inhalt. */
+  .hint, .pollzone { display: none; }
+  .umfrage .opts { display: none; }
+  .umfrage .mat { place-items: start center; }
+  .umfrage .content { height: 100%; display: flex; flex-direction: column; align-items: center; }
+  .umfrage .hint { display: block; font-family: Rubik, sans-serif; font-weight: 600;
+                   color: var(--red); }
+  .umfrage .pollzone { display: grid; place-items: center; margin-inline: auto;
+                       background: rgba(74,64,52,.07); }
+  .umfrage .spacer { flex: 1; }
+
+  /* Nur für die Vorschau (?mock=1): grober Nachbau des Instagram-Stickers,
+     damit man die Wirkung beurteilen kann. Kommt nie auf die Seite. */
+  .mock { background: #fff; box-shadow: 0 6px 24px rgba(0,0,0,.28);
+          font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; text-align: left; }
+  .mock div { background: #efefef; color: #262626; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -104,6 +127,9 @@
           <div class="opt"><b>B</b><span>ca. 4.500</span></div>
           <div class="opt"><b>C</b><span>ca. 5.500</span></div>
         </div>
+        <p class="hint" id="hint">Tippt eure Antwort an ↓</p>
+        <div class="pollzone" id="pollzone"></div>
+        <div class="spacer"></div>
         <div class="flagbar" id="flagbar"></div>
         <p class="foot" id="foot">Antwort in die Kommentare — Auflösung morgen</p>
         <div class="sender" id="sender">
@@ -160,6 +186,61 @@
   set('foot', 'fontSize', 3.2);
   set('foot', 'marginBottom', 3.2);
   document.getElementById('logo').style.height = (u * 12) + 'px';
+
+  if (!p.get('umfrage')) return;
+
+  // Hochkant-Deckel: 1080x1920, Instagram belegt oben ~250 px (Profilzeile)
+  // und unten ~250 px (Antwortfeld). Der Deckelrand darf da hinein, Inhalt nicht.
+  document.body.classList.add('umfrage');
+  var mw = Math.round(W * 0.87), mh = Math.round(H * 0.74);
+  m.style.width = mw + 'px';
+  m.style.height = mh + 'px';
+  m.style.borderRadius = (mw * 0.045) + 'px';
+  document.getElementById('matWrap').style.transform = 'rotate(-1deg)';
+  u = mw / 100;
+
+  var c = m.querySelector('.content');
+  c.style.paddingTop = (u * 11) + 'px';
+  c.style.paddingBottom = (u * 7) + 'px';
+  set('kicker', 'fontSize', 3.8);
+  set('kicker', 'marginBottom', 3.4);
+  set('q', 'fontSize', 6.6);
+  set('q', 'marginBottom', 5);
+  set('hint', 'fontSize', 3.6);
+  set('hint', 'marginBottom', 2.6);
+
+  // Freies Feld für den Sticker: etwas größer als ein Instagram-Umfrage-
+  // Sticker mit drei Antworten in Standardgröße, damit Luft zum Schieben bleibt.
+  var pz = document.getElementById('pollzone');
+  pz.style.width = (u * 80) + 'px';
+  pz.style.height = (u * 50) + 'px';
+  pz.style.borderRadius = (u * 4) + 'px';
+
+  var foot = document.getElementById('foot');
+  foot.textContent = 'Auflösung morgen in der Story';
+  set('foot', 'fontSize', 3.4);
+  set('flagbar', 'marginBottom', 3.4);
+  fb.style.width = (u * 24) + 'px';
+  fb.style.height = (u * 1.3) + 'px';
+  document.getElementById('logo').style.height = (u * 12) + 'px';
+
+  if (!p.get('mock')) return;
+  var box = document.createElement('div');
+  box.className = 'mock';
+  box.style.width = (u * 68) + 'px';
+  box.style.padding = (u * 3) + 'px';
+  box.style.borderRadius = (u * 3.4) + 'px';
+  [].forEach.call(document.querySelectorAll('.opt span'), function (s) {
+    var o = document.createElement('div');
+    o.textContent = s.textContent;
+    o.style.fontSize = (u * 4) + 'px';
+    o.style.padding = (u * 2.6) + 'px ' + (u * 3.4) + 'px';
+    o.style.borderRadius = (u * 2.2) + 'px';
+    o.style.marginTop = (u * 1.6) + 'px';
+    box.appendChild(o);
+  });
+  box.firstChild.style.marginTop = 0;
+  pz.appendChild(box);
 })();
 </script>
 </body>

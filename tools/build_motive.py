@@ -95,8 +95,22 @@ MOTIVE = {
         "renders": [
             ("wirtshausquiz-frage1-feed", 1080, 1350, "Feed 4:5"),
             ("wirtshausquiz-frage1-quadrat", 1080, 1080, "Feed 1:1"),
-            ("wirtshausquiz-frage1-story", 1080, 1920, "Story 9:16"),
         ],
+        "jpg": True,
+    },
+    # Die Story hat keine Kommentare: ohne Antworten, mit freiem Feld für den
+    # Instagram-Umfrage-Sticker. Die Vorschau zeigt einen nachgebauten Sticker
+    # und bleibt in tools/out/.
+    "frage-umfrage": {
+        "template": "frage.html",
+        "query": "&umfrage=1",
+        "renders": [("wirtshausquiz-frage1-story", 1080, 1920, "Story 9:16, Umfrage")],
+        "jpg": True,
+    },
+    "frage-umfrage-vorschau": {
+        "template": "frage.html",
+        "query": "&umfrage=1&mock=1",
+        "renders": [("wirtshausquiz-frage1-story-umfrage-vorschau", 1080, 1920, "nur Vorschau")],
         "jpg": True,
     },
     # Die Agentur nimmt ausschliesslich Hochformat 1080x1920, PNG/JPG unter 3 MB.
@@ -222,7 +236,7 @@ def build(name, spec, browser, noise, qr, ort=None, suffix="", extra_vars=None):
     try:
         for fname, w, h, label in spec["renders"]:
             target = OUT / (fname + suffix + ".png")
-            url = built.as_uri() + "?w={}&h={}".format(w, h)
+            url = built.as_uri() + "?w={}&h={}".format(w, h) + spec.get("query", "")
             subprocess.run(
                 [
                     browser,
