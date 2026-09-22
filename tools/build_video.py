@@ -19,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.request
 from pathlib import Path
 
 import imageio_ffmpeg
@@ -27,6 +28,17 @@ from playwright.sync_api import sync_playwright
 from build_motive import OUT, ROOT, find_browser, paper_noise
 
 FPS = 30
+
+COUNTERS = "https://quiz.team-michelhausen.at/api/counters.php"
+
+
+def live_teams():
+    """Angemeldete Teams von der Anmeldeseite — nie eine Zahl erfinden."""
+    with urllib.request.urlopen(COUNTERS, timeout=15) as r:
+        return int(json.load(r)["counters"]["teamsTotal"])
+
+
+LIVE_TEAMS = live_teams()
 
 # Bewegte Auflösungen der „Frage der Woche“. Für eine neue Auflösung einen
 # Eintrag kopieren und anpassen — die Vorlage bleibt unverändert.
@@ -64,6 +76,28 @@ VIDEOS = {
             "cta": "Neu hier? Lern deine Nachbarn beim Wirtshausquiz kennen: Fr 16. Oktober.",
             "next": "Zur Anmeldung",
             "source": "Quelle: Statistik Austria",
+        },
+    },
+    # Zweite Seite der Story: hier soll getippt werden. Unten bleibt ein Feld
+    # für den Link-Sticker frei — Link immer über tm_go, sonst fehlt das
+    # Tracking:  https://go.team-michelhausen.at/quiz?s=story
+    # teams: kommt live von der Anmeldeseite (LIVE_TEAMS).
+    "anmeldung": {
+        "template": "anmeldung-bewegt.html",
+        "out": "wirtshausquiz-anmeldung-story-bewegt",
+        "cfg": {
+            "kicker": "Ab sofort",
+            "headline": "Anmeldung offen",
+            "when": "Wirtshausquiz · Freitag, 16. Oktober",
+            "where": "Gasthaus Burchhart · Atzelsdorf",
+            "teams": LIVE_TEAMS,
+            # {n} = Zahl der angemeldeten Teams. Bewusst KEINE Obergrenze: die
+            # Saalkapazität ist mit dem Wirt noch nicht fixiert. Für den Post
+            # „Letzte Plätze“ (13.10.) auf die Restplätze umstellen.
+            "teamsText": "Schon {n} Teams sind dabei",
+            "hint": "🍺 Kein Team? Wir setzen euch dazu",
+            "tap": "Hier geht's zur Anmeldung",
+            "small": "Teams mit 3 bis 5 Personen · Teilnahme kostenlos",
         },
     },
 }
