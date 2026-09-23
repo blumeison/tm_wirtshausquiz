@@ -20,6 +20,7 @@ committen und pushen, sonst zeigt sie alte Motive.
 
 import base64
 import io
+import json
 import os
 import random
 import subprocess
@@ -28,6 +29,8 @@ from pathlib import Path
 
 import qrcode
 from PIL import Image, ImageFilter
+
+import aufloesungen
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "out"
@@ -95,6 +98,17 @@ MOTIVE = {
         "renders": [
             ("wirtshausquiz-frage1-feed", 1080, 1350, "Feed 4:5"),
             ("wirtshausquiz-frage1-quadrat", 1080, 1080, "Feed 1:1"),
+        ],
+        "jpg": True,
+    },
+    # Auflösung als stehendes Sujet für Feed und Facebook. Die Story-Fassung
+    # ist ein Video (tools/build_video.py), Inhalt für beide: aufloesungen.py.
+    "aufloesung": {
+        "template": "aufloesung.html",
+        "cfg": aufloesungen.FRAGE1,
+        "renders": [
+            ("wirtshausquiz-frage1-aufloesung-feed", 1080, 1350, "Feed 4:5"),
+            ("wirtshausquiz-frage1-aufloesung-quadrat", 1080, 1080, "Feed 1:1"),
         ],
         "jpg": True,
     },
@@ -229,6 +243,13 @@ def build(name, spec, browser, noise, qr, ort=None, suffix="", extra_vars=None):
     for key, uri in (extra_vars or {}).items():
         block += '\n    ' + key + ': url("' + uri + '");'
     injected = tpl.replace("  :root {", block, 1)
+    # Vorlagen mit Konfiguration (z. B. die Auflösung) holen ihren Inhalt aus
+    # aufloesungen.py, damit Sujet und Video dieselben Zahlen zeigen.
+    if spec.get("cfg"):
+        injected = injected.replace(
+            "</head>",
+            "<script>window.CFG = " + json.dumps(spec["cfg"], ensure_ascii=False) + ";</script>\n</head>",
+            1)
     built = ROOT / ("_" + name + suffix + ".built.html")
     built.write_text(injected, encoding="utf-8")
     scale = spec.get("scale", 1)
@@ -328,6 +349,14 @@ AUF_DIE_SEITE = (
     "wirtshausquiz-frage1-feed.jpg",
     "wirtshausquiz-frage1-story.jpg",
     "wirtshausquiz-frage1-quadrat.jpg",
+    "wirtshausquiz-frage1-aufloesung-feed.jpg",
+    "wirtshausquiz-frage1-aufloesung-quadrat.jpg",
+    # Die bewegten Fassungen kommen aus build_video.py, wandern aber über
+    # denselben Weg auf die Seite. Zu jedem Video das Standbild als Vorschau.
+    "wirtshausquiz-frage1-aufloesung-story.mp4",
+    "wirtshausquiz-frage1-aufloesung-story.jpg",
+    "wirtshausquiz-anmeldung-story-bewegt.mp4",
+    "wirtshausquiz-anmeldung-story-bewegt.jpg",
     "wirtshausquiz-plakat-a3-burchhart-kompakt.pdf",
     "wirtshausquiz-plakat-a3-billa-kompakt.pdf",
     "wirtshausquiz-plakat-a3-bahnhof-kompakt.pdf",

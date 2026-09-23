@@ -25,6 +25,7 @@ from pathlib import Path
 import imageio_ffmpeg
 from playwright.sync_api import sync_playwright
 
+import aufloesungen
 from build_motive import OUT, ROOT, find_browser, paper_noise
 
 FPS = 30
@@ -55,32 +56,13 @@ VIDEOS = {
     "frage1": {
         "template": "aufloesung-kurve.html",
         "out": "wirtshausquiz-frage1-aufloesung-story",
-        "cfg": {
-            "kicker": "Auflösung · Frage der Woche",
-            "headline": "So schnell wächst die Gemeinde Michelhausen",
-            "unit": "Einwohner",
-            "lastLabel": "Anfang 2026",
-            "data": [
-                {"x": 2011.83, "y": 2609, "label": "2011"},
-                {"x": 2015.0, "y": 2736, "label": "2015"},
-                {"x": 2021.83, "y": 3845, "label": "2021"},
-                {"x": 2025.0, "y": 4373, "label": "2025", "axis": False},
-                {"x": 2026.0, "y": 4560, "label": "2026"},
-            ],
-            "x": [2011.5, 2026.3],
-            "y": [2000, 5000],
-            "grid": [3000, 4000, 5000],
-            "badge": "+75 %",
-            "answer": {"letter": "B", "text": "Richtig ist: ca. 4.500"},
-            "fact": "Keine Gemeinde in Österreich ist von 2015 bis 2025 so stark gewachsen.",
-            "cta": "Neu hier? Lern deine Nachbarn beim Wirtshausquiz kennen: Fr 16. Oktober.",
-            "next": "Zur Anmeldung",
-            "source": "Quelle: Statistik Austria",
-        },
+        # Inhalt aus aufloesungen.py — dieselben Zahlen wie im statischen
+        # Sujet. „next“ gibt es nur im Video: Pfeil auf die nächste Story.
+        "cfg": dict(aufloesungen.FRAGE1, next="Zur Anmeldung"),
     },
     # Zweite Seite der Story: hier soll getippt werden. Unten bleibt ein Feld
     # für den Link-Sticker frei — Link immer über tm_go, sonst fehlt das
-    # Tracking:  https://go.team-michelhausen.at/quiz?s=story
+    # Tracking:  https://go.team-michelhausen.at/quiz?s=instagram-story
     # teams: kommt live von der Anmeldeseite (LIVE_TEAMS).
     "anmeldung": {
         "template": "anmeldung-bewegt.html",

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<title>Auflösung der Frage der Woche – Sujet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;700&display=swap">
+<style>
+  /* Statisches Auflösungs-Sujet für Instagram-Feed (4:5, 1:1) und Facebook —
+     das stehende Gegenstück zur bewegten Story. Inhalt und Zahlen kommen als
+     window.CFG aus aufloesungen.py, damit Bild und Video nie auseinanderlaufen.
+
+     Der Anmeldelink steht bewusst NICHT im Bild: im Feed-Post gehört er in
+     den Text (bei Facebook klickbar, bei Instagram als „Link in der Bio“).
+
+     CI (tm-design) auf der Kampagnen-Bildwelt: Patua One + Rubik, Ink
+     #3f3f3e, Rot als Signal, Grün für „richtig“, Flaggenbalken Rot vorne. */
+
+  :root {
+    --tm-red: #e51324; --tm-red-soft: #fce8ea; --tm-green: #3aaa35;
+    --tm-ink: #3f3f3e; --tm-text-soft: #6b6b6a;
+    --tm-font-head: 'Patua One', Georgia, serif;
+    --tm-font-body: 'Rubik', -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    --tm-flag-gradient: linear-gradient(90deg, #e51324 0 45%, #3aaa35 45% 63.3%,
+                                        #ffcc00 63.3% 81.6%, #e6007e 81.6% 100%);
+    --board: #f0e8d8; --board-sh: #ddd2bc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; overflow: hidden; }
+
+  .stage { position: relative; overflow: hidden; display: grid; place-items: center;
+           background: #3f2c20; }
+  .wood, .wood-photo, .vignette { position: absolute; inset: 0; }
+  .wood {
+    background:
+      repeating-linear-gradient(91.5deg,
+        rgba(0,0,0,.07) 0, rgba(0,0,0,.07) 3px,
+        rgba(255,255,255,.014) 3px, rgba(255,255,255,.014) 9px,
+        rgba(0,0,0,.035) 9px, rgba(0,0,0,.035) 23px),
+      linear-gradient(163deg, #63483a 0%, #4a3527 48%, #33241a 100%);
+  }
+  .wood-photo { background-image: url("wood.jpg"); background-size: cover; background-position: center;
+                filter: brightness(1.12) saturate(1.06); }
+  .vignette { background: radial-gradient(ellipse at 50% 42%,
+      rgba(255,232,190,.13) 0%, rgba(0,0,0,0) 52%, rgba(0,0,0,.38) 100%); }
+
+  .mat-wrap { position: relative; }
+  .mat {
+    position: relative; background: var(--board); border-radius: 4.5%;
+    display: grid; place-items: center; text-align: center;
+    box-shadow: 0 2px 0 var(--board-sh), 0 3px 1px rgba(0,0,0,.35),
+                0 26px 50px rgba(0,0,0,.55);
+  }
+  .mat::before { content: ""; position: absolute; inset: 0; border-radius: inherit;
+                 background-image: var(--noise); opacity: .5; mix-blend-mode: multiply; }
+  .mat::after { content: ""; position: absolute; inset: 0; border-radius: inherit;
+                background: linear-gradient(145deg, rgba(255,255,255,.5), rgba(0,0,0,0) 38%, rgba(0,0,0,.06)); }
+  .keyline { position: absolute; inset: 4.5%; border: 2px solid var(--tm-red);
+             border-radius: 2.5%; opacity: .85; }
+  .content { position: relative; z-index: 2; width: 100%; padding: 0 7%; }
+
+  .kicker { font-family: var(--tm-font-body); font-weight: 500; color: var(--tm-red);
+            text-transform: uppercase; }
+  .h { font-family: var(--tm-font-head); font-weight: 400; color: var(--tm-ink);
+       line-height: 1.13; text-wrap: balance; }
+  .counter { font-family: var(--tm-font-head); font-weight: 400; color: var(--tm-red);
+             line-height: 1; font-variant-numeric: tabular-nums; }
+  .counter-sub { font-family: var(--tm-font-body); font-weight: 500; color: var(--tm-text-soft); }
+
+  .chart { position: relative; margin-inline: auto; }
+  .chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .ax { font-family: var(--tm-font-body); font-weight: 500; fill: var(--tm-text-soft); }
+  .pt { font-family: var(--tm-font-body); font-weight: 700; fill: var(--tm-ink); }
+  .badge { position: absolute; background: var(--tm-red-soft); color: var(--tm-red);
+           font-family: var(--tm-font-body); font-weight: 700; border-radius: 999px;
+           transform: rotate(-4deg); }
+
+  .answer { display: inline-flex; align-items: center; font-family: var(--tm-font-body);
+            font-weight: 500; color: var(--tm-ink); }
+  .answer b { display: grid; place-items: center; border-radius: 50%;
+              background: var(--tm-green); color: #fff; font-weight: 700; }
+
+  .fact { font-family: var(--tm-font-body); font-weight: 400; color: var(--tm-ink);
+          line-height: 1.4; text-wrap: balance; }
+  .flagbar { margin-inline: auto; border-radius: 99px; background: var(--tm-flag-gradient); }
+  .src { font-family: var(--tm-font-body); font-weight: 400; color: var(--tm-text-soft); }
+  .sender { display: flex; justify-content: center; }
+  .sender img { display: block; width: auto; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="wood"></div>
+  <div class="wood-photo"></div>
+  <div class="vignette"></div>
+
+  <div class="mat-wrap" id="matWrap">
+    <div class="mat" id="mat">
+      <div class="keyline"></div>
+      <div class="content">
+        <p class="kicker" id="kicker"></p>
+        <h1 class="h" id="h"></h1>
+        <p class="counter" id="counter"></p>
+        <p class="counter-sub" id="csub"></p>
+        <div class="chart" id="chart">
+          <svg id="svg" viewBox="0 0 760 380" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#e51324" stop-opacity=".22"/>
+                <stop offset="1" stop-color="#e51324" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <g id="axes"></g>
+            <path id="area" fill="url(#fill)"/>
+            <path id="line" fill="none" stroke="#e51324" stroke-width="9"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+            <g id="dots"></g>
+          </svg>
+          <div class="badge" id="badge"></div>
+        </div>
+        <div class="answer" id="answer"><b id="ansLetter"></b><span id="ansText"></span></div>
+        <p class="fact" id="fact"></p>
+        <div class="flagbar" id="flagbar"></div>
+        <p class="src" id="src"></p>
+        <div class="sender">
+          <img id="logo" src="logo-trim.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var CFG = window.CFG;
+  var p = new URLSearchParams(location.search);
+  var W = parseInt(p.get('w'), 10) || 1080;
+  var H = parseInt(p.get('h'), 10) || 1350;
+
+  var stage = document.getElementById('stage');
+  stage.style.width = W + 'px';
+  stage.style.height = H + 'px';
+
+  var mat = Math.round(Math.min(W, H) * (W === H ? 0.86 : 0.88));
+  var m = document.getElementById('mat');
+  m.style.width = mat + 'px';
+  m.style.height = mat + 'px';
+  document.getElementById('matWrap').style.transform = 'rotate(-1.9deg)';
+
+  // Alles in Einheiten des Deckels, damit jedes Format gleich wirkt.
+  var u = mat / 100;
+  function set(id, prop, v) { document.getElementById(id).style[prop] = (u * v) + 'px'; }
+  function txt(id, s) { document.getElementById(id).textContent = s || ''; }
+
+  txt('kicker', CFG.kicker);
+  txt('h', CFG.headline);
+  txt('csub', CFG.unit + ' ' + (CFG.lastLabel || ''));
+  txt('badge', CFG.badge);
+  txt('ansLetter', CFG.answer.letter);
+  txt('ansText', CFG.answer.text);
+  txt('fact', CFG.fact);
+  txt('src', CFG.source);
+
+  set('kicker', 'fontSize', 2.9);
+  document.getElementById('kicker').style.letterSpacing = (u * 0.34) + 'px';
+  set('kicker', 'marginBottom', 2.0);
+  set('h', 'fontSize', 4.9);
+  set('h', 'marginBottom', 2.0);
+
+  var last = CFG.data[CFG.data.length - 1];
+  function fmt(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  txt('counter', fmt(last.y));
+  set('counter', 'fontSize', 9.6);
+  set('csub', 'fontSize', 2.8);
+  set('csub', 'marginBottom', 2.0);
+
+  // Kurve — gleiche Daten und Achsen wie im Video.
+  var SW = 760, SH = 380, PL = 92, PR = 30, PT = 56, PB = 50;
+  var X0 = CFG.x[0], X1 = CFG.x[1], Y0 = CFG.y[0], Y1 = CFG.y[1];
+  function sx(x) { return PL + (x - X0) / (X1 - X0) * (SW - PL - PR); }
+  function sy(y) { return PT + (1 - (y - Y0) / (Y1 - Y0)) * (SH - PT - PB); }
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text) e.textContent = text;
+    return e;
+  }
+  var chart = document.getElementById('chart');
+  chart.style.width = (u * 78) + 'px';
+  chart.style.height = (u * 32) + 'px';
+  chart.style.marginBottom = (u * 1.8) + 'px';
+  // Schrift im SVG skaliert mit der viewBox, nicht mit u.
+  document.getElementById('svg').style.fontSize = '0px';
+
+  var axes = document.getElementById('axes');
+  CFG.grid.forEach(function (v) {
+    axes.appendChild(el('line', { x1: PL, x2: SW - PR, y1: sy(v), y2: sy(v),
+      stroke: '#3f3f3e', 'stroke-opacity': .14, 'stroke-width': 2, 'stroke-dasharray': '6 8' }));
+    axes.appendChild(el('text', { x: PL - 16, y: sy(v) + 8, 'text-anchor': 'end',
+      'class': 'ax', 'font-size': 24 }, fmt(v)));
+  });
+  axes.appendChild(el('line', { x1: PL, x2: SW - PR, y1: SH - PB, y2: SH - PB,
+    stroke: '#3f3f3e', 'stroke-opacity': .3, 'stroke-width': 2 }));
+
+  var pts = CFG.data.map(function (d) { return [sx(d.x), sy(d.y)]; });
+  var dLine = pts.map(function (q, i) { return (i ? 'L' : 'M') + q[0] + ' ' + q[1]; }).join(' ');
+  document.getElementById('line').setAttribute('d', dLine);
+  document.getElementById('area').setAttribute('d',
+    dLine + ' L' + pts[pts.length - 1][0] + ' ' + (SH - PB) + ' L' + pts[0][0] + ' ' + (SH - PB) + ' Z');
+
+  var dots = document.getElementById('dots');
+  CFG.data.forEach(function (d, i) {
+    dots.appendChild(el('circle', { cx: sx(d.x), cy: sy(d.y), r: 9, fill: '#e51324' }));
+    if (d.axis !== false) {
+      axes.appendChild(el('text', { x: sx(d.x), y: SH - PB + 36, 'text-anchor': 'middle',
+        'class': 'ax', 'font-size': 24 }, d.label));
+    }
+    if (i === 0 || i === CFG.data.length - 1) {
+      dots.appendChild(el('text', { x: sx(d.x) + (i ? 4 : -8), y: sy(d.y) - (i ? 30 : 26),
+        'text-anchor': i ? 'end' : 'start', 'class': 'pt', 'font-size': 26 }, fmt(d.y)));
+    }
+  });
+
+  var badge = document.getElementById('badge');
+  badge.style.left = (u * 10) + 'px';
+  badge.style.top = 0;
+  badge.style.fontSize = (u * 4.4) + 'px';
+  badge.style.padding = (u * 0.9) + 'px ' + (u * 2.4) + 'px';
+
+  var ans = document.getElementById('answer');
+  ans.style.fontSize = (u * 3.9) + 'px';
+  ans.style.gap = (u * 2.0) + 'px';
+  ans.style.marginBottom = (u * 2.2) + 'px';
+  var b = ans.querySelector('b');
+  b.style.width = (u * 7.0) + 'px';
+  b.style.height = (u * 7.0) + 'px';
+  b.style.fontSize = (u * 3.9) + 'px';
+
+  set('fact', 'fontSize', 2.8);
+  set('fact', 'marginBottom', 2.0);
+  var fb = document.getElementById('flagbar');
+  fb.style.width = (u * 24) + 'px';
+  fb.style.height = (u * 1.3) + 'px';
+  fb.style.marginBottom = (u * 1.6) + 'px';
+  set('src', 'fontSize', 2.1);
+  set('src', 'marginBottom', 1.8);
+  document.getElementById('logo').style.height = (u * 10) + 'px';
+
+  // Sicherheitsnetz: Was trotzdem über den Deckel ragen würde, wird passend
+  // geschrumpft — ein Sujet mit abgeschnittener Zeile darf nie rausgehen.
+  var content = m.querySelector('.content');
+  var avail = mat * 0.88;
+  var hgt = content.getBoundingClientRect().height;
+  if (hgt > avail) {
+    content.style.transform = 'scale(' + (avail / hgt) + ')';
+  }
+})();
+</script>
+</body>
+</html>
