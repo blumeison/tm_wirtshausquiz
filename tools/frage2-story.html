@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<title>Frage der Woche #2 – Video-Overlay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@500;600;700&display=swap">
+<style>
+  /* Transparentes Overlay für Dennis' Video (1080x1920). build_frage2_story.py
+     macht je Untertitel einen Screenshot ohne Hintergrund und legt ihn per
+     ffmpeg übers Video.
+     Aufteilung: oben (y < 520) ist Vorhang — Kicker + Untertitel.
+     Gesicht ~540–940 bleibt frei. Darunter auf dem Shirt: Feld für den
+     Instagram-Quiz-Sticker (nicht gezeichnet, nur freigehalten). Oben und
+     unten je ~250 px Instagram-Leiste ohne Inhalt. */
+  :root {
+    --red: #e51324; --board: #f0e8d8; --board-sh: #ddd2bc; --ink: #4a4034;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: transparent; width: 1080px; height: 1920px; overflow: hidden; }
+  body.dev { background: #777; }
+
+  .kicker { position: absolute; top: 262px; left: 50%; transform: translateX(-50%) rotate(-1.5deg);
+            background: var(--red); color: #fff; font: 700 34px Rubik, sans-serif;
+            letter-spacing: 4px; text-transform: uppercase; padding: 12px 28px 11px;
+            border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.35); white-space: nowrap; }
+
+  .cap { position: absolute; top: 346px; left: 70px; right: 70px; display: none;
+         justify-content: center; }
+  .cap.on { display: flex; }
+  .cap p { background: var(--board); color: var(--ink); text-align: center;
+           font: 44px/1.14 'Patua One', Georgia, serif; text-wrap: balance;
+           padding: 20px 32px 22px; border-radius: 18px; transform: rotate(-1deg);
+           box-shadow: 0 2px 0 var(--board-sh), 0 14px 30px rgba(0,0,0,.4); }
+  .cap.shout p { font-size: 70px; color: var(--red); padding: 16px 40px 20px; transform: rotate(1.5deg); }
+
+  .hint { position: absolute; top: 968px; left: 0; right: 0; text-align: center; display: none; }
+  .hint.on { display: block; }
+  .hint span { display: inline-block; background: var(--red); color: #fff;
+               font: 600 36px Rubik, sans-serif; padding: 10px 26px; border-radius: 99px;
+               box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+
+  .later { position: absolute; top: 1478px; left: 0; right: 0; text-align: center; display: none; }
+  .later.on { display: block; }
+  .later span { display: inline-block; background: var(--board); color: var(--ink);
+                font: 600 32px Rubik, sans-serif; padding: 9px 24px; border-radius: 99px;
+                box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+
+  .logo { position: absolute; left: 50%; bottom: 262px; transform: translateX(-50%);
+          background: var(--board); border-radius: 16px; padding: 12px 22px;
+          box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+  .logo img { display: block; height: 78px; }
+
+  /* Countdown nach Videoende (build_frage2_story.py rendert nur diesen
+     Ausschnitt, 30 Bilder/s). Sitzt rechts neben dem Kopf im Vorhang. */
+  .count { position: absolute; left: 740px; top: 570px; width: 260px; height: 260px;
+           display: none; place-items: center; }
+  .count.on { display: grid; }
+  .count .disc { position: relative; width: 220px; height: 220px; border-radius: 50%;
+                 background: var(--board); display: grid; place-items: center;
+                 box-shadow: 0 2px 0 var(--board-sh), 0 14px 30px rgba(0,0,0,.4); }
+  .count svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .count .n { font: 104px/1 'Patua One', Georgia, serif; color: var(--ink); margin-top: -6px; }
+  .count.end .disc { background: var(--red); }
+  .count.end .n { font-size: 64px; color: #fff; }
+
+  /* Nur Vorschau (?mock=1): grober Nachbau des Quiz-Stickers. */
+  .mock { position: absolute; top: 1050px; left: 50%; transform: translateX(-50%); width: 700px;
+          background: #fff; border-radius: 26px; padding: 26px; display: none;
+          font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+          box-shadow: 0 6px 24px rgba(0,0,0,.28); }
+  .mock div { background: #efefef; color: #262626; font-weight: 600; font-size: 32px;
+              padding: 20px 26px; border-radius: 18px; margin-top: 12px; }
+  .mock div:first-child { margin-top: 0; }
+</style>
+</head>
+<body>
+  <div class="kicker" id="kicker">Frage der Woche #2</div>
+  <div id="caps"></div>
+  <div class="hint" id="hint"><span>Tippt eure Antwort an ↓</span></div>
+  <div class="later" id="later"><span>Auflösung morgen in der Story</span></div>
+  <div class="logo"><img src="logo-trim.png" alt="SPÖ &amp; Unabhängige – Team Michelhausen"></div>
+  <div class="mock" id="mock"></div>
+  <div class="count" id="count"><div class="disc">
+    <svg viewBox="0 0 220 220"><circle cx="110" cy="110" r="98" fill="none" stroke="#ddd2bc" stroke-width="12"/>
+      <circle id="arc" cx="110" cy="110" r="98" fill="none" stroke="#e51324" stroke-width="12"
+              stroke-linecap="round" stroke-dasharray="615.75" stroke-dashoffset="0"/></svg>
+    <span class="n" id="num">10</span></div></div>
+<script>
+(function () {
+  var C = window.CFG || { kicker: 'Frage der Woche #2', caps: [{ text: 'Untertitel' }], opts: [] };
+  document.getElementById('kicker').textContent = C.kicker;
+  var box = document.getElementById('caps');
+  C.caps.forEach(function (c) {
+    var d = document.createElement('div');
+    d.className = 'cap' + (c.shout ? ' shout' : '');
+    var p = document.createElement('p');
+    p.textContent = c.text;
+    d.appendChild(p);
+    box.appendChild(d);
+  });
+  var mock = document.getElementById('mock');
+  (C.opts || []).forEach(function (o) {
+    var d = document.createElement('div'); d.textContent = o; mock.appendChild(d);
+  });
+
+  // Zustand i = Untertitel i sichtbar; hint wenn der Untertitel die Frage ist.
+  window.show = function (i, withMock, noHint) {
+    [].forEach.call(box.children, function (el, k) { el.classList.toggle('on', k === i); });
+    var c = C.caps[i] || {};
+    document.getElementById('hint').classList.toggle('on', !!c.hint && !noHint);
+    document.getElementById('later').classList.toggle('on', !!c.hint && !noHint);
+    mock.style.display = withMock && c.hint ? 'block' : 'none';
+  };
+  window.show(0, false);
+
+  // Countdown: t = Sekunden seit Beginn, n = Länge. Ring läuft gleichmäßig
+  // leer, die Zahl springt jede Sekunde mit kleinem Puls; ab t >= n „Zeit!“.
+  window.countdown = function (t, n) {
+    document.body.querySelectorAll('.kicker, .logo, #caps, .hint, .later').forEach(function (el) {
+      el.style.visibility = 'hidden';
+    });
+    var c = document.getElementById('count'), disc = c.firstChild;
+    c.classList.add('on');
+    var end = t >= n;
+    c.classList.toggle('end', end);
+    document.getElementById('num').textContent = end ? 'Zeit!' : String(Math.ceil(n - t - 1e-6));
+    document.getElementById('arc').style.strokeDashoffset = 615.75 * Math.min(1, t / n);
+    document.getElementById('arc').style.opacity = end ? 0 : 1;
+    var f = end ? t - n : t % 1;            // Puls am Sekundenanfang
+    var k = Math.max(0, 1 - f / 0.25);
+    disc.style.transform = 'scale(' + (1 + 0.1 * k * k) + ')';
+  };
+  if (new URLSearchParams(location.search).get('dev')) document.body.classList.add('dev');
+})();
+</script>
+</body>
+</html>

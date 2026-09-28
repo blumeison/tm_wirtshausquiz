@@ -74,6 +74,16 @@ SCREEN_SLUGS = [
     ("quiz-c", "https://quiz.team-michelhausen.at/quizfrage.html?a=3"),
 ]
 
+# Frage #2: Inhalt für das stehende Sujet UND die Video-Story, damit
+# Frage und Antworten nicht auseinanderlaufen. Richtig ist B (3:2).
+FRAGE2 = {
+    "kicker": "Frage der Woche #2",
+    "q": "Cordoba 1978: Edi Finger ruft „I wer’ narrisch!“ Wie steht es nach diesem Tor?",
+    "opts": ["2:1 für Österreich", "3:2 für Österreich", "3:1 für Österreich"],
+    "foot": "Antwort in die Kommentare — Auflösung morgen",
+}
+
+
 MOTIVE = {
     "savethedate": {
         "template": "sujet.html",
@@ -125,6 +135,24 @@ MOTIVE = {
         "template": "frage.html",
         "query": "&umfrage=1&mock=1",
         "renders": [("wirtshausquiz-frage1-story-umfrage-vorschau", 1080, 1920, "nur Vorschau")],
+        "jpg": True,
+    },
+    # Frage #2 (Di 29.09.): Cordoba 1978. Die Story dazu ist Dennis' Video
+    # (tools/build_frage2_story.py), das stehende Sujet ist für Feed/Facebook.
+    "frage2": {
+        "template": "frage.html",
+        "cfg": FRAGE2,
+        "renders": [
+            ("wirtshausquiz-frage2-feed", 1080, 1350, "Feed 4:5"),
+            ("wirtshausquiz-frage2-quadrat", 1080, 1080, "Feed 1:1"),
+        ],
+        "jpg": True,
+    },
+    "frage2-umfrage": {
+        "template": "frage.html",
+        "cfg": FRAGE2,
+        "query": "&umfrage=1",
+        "renders": [("wirtshausquiz-frage2-story", 1080, 1920, "Story 9:16, Umfrage")],
         "jpg": True,
     },
     # Die Agentur nimmt ausschliesslich Hochformat 1080x1920, PNG/JPG unter 3 MB.
@@ -351,6 +379,15 @@ AUF_DIE_SEITE = (
     "wirtshausquiz-frage1-quadrat.jpg",
     "wirtshausquiz-frage1-aufloesung-feed.jpg",
     "wirtshausquiz-frage1-aufloesung-quadrat.jpg",
+    "wirtshausquiz-frage2-feed.jpg",
+    "wirtshausquiz-frage2-story.jpg",
+    "wirtshausquiz-frage2-quadrat.jpg",
+    # Frage #2 als Video-Story (build_frage2_story.py)
+    "wirtshausquiz-frage2-story-video.mp4",
+    "wirtshausquiz-frage2-story-video.jpg",
+    "wirtshausquiz-frage2-story-video-teil1.mp4",
+    "wirtshausquiz-frage2-story-video-teil2.mp4",
+    "wirtshausquiz-frage2-story-video-teil2.jpg",
     # Die bewegten Fassungen kommen aus build_video.py, wandern aber über
     # denselben Weg auf die Seite. Zu jedem Video das Standbild als Vorschau.
     "wirtshausquiz-frage1-aufloesung-story.mp4",
