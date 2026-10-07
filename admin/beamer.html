@@ -100,6 +100,9 @@
   .s-rows li i { font: 400 2.8cqw/1 'Patua One', serif; font-style: normal; }
   .s-rows li.p1 { background: var(--yellow); color: #3a2a00; } .s-rows li.p1 b { color: #3a2a00; }
   .s-rows li.p2 { background: rgba(246,239,226,.3); } .s-rows li.p3 { background: rgba(205,127,50,.5); }
+  .fx .s-rows li[data-step] { opacity: 0; transform: translateY(2cqw) scale(.96); transition: opacity .5s, transform .6s cubic-bezier(.2,1.3,.4,1); }
+  .fx .s-rows li[data-step].on { opacity: 1; transform: none; }
+  .fx .s-rows li.p1.on { animation: okFlash 1.4s .3s both; box-shadow: 0 0 4cqw rgba(255,204,0,.6); }
   .s-timer { position: relative; width: 26cqw; aspect-ratio: 1; }
   .s-timer svg { width: 100%; height: 100%; transform: rotate(-90deg); }
   .s-timer circle { fill: none; stroke-width: 6; }
@@ -181,7 +184,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261008-6';
+  var BUILD = '20261008-7';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -302,7 +305,7 @@
             : 'Wir werten aus — danach: Auflösung Runde ' + sl.r.n) + '</div></div>';
       case 'solve':
         return top('') + '<div class="s-center"><div class="s-sub rise">Runde ' + sl.r.n + '</div><div class="s-big red zoom">Auflösung</div></div>';
-      case 'stand': return standHtml(sl);
+      case 'stand': return standHtml(sl, st);
       case 'teams': return teamsHtml();
       case 'rules': return rulesHtml(D0);
       case 'prizes': return prizesHtml(D0);
@@ -402,7 +405,13 @@
       }).join('') + '</ol>'
       + '<div class="s-ladder pop" style="--d:1.2s">Tipp jetzt: <b>' + (lad[sl.n - 1] != null ? lad[sl.n - 1] : '') + ' Punkte</b> — Karte hoch!</div></div>';
   }
-  function standHtml(sl) {
+  // Endstand: Klick für Klick vom letzten zum ersten Platz aufdecken.
+  function standRows(sl) {
+    var tbv = sl.tb && D && D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null;
+    return LIVE ? WQD.table(LIVE, sl.upto, tbv) : [];
+  }
+  function stepsOf(sl) { return sl.k === 'stand' && sl.final ? standRows(sl).length : (sl.steps || 0); }
+  function standHtml(sl, st) {
     var tbv = sl.tb && D && D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null;
     var rows = LIVE ? WQD.table(LIVE, sl.upto, tbv) : [];
     var head = top(sl.tb ? 'Nach der Stechfrage' : sl.final ? 'Endstand' : 'Nach Runde ' + sl.r.n);
@@ -410,6 +419,10 @@
     if (!rows.length) return head + '<div class="s-center">' + title + '<div class="s-sub">Punkte werden geladen …</div></div>';
     // Von hinten nach vorne aufdecken: der letzte Platz zuerst, Platz 1 zum Schluss.
     return head + '<div class="s-stand">' + title + '<ol class="s-rows' + (rows.length > 7 ? ' two" style="grid-template-rows:repeat(' + Math.ceil(rows.length / 2) + ',auto)' : '') + '">' + rows.map(function (r, i) {
+      if (sl.final) {
+        var n = rows.length - i; // letzter Platz = Klick 1, Sieger = letzter Klick
+        return '<li data-step="' + n + '" class="p' + r.rank + (n <= (st || 0) ? ' on' : '') + '"><b>' + r.rank + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
+      }
       return '<li class="rise p' + r.rank + '" style="--d:' + (0.6 + (rows.length - 1 - i) * 0.45).toFixed(2) + 's"><b>' + r.rank + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
     }).join('') + '</ol></div>';
   }
@@ -563,12 +576,12 @@
   function goto(n) { idx = Math.max(0, Math.min(deck.length - 1, n)); step = 0; moved(); }
   function forward() {
     if (Date.now() < typeEnd) { typeEnd = 0; ch.postMessage({ t: 'skip', ctrl: CTRL }); return; }
-    if (step < (deck[idx].steps || 0)) { step++; broadcast(false); draw(); return; }
+    if (step < stepsOf(deck[idx])) { step++; broadcast(false); draw(); return; }
     if (idx < deck.length - 1) goto(idx + 1);
   }
   function backward() {
     if (step > 0) { step--; broadcast(false); draw(); return; }
-    if (idx > 0) { idx--; step = deck[idx].steps || 0; moved(); }
+    if (idx > 0) { idx--; step = stepsOf(deck[idx]); moved(); }
   }
   function startTimer(min) { min = min || PAUSE_MIN; TIMER = { idx: idx, total: min * 60000, ends: Date.now() + min * 60000, left: 0, running: true }; }
   function timerCmd(c) {
@@ -707,8 +720,9 @@
     document.getElementById('pos').textContent = (idx + 1) + ' / ' + deck.length;
     document.getElementById('jump').value = idx;
     document.getElementById('prev-stage').innerHTML = render(sl, true, step);
-    document.getElementById('next').textContent = step < (sl.steps || 0)
-      ? 'Nächster Klick: Antwort ' + 'ABCDEFGH'[step] + ' einblenden'
+    var ns = stepsOf(sl);
+    document.getElementById('next').textContent = step < ns
+      ? (sl.k === 'stand' ? 'Nächster Klick: Platz ' + (ns - step) + ' aufdecken' : 'Nächster Klick: Antwort ' + 'ABCDEFGH'[step] + ' einblenden')
       : nx ? label(nx) : '— Ende —';
     if (drawnIdx !== idx) { document.getElementById('info').innerHTML = infoHtml(sl); drawnIdx = idx; mountAudio(sl); }
     tick();
