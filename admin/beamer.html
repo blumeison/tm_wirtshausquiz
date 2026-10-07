@@ -181,7 +181,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261008-5';
+  var BUILD = '20261008-6';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -218,6 +218,7 @@
       s.push({ k: 'q', label: 'Masterfrage', q: D.master, steps: nOpts(D.master) }, { k: 'a', label: 'Masterfrage', q: D.master });
     }
     var last = D.rounds.length - 1 + (D.master ? 1 : 0);
+    if (D.master) s.push({ k: 'pause', master: true, min: 5 });
     s.push({ k: 'stand', upto: last, final: true });
     if (D.tiebreak) {
       s.push({ k: 'q', label: 'Stechfrage', q: D.tiebreak, steps: 0 }, { k: 'a', label: 'Stechfrage', q: D.tiebreak });
@@ -232,7 +233,7 @@
       case 'teams': return 'Die Teams';
       case 'rules': return 'Regeln';
       case 'prizes': return 'Finale & Preise';
-      case 'pause': return 'R' + sl.r.n + ' · Pause (Timer)';
+      case 'pause': return sl.master ? 'Pause: Masterpunkte eintragen' : 'R' + sl.r.n + ' · Pause (Timer)';
       case 'mhint': return 'Masterfrage · Hinweis ' + sl.n;
       case 'minfo': return 'Finale: So geht die Masterfrage';
       case 'round': return 'Runde ' + sl.r.n + ': ' + sl.r.title;
@@ -248,7 +249,7 @@
   // ---- Folien zeichnen (Beamer und Vorschau teilen sich das) ---------------
   // Während der Masterhinweise kein Fragenbild – das würde die Lösung verraten; erst die Auflösung zeigt es.
   // Masterhinweise: eigenes Bild <id>_hint.jpg (Cocktail), wird von Hinweis zu Hinweis schärfer.
-  var UNBLUR = [[3.2, .5, .7], [2.4, .55, .74], [1.5, .6, .78], [.7, .66, .84], [0, .78, .95]]; // [blur cqw, Helligkeit, Deckkraft]
+  var UNBLUR = [[3.2, .5, .7], [2.4, .55, .74], [1.5, .6, .78], [.3, .72, .9], [0, .78, .95]]; // [blur cqw, Helligkeit, Deckkraft]
   function unblurAt(n) { return UNBLUR[Math.max(0, Math.min(UNBLUR.length - 1, n - 1))]; }
   function bgStyle(sl) {
     var url = sl.k === 'mhint' ? '../uploads/bg/' + encodeURIComponent(sl.q.id) + '_hint.jpg' : bgUrl(sl);
@@ -293,11 +294,12 @@
         return top('Runde ' + sl.r.n) + '<div class="s-center"><div class="s-big zoom">Stifte weg!</div>'
           + '<div class="s-sub rise" style="--d:.5s">Bringt euren Zettel zu uns nach vorne —<br>wir werten aus, gleich gibt’s die Auflösung.</div></div>';
       case 'pause':
-        return top('Runde ' + sl.r.n) + '<div class="s-center"><div class="s-big rise" style="font-size:5cqw">Pause</div>'
+        return top(sl.master ? 'Finale' : 'Runde ' + sl.r.n) + '<div class="s-center"><div class="s-big rise" style="font-size:5cqw">Pause</div>'
           + '<div class="s-timer pop" id="timer"><svg viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="44"/>'
           + '<circle class="bar" id="tbar" cx="50" cy="50" r="44" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg><div class="t" id="tleft">'
-          + PAUSE_MIN + ':00</div></div>'
-          + '<div class="s-sub rise" style="--d:.4s">Wir werten aus — danach: Auflösung Runde ' + sl.r.n + '</div></div>';
+          + (sl.min || PAUSE_MIN) + ':00</div></div>'
+          + '<div class="s-sub rise" style="--d:.4s">' + (sl.master ? 'Wir zählen die Masterfrage aus — gleich kommt der Endstand!'
+            : 'Wir werten aus — danach: Auflösung Runde ' + sl.r.n) + '</div></div>';
       case 'solve':
         return top('') + '<div class="s-center"><div class="s-sub rise">Runde ' + sl.r.n + '</div><div class="s-big red zoom">Auflösung</div></div>';
       case 'stand': return standHtml(sl);
@@ -554,7 +556,7 @@
     typeEnd = Date.now() + typingMs(deck[idx]);
     qStart = deck[idx].k === 'q' || deck[idx].k === 'mhint' ? Date.now() : 0;
     // Pause-Folie: Timer startet beim Hinkommen von selbst (einmal je Pause).
-    if (deck[idx].k === 'pause' && (!TIMER || TIMER.idx !== idx)) startTimer();
+    if (deck[idx].k === 'pause' && (!TIMER || TIMER.idx !== idx)) startTimer(deck[idx].min);
     broadcast(false); draw();
     if (needsLive(deck[idx])) fetchLive();
   }
@@ -571,7 +573,7 @@
   function startTimer(min) { min = min || PAUSE_MIN; TIMER = { idx: idx, total: min * 60000, ends: Date.now() + min * 60000, left: 0, running: true }; }
   function timerCmd(c) {
     if (/^set:\d+$/.test(c)) { startTimer(Number(c.slice(4))); }
-    else if (c === 'restart' || !TIMER) { startTimer(); }
+    else if (c === 'restart' || !TIMER) { startTimer(deck[idx].min); }
     else if (c === 'toggle') {
       if (TIMER.running) { TIMER.left = TIMER.ends - Date.now(); TIMER.running = false; }
       else { TIMER.ends = Date.now() + TIMER.left; TIMER.running = true; }
@@ -633,7 +635,7 @@
     var anyIn = Object.keys(LIVE.checkin).length > 0;
     var ts = LIVE.teams.filter(function (t) { return !anyIn || LIVE.checkin[t.id]; });
     var have = ts.filter(function (t) { return ((LIVE.scores[t.id] || {})[ri]) != null; }).length;
-    return '<a class="btn red big" href="live.html?r=' + ri + '#punkte" target="_blank">✍️ Punkte eintragen (Runde ' + (ri + 1) + ')</a>'
+    return '<a class="btn red big" href="live.html?r=' + ri + '#punkte" target="_blank">✍️ Punkte eintragen (' + (ri >= D.rounds.length ? 'Masterfrage' : 'Runde ' + (ri + 1)) + ')</a>'
       + '<div class="cl-head' + (have === ts.length ? ' ok' : '') + '">' + (have === ts.length ? '✓ Alle ' + ts.length + ' Teams eingetragen — bereit für die Auflösung'
         : have + ' von ' + ts.length + ' Teams eingetragen') + '</div>'
       + '<ul class="cl">' + ts.map(function (t) {
@@ -657,7 +659,7 @@
         + '<button class="btn" data-timer="restart">⟲ Neu</button></div>'
         + '<div class="row"><span class="mute" style="align-self:center">Diese Pause neu starten mit:</span>'
         + [5, 10, 15, 20].map(function (m) { return '<button class="btn" data-timer="set:' + m + '">' + m + ' min</button>'; }).join('') + '</div>'
-        + checklist(sl.r.n - 1) + '</div>';
+        + checklist(sl.master ? D.rounds.length : sl.r.n - 1) + '</div>';
     }
     if (sl.k === 'mhint') {
       var mp = sl.q.payload || {};
