@@ -160,7 +160,10 @@
 
     W.app.innerHTML = '<div id="abend">'
       + '<div class="page-head"><div><h2>' + esc(S.title) + '</h2><p>' + esc(sub) + '</p></div>'
-      + '<span class="save-state" id="save-state" role="status"></span></div>'
+      + '<div class="btn-row"><span class="save-state" id="save-state" role="status"></span>'
+      + '<a class="tm-btn tm-btn--ghost btn-sm" href="druck.html?was=zettel" target="_blank">🖨 Antwortzettel</a>'
+      + '<a class="tm-btn tm-btn--ghost btn-sm" href="druck.html?was=karten" target="_blank">🖨 Moderationskarten</a>'
+      + '<a class="tm-btn tm-btn--primary btn-sm" href="beamer.html" target="_blank">📽 Beamer</a></div></div>'
       + '<div class="kpi-grid">' + kpi(S.rounds.length, 'Runden') + kpi(nQ, 'Fragen') + kpi(total, 'Punkte')
       + kpi(dur(mins), 'Dauer ca.') + kpi(end, late ? 'Ende ca. — zu spät!' : 'Ende ca.') + '</div>'
       + '<details class="checklist"' + (open ? ' open' : '') + '><summary>'

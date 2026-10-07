@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Druck – Wirtshausquiz</title>
+<link rel="icon" type="image/png" href="../logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+  /* Antwortzettel (A4, ein Blatt je Team und Runde) und Moderationskarten
+     (A5 quer, zwei pro A4-Blatt zum Durchschneiden). Drucken oder „Als PDF
+     speichern“ direkt aus dem Browser — die Seite rechnet immer mit dem
+     aktuellen Stand aus dem Backoffice. */
+  @page { size: A4 portrait; margin: 0; }
+  :root { --red: #e51324; --green: #2f8f2b; --ink: #3a332b; --soft: #7a7064; --line: #cfc6b8; --board: #f6f1e7; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font: 400 11pt/1.4 Rubik, Arial, sans-serif; color: var(--ink); background: #8a8178; }
+  .sheet { width: 210mm; height: 297mm; background: #fff; margin: 8mm auto; overflow: hidden; position: relative; break-after: page; }
+  @media print { body { background: #fff; } .sheet { margin: 0; } .bar { display: none !important; } }
+
+  /* ---- Bedienleiste (nur am Bildschirm) ---- */
+  .bar { position: sticky; top: 0; z-index: 9; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+         padding: 10px 16px; background: #1f1b17; color: #fff; font: 500 14px Rubik, sans-serif; }
+  .bar a, .bar button { color: #fff; background: #3a332b; border: 1px solid #5a5047; border-radius: 99px;
+         padding: 6px 14px; text-decoration: none; font: inherit; cursor: pointer; }
+  .bar a.on { background: var(--red); border-color: var(--red); }
+  .bar button.print { background: var(--red); border-color: var(--red); margin-left: auto; }
+  .bar input { width: 3.5em; font: inherit; padding: 4px 6px; border-radius: 6px; border: 0; }
+  .bar .info { opacity: .75; font-weight: 400; flex-basis: 100%; font-size: 13px; }
+
+  /* ---- Antwortzettel ---- */
+  .z { padding: 13mm 14mm 11mm; display: flex; flex-direction: column; }
+  .z__head { display: flex; align-items: flex-start; gap: 6mm; padding-bottom: 4mm; border-bottom: .6mm solid var(--red); }
+  .z__head img { height: 15mm; }
+  .z__ev { font: 600 8.5pt/1.3 Rubik, sans-serif; text-transform: uppercase; letter-spacing: .4mm; color: var(--soft); }
+  .z__round { font: 400 26pt/1 'Patua One', Georgia, serif; color: var(--red); margin-top: 1mm; }
+  .z__rsub { font-size: 10pt; color: var(--soft); }
+  .z__team { margin-left: auto; text-align: right; min-width: 70mm; }
+  .z__team small { display: block; font-size: 8pt; text-transform: uppercase; letter-spacing: .4mm; color: var(--soft); }
+  .z__team b { display: block; font: 400 20pt/1.1 'Patua One', Georgia, serif; }
+  .z__team .blank { height: 12mm; border-bottom: .3mm solid var(--ink); }
+  .z__rows { flex: 1; display: flex; flex-direction: column; margin-top: 3mm; }
+  .zr { flex: 1; display: grid; grid-template-columns: 11mm 1fr 22mm; gap: 3mm; align-items: end;
+        border-bottom: .25mm solid var(--line); padding: 2mm 0 2.5mm; max-height: 42mm; }
+  .zr__n { font: 400 20pt/1 'Patua One', Georgia, serif; color: var(--red); align-self: center; }
+  .zr__mid { align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; gap: 2mm; }
+  .zr__hint { font-size: 9pt; color: var(--soft); }
+  .zr__q { font-size: 10pt; line-height: 1.35; }
+  .zr__opts { display: flex; gap: 7mm; font: 600 13pt Rubik, sans-serif; }
+  .zr__opts span { width: 9mm; height: 9mm; border: .35mm solid var(--ink); border-radius: 50%; display: grid; place-items: center; }
+  .zr__opts.long { flex-direction: column; gap: 1mm; font: 400 9.5pt Rubik, sans-serif; }
+  .zr__opts.long span { width: auto; height: auto; border: 0; display: block; }
+  .zr__pts { align-self: center; text-align: center; font-size: 8pt; color: var(--soft); }
+  .zr__pts i { display: block; height: 11mm; border: .35mm solid var(--ink); border-radius: 2mm; margin-bottom: 1mm; }
+  .z__foot { display: flex; gap: 8mm; align-items: end; margin-top: 5mm; font-size: 10pt; }
+  .z__foot .sum { margin-left: auto; display: flex; align-items: center; gap: 3mm; font-weight: 600; }
+  .z__foot .sum i { width: 22mm; height: 13mm; border: .5mm solid var(--red); border-radius: 2mm; }
+  .z__foot .by { flex: 1; border-bottom: .3mm solid var(--ink); padding-bottom: 1mm; color: var(--soft); }
+
+  /* ---- Moderationskarten: A5 quer, zwei pro Blatt ---- */
+  .sheet.k { display: grid; grid-template-rows: 1fr 1fr; }
+  .card { font-size: 12.5pt; height: 148.5mm; padding: 9mm 11mm; overflow: hidden; position: relative; display: flex; flex-direction: column; gap: 2.4mm; }
+  .card + .card { border-top: .3mm dashed #aaa; }
+  .card__top { display: flex; justify-content: space-between; gap: 4mm; font: 600 8.5pt/1.2 Rubik, sans-serif;
+               text-transform: uppercase; letter-spacing: .3mm; color: var(--soft); }
+  .card__top b { color: var(--red); }
+  .card h2 { font: 400 1.9em/1.05 'Patua One', Georgia, serif; color: var(--red); }
+  .card .q { font-size: 1.22em; line-height: 1.38; font-weight: 500; }
+  .card .opts { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: .6mm 6mm; }
+  .card .opts li.ok { font-weight: 700; color: var(--green); }
+  .card .opts li.ok::after { content: " ✓"; }
+  .card .ans { background: #e8f4e6; border-left: 1.2mm solid var(--green); padding: 1.6mm 3mm; font-size: 1.12em; }
+  .card .ans b { color: var(--green); }
+  .card .ans small { display: block; font-size: .78em; color: var(--soft); }
+  .card .media { background: #fff3cc; padding: 1.4mm 3mm; border-radius: 1.5mm; font-size: .92em; }
+  .card .media.warn { background: #fde2e2; }
+  .card .bg { font-size: .98em; line-height: 1.45; }
+  .card .bg::before { content: "Zum Erzählen: "; font-weight: 700; color: var(--red); }
+  .card .src { font-size: .74em; color: var(--soft); margin-top: auto; }
+  .card ol.list { padding-left: 6mm; display: flex; flex-direction: column; gap: 1.2mm; font-size: .95em; }
+  .card ol.list b { color: var(--green); }
+  .card .note { font-size: .92em; color: var(--soft); }
+</style>
+</head>
+<body>
+  <div class="bar" id="bar"></div>
+  <div id="out"><p style="padding:2rem;color:#fff">Lädt …</p></div>
+
+<script src="assets/quiz-data.js?v=1"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = WQD.esc, TYPE = WQD.TYPE;
+  var params = new URLSearchParams(location.search);
+  var MODE = params.get('was') === 'karten' ? 'karten' : 'zettel';
+  var BLANKS = Math.max(0, Math.min(20, parseInt(params.get('leer') || '3', 10) || 0));
+  var out = document.getElementById('out');
+
+  function bar(D) {
+    var nSheets = MODE === 'zettel'
+      ? D.rounds.length * (D.teams.length + BLANKS) + ' Blätter: ' + D.rounds.length + ' Runden × (' + D.teams.length + ' Teams + ' + BLANKS + ' leer)'
+      : document.querySelectorAll('.sheet').length + ' Blätter, je zwei Karten — in der Mitte durchschneiden';
+    document.getElementById('bar').innerHTML =
+        '<a href="?was=zettel&leer=' + BLANKS + '"' + (MODE === 'zettel' ? ' class="on"' : '') + '>Antwortzettel</a>'
+      + '<a href="?was=karten"' + (MODE === 'karten' ? ' class="on"' : '') + '>Moderationskarten</a>'
+      + (MODE === 'zettel' ? '<label>Leere Zettel je Runde <input type="number" min="0" max="20" value="' + BLANKS + '" id="leer"></label>' : '')
+      + '<a href="./#abend">← Abend</a>'
+      + '<button class="print" type="button" onclick="print()">Drucken / als PDF speichern</button>'
+      + '<span class="info">' + esc(nSheets) + '. Im Druckdialog: A4, Ränder „Keine“ oder „Standard“, Hintergrundgrafiken an.</span>';
+    var l = document.getElementById('leer');
+    if (l) l.onchange = function () { location.search = '?was=zettel&leer=' + l.value; };
+  }
+
+  // ---- Antwortzettel -------------------------------------------------------
+  function hint(q) {
+    var p = q.payload || {};
+    if (q.type === 'MULTIPLE_CHOICE') return '';
+    if (q.type === 'ESTIMATE') return 'Schätzung' + (p.unit ? ' in ' + esc(p.unit) : '');
+    if (q.type === 'AUDIO') return '🎵 Hörfrage';
+    if (q.type === 'VIDEO') return '🎬 Videofrage';
+    if (q.type === 'IMAGE') return '🖼 Bildfrage';
+    return '';
+  }
+  function opts(q, handout) {
+    var o = (q.payload && q.payload.options) || [];
+    if (q.type !== 'MULTIPLE_CHOICE' || !o.length) return '';
+    if (handout) return '<div class="zr__opts long">' + o.map(function (t, i) { return '<span>○ ' + 'ABCDEFGH'[i] + ') ' + esc(t) + '</span>'; }).join('') + '</div>';
+    return '<div class="zr__opts">' + o.map(function (t, i) { return '<span>' + 'ABCDEFGH'[i] + '</span>'; }).join('') + '</div>';
+  }
+  function zettel(D, round, team) {
+    var handout = round.kind === 'HANDOUT';
+    return '<section class="sheet z">'
+      + '<div class="z__head"><img src="../logo-mark.png" alt="">'
+      + '<div><div class="z__ev">' + esc(D.title) + ' · ' + esc(D.event.dateLong || '') + '</div>'
+      + '<div class="z__round">Runde ' + round.n + '</div><div class="z__rsub">' + esc(round.title) + '</div></div>'
+      + '<div class="z__team"><small>Team</small>' + (team ? '<b>' + esc(team) + '</b>' : '<div class="blank"></div>') + '</div></div>'
+      + '<div class="z__rows">' + round.questions.map(function (q, i) {
+          return '<div class="zr"><div class="zr__n">' + (i + 1) + '</div><div class="zr__mid">'
+            + (handout ? '<div class="zr__q">' + esc(q.prompt) + '</div>' : '')
+            + (hint(q) ? '<div class="zr__hint">' + hint(q) + '</div>' : '')
+            + opts(q, handout) + '</div>'
+            + '<div class="zr__pts"><i></i>von ' + q.pts + '</div></div>';
+        }).join('') + '</div>'
+      + '<div class="z__foot"><span class="by">Korrigiert von Team:</span>'
+      + '<span class="sum">Summe Runde ' + round.n + ' <i></i></span></div>'
+      + '</section>';
+  }
+
+  // ---- Moderationskarten ---------------------------------------------------
+  function fmtTime(s) { s = Math.round(s || 0); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
+  function mediaCue(q) {
+    var m = q.media;
+    if (!m) return '';
+    var what = m.video ? '🎬 Video am Beamer' : '🎵 Ton einspielen';
+    if (m.kind === 'missing') return '<div class="media warn">' + what + ' — <b>Clip fehlt noch!</b>'
+      + (m.search ? ' Suche: „' + esc(m.search) + '“' : '') + '</div>';
+    return '<div class="media">' + what + (m.kind === 'youtube' ? ' (YouTube)' : ' (Datei)')
+      + (m.start ? ' ab ' + fmtTime(m.start) : '') + (m.end ? ' bis ' + fmtTime(m.end) : '')
+      + ' — startet über die Beamer-Steuerung</div>';
+  }
+  function answer(q) {
+    var p = q.payload || {}, extra = '';
+    if (q.type === 'OPEN_TEXT' && p.acceptedAnswers && p.acceptedAnswers.length) extra = 'Gilt auch: ' + p.acceptedAnswers.map(esc).join(', ');
+    if (q.type === 'ESTIMATE') extra = p.scoring === 'TOLERANCE' ? 'Punkte, wenn höchstens ' + p.tolerancePercent + ' % daneben' : 'Wer am nächsten dran ist, bekommt die Punkte';
+    if (q.type === 'MAP') extra = 'Radius ' + p.radiusKm + ' km';
+    return '<div class="ans">Antwort: <b>' + esc(q.answer) + '</b>' + (extra ? '<small>' + extra + '</small>' : '') + '</div>';
+  }
+  function qCard(q, top) {
+    var o = (q.payload && q.payload.options) || [];
+    return '<article class="card"><div class="card__top"><span>' + top + '</span><span>'
+      + esc(TYPE[q.type] || q.type) + ' · ' + q.pts + ' Punkte</span></div>'
+      + mediaCue(q)
+      + '<p class="q">' + esc(q.prompt) + '</p>'
+      + (q.type === 'MULTIPLE_CHOICE' ? '<ul class="opts">' + o.map(function (t, i) {
+          return '<li' + (i === q.payload.correctIndex ? ' class="ok"' : '') + '>' + 'ABCDEFGH'[i] + ') ' + esc(t) + '</li>';
+        }).join('') + '</ul>' : '')
+      + answer(q)
+      + (q.background ? '<p class="bg">' + esc(q.background) + '</p>' : '')
+      + (q.factCheck ? '<p class="src">Quelle: ' + esc(q.factCheck) + '</p>' : '')
+      + '</article>';
+  }
+  function short(s, n) { s = String(s || ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+  function overview(round) {
+    return '<article class="card"><div class="card__top"><span>Ablauf & Auflösung</span><span>'
+      + round.questions.length + ' Fragen</span></div>'
+      + '<h2>Runde ' + round.n + ' · ' + esc(round.title) + '</h2>'
+      + (round.kind === 'HANDOUT' ? '<p class="note">📄 Handout-Runde: Fragen stehen am Zettel, am Beamer nur die Auflösung.</p>' : '')
+      + '<ol class="list">' + round.questions.map(function (q) {
+          return '<li>' + esc(short(q.prompt, 95)) + ' → <b>' + esc(q.answer) + '</b></li>';
+        }).join('') + '</ol></article>';
+  }
+  function karten(D) {
+    var cards = [];
+    D.rounds.forEach(function (r) {
+      cards.push(overview(r));
+      r.questions.forEach(function (q, i) {
+        cards.push(qCard(q, '<b>Runde ' + r.n + '</b> · Frage ' + (i + 1) + ' von ' + r.questions.length));
+      });
+    });
+    if (D.master) cards.push(qCard(D.master, '<b>Finale</b> · Masterfrage'));
+    if (D.tiebreak) cards.push(qCard(D.tiebreak, '<b>Stechfrage</b> · nur bei Gleichstand'));
+    var html = '';
+    for (var i = 0; i < cards.length; i += 2) html += '<section class="sheet k">' + cards[i] + (cards[i + 1] || '') + '</section>';
+    return html;
+  }
+
+  /** Long background texts must never be cut off: shrink the card's type until it fits. */
+  function fit() {
+    [].forEach.call(document.querySelectorAll('.card'), function (c) {
+      var size = 12.5;
+      while (c.scrollHeight > c.clientHeight + 1 && size > 7) { size -= .25; c.style.fontSize = size + 'pt'; }
+    });
+  }
+
+  WQD.load().then(function (D) {
+    if (MODE === 'zettel') {
+      var html = '', teams = D.teams.concat(new Array(BLANKS).fill(''));
+      D.rounds.forEach(function (r) { teams.forEach(function (t) { html += zettel(D, r, t); }); });
+      out.innerHTML = html || '<p style="padding:2rem;color:#fff">Im Abend sind noch keine Runden angelegt.</p>';
+    } else {
+      out.innerHTML = karten(D);
+      (document.fonts ? document.fonts.ready : Promise.resolve()).then(fit);
+    }
+    document.title = (MODE === 'zettel' ? 'Antwortzettel' : 'Moderationskarten') + ' – ' + D.title;
+    bar(D);
+  }).catch(function (e) { WQD.fail(e, out); });
+})();
+</script>
+</body>
+</html>
