@@ -4,8 +4,10 @@
 (function () {
   'use strict';
 
-  function api(path) {
-    return fetch('../api/' + path, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+  function api(path, body) {
+    var init = { credentials: 'same-origin', headers: { Accept: 'application/json' } };
+    if (body) { init.method = 'POST'; init.headers['Content-Type'] = 'application/json'; init.body = JSON.stringify(body); }
+    return fetch('../api/' + path, init)
       .then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (j) {
           if (!r.ok || j.ok === false) { var e = new Error(j.error || 'HTTP ' + r.status); e.status = r.status; throw e; }
@@ -78,5 +80,21 @@
         : 'Laden fehlgeschlagen: ' + esc(e.message)) + '</p>';
   }
 
-  window.WQD = { load: load, TYPE: TYPE, esc: esc, fail: fail, youtubeId: youtubeId };
+  /**
+   * Standings from api/live.php: rounds 0..upto summed, ties share a rank.
+   * Once anyone is checked in, only checked-in teams count — no-shows vanish.
+   */
+  function table(live, upto) {
+    var anyIn = Object.keys(live.checkin || {}).length > 0;
+    var rows = live.teams.filter(function (t) { return !anyIn || live.checkin[t.id]; }).map(function (t) {
+      var s = (live.scores || {})[t.id] || {}, per = [], total = 0;
+      for (var r = 0; r <= upto; r++) { var v = s[r]; per.push(v == null ? null : v); total += v || 0; }
+      return { id: t.id, name: t.name, per: per, total: Math.round(total * 10) / 10 };
+    });
+    rows.sort(function (a, b) { return b.total - a.total || a.name.localeCompare(b.name, 'de'); });
+    rows.forEach(function (r, i) { r.rank = i && rows[i - 1].total === r.total ? rows[i - 1].rank : i + 1; });
+    return rows;
+  }
+
+  window.WQD = { load: load, api: api, table: table, TYPE: TYPE, esc: esc, fail: fail, youtubeId: youtubeId };
 })();

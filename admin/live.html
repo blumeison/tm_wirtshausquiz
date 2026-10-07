@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de-AT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Abend live – Wirtshausquiz</title>
+<link rel="icon" type="image/png" href="../logo-mark.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patua+One&family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+  /* Check-in an der Tür und Punkteeingabe nach jeder Runde — fürs Handy gebaut.
+     Mehrere Leute können gleichzeitig tippen, jede Zahl wird sofort gespeichert. */
+  :root { --red: #e51324; --green: #2f9a2a; --ink: #2f2a25; --soft: #77706a; --line: #e4dfd8; --bg: #f6f3ee; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font: 400 16px/1.4 Rubik, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+  header { background: #1f1b17; color: #fff; padding: 12px 16px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 2; flex-wrap: wrap; }
+  header h1 { font: 400 20px 'Patua One', serif; }
+  header a { color: #ffcc00; font-size: 14px; margin-left: auto; }
+  nav { display: flex; gap: 6px; flex-basis: 100%; }
+  nav a { flex: 1; text-align: center; padding: 9px 4px; border-radius: 10px; background: #3a332b; color: #fff; text-decoration: none; font-weight: 600; margin: 0; }
+  nav a.on { background: var(--red); }
+  main { max-width: 640px; margin: 0 auto; padding: 14px 16px 60px; }
+  .sum { font-size: 15px; color: var(--soft); margin-bottom: 10px; }
+  .row { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  .row .name { flex: 1; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+  .row small { display: block; font-weight: 400; color: var(--soft); font-size: 13px; }
+  .chk { min-width: 108px; min-height: 44px; border-radius: 99px; border: 2px solid var(--green); background: #fff; color: var(--green); font: 600 15px Rubik, sans-serif; cursor: pointer; }
+  .chk.on { background: var(--green); color: #fff; }
+  .rounds { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .rounds button { flex: 1; min-width: 70px; padding: 9px 6px; border-radius: 10px; border: 2px solid var(--line); background: #fff; font: 600 15px Rubik, sans-serif; cursor: pointer; }
+  .rounds button.on { border-color: var(--red); color: var(--red); }
+  .rounds button small { display: block; font-weight: 400; font-size: 12px; color: var(--soft); }
+  .row input { width: 92px; font: 600 20px Rubik, sans-serif; text-align: center; padding: 8px; border: 2px solid var(--line); border-radius: 10px; }
+  .row input:focus { outline: none; border-color: var(--red); }
+  .state { width: 22px; text-align: center; }
+  .state.ok { color: var(--green); } .state.err { color: var(--red); }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; }
+  th, td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; }
+  th:nth-child(2), td:nth-child(2) { text-align: left; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--soft); }
+  td.tot { font-weight: 700; }
+  .hint { font-size: 14px; color: var(--soft); margin: 12px 0; }
+  .hint a { color: var(--red); }
+  .err-box { background: #fde2e2; padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<header><h1>Abend live</h1><a href="./#abend">Backoffice</a>
+  <nav><a href="#checkin">Check-in</a><a href="#punkte">Punkte</a><a href="#stand">Stand</a></nav></header>
+<main id="main"><p>Lädt …</p></main>
+
+<script src="assets/quiz-data.js?v=2"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = WQD.esc, main = document.getElementById('main');
+  var D = null, L = null, round = 0, err = '';
+  try { round = Number(localStorage.getItem('wq-live-round')) || 0; } catch (e) {}
+
+  function view() { return (location.hash || '#checkin').slice(1); }
+  function anyIn() { return Object.keys(L.checkin).length > 0; }
+  function playing() { return L.teams.filter(function (t) { return !anyIn() || L.checkin[t.id]; }); }
+  function maxPts(r) { return D.rounds[r].questions.reduce(function (s, q) { return s + q.pts; }, 0); }
+
+  function render() {
+    [].forEach.call(document.querySelectorAll('nav a'), function (a) { a.classList.toggle('on', a.getAttribute('href') === '#' + view()); });
+    var html = err ? '<div class="err-box">' + esc(err) + '</div>' : '';
+    if (view() === 'checkin') {
+      var n = Object.keys(L.checkin).length;
+      html += '<p class="sum">' + n + ' von ' + L.teams.length + ' Teams da</p>'
+        + L.teams.map(function (t) {
+          var on = !!L.checkin[t.id];
+          return '<div class="row"><span class="name">' + esc(t.name) + (t.slot === 'WAITLIST' ? '<small>Warteliste</small>' : '') + '</span>'
+            + '<button class="chk' + (on ? ' on' : '') + '" data-in="' + esc(t.id) + '">' + (on ? '✓ Da' : 'Check-in') + '</button></div>';
+        }).join('')
+        + '<p class="hint">Wer nicht eingecheckt ist, taucht bei Punkten und Stand nicht auf — sobald mindestens ein Team eingecheckt ist. '
+        + 'Spontanes Team? <a href="./#anmeldungen">Unter Anmeldungen „+ Team eintragen“</a>, dann hier neu laden.</p>';
+    } else if (view() === 'punkte') {
+      html += '<div class="rounds">' + D.rounds.map(function (r, i) {
+          return '<button data-round="' + i + '"' + (i === round ? ' class="on"' : '') + '>Runde ' + (i + 1) + '<small>max. ' + maxPts(i) + '</small></button>';
+        }).join('') + '</div>'
+        + '<p class="sum">' + esc(D.rounds[round].title) + ' — Rundensumme vom Zettel eintragen, wird sofort gespeichert.</p>'
+        + playing().map(function (t) {
+          var v = (L.scores[t.id] || {})[round];
+          return '<div class="row"><span class="name">' + esc(t.name) + '</span>'
+            + '<input type="number" inputmode="decimal" min="0" step="0.5" data-pts="' + esc(t.id) + '" value="' + (v == null ? '' : v) + '">'
+            + '<span class="state" id="st-' + esc(t.id) + '"></span></div>';
+        }).join('');
+    } else {
+      var last = D.rounds.length - 1, rows = WQD.table(L, last);
+      html += '<table><thead><tr><th>#</th><th>Team</th>' + D.rounds.map(function (r, i) { return '<th>R' + (i + 1) + '</th>'; }).join('')
+        + '<th>Σ</th></tr></thead><tbody>' + rows.map(function (r) {
+          return '<tr><td>' + r.rank + '.</td><td>' + esc(r.name) + '</td>'
+            + r.per.map(function (v) { return '<td>' + (v == null ? '–' : v) + '</td>'; }).join('')
+            + '<td class="tot">' + r.total + '</td></tr>';
+        }).join('') + '</tbody></table>'
+        + '<p class="hint">Am Beamer erscheint der Stand automatisch nach jeder Auflösung.</p>';
+    }
+    main.innerHTML = html;
+  }
+
+  function post(body, stateEl) {
+    if (stateEl) { stateEl.textContent = '…'; stateEl.className = 'state'; }
+    return WQD.api('live.php', body).then(function (d) {
+      L = d; err = '';
+      if (stateEl) { stateEl.textContent = '✓'; stateEl.className = 'state ok'; }
+      return d;
+    }).catch(function (e) {
+      if (stateEl) { stateEl.textContent = '✗'; stateEl.className = 'state err'; stateEl.title = e.message; }
+      err = e.status === 401 ? 'Abgemeldet — bitte im Backoffice neu anmelden und diese Seite neu laden.' : 'Nicht gespeichert: ' + e.message;
+      if (!stateEl) render();
+      throw e;
+    });
+  }
+
+  main.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-in]');
+    if (b) { post({ action: 'checkin', id: b.getAttribute('data-in'), on: !b.classList.contains('on') }).then(render, function () {}); return; }
+    var r = e.target.closest('[data-round]');
+    if (r) { round = Number(r.getAttribute('data-round')); try { localStorage.setItem('wq-live-round', round); } catch (x) {} render(); }
+  });
+  main.addEventListener('change', function (e) {
+    var i = e.target.closest('[data-pts]');
+    if (!i) return;
+    var id = i.getAttribute('data-pts'), v = i.value.trim().replace(',', '.');
+    post({ action: 'score', id: id, round: round, pts: v === '' ? null : Number(v) }, document.getElementById('st-' + id)).catch(function () {});
+  });
+  window.addEventListener('hashchange', render);
+
+  // Alle 15 Sekunden frisch holen: zeigt, was andere eintippen, und hält die Anmeldung wach.
+  setInterval(function () {
+    var a = document.activeElement;
+    if (a && a.hasAttribute && a.hasAttribute('data-pts')) return;
+    WQD.api('live.php').then(function (d) { L = d; err = ''; render(); }, function (e) {
+      if (e.status === 401) { err = 'Abgemeldet — bitte im Backoffice neu anmelden und diese Seite neu laden.'; render(); }
+    });
+  }, 15000);
+
+  Promise.all([WQD.load(), WQD.api('live.php')]).then(function (r) {
+    D = r[0]; L = r[1];
+    if (round >= D.rounds.length) round = 0;
+    render();
+  }).catch(function (e) { WQD.fail(e, main); });
+})();
+</script>
+</body>
+</html>
