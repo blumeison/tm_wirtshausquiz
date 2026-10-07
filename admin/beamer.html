@@ -29,6 +29,8 @@
           opacity: .8; transform: scale(1.08); animation: drift 40s ease-in-out infinite alternate; }
   .s-shade { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(30,20,12,.3) 0%, rgba(20,13,8,.75) 100%); }
   .s-wrap { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; padding: 4cqw 5cqw; }
+  .fx .s-bg.unblur { animation: unblur 1.8s ease-out both, drift 40s ease-in-out infinite alternate; }
+  @keyframes unblur { from { filter: blur(var(--b0)) brightness(var(--l0)); opacity: var(--o0); } to { filter: blur(var(--b1)) brightness(var(--l1)); opacity: var(--o1); } }
   @keyframes drift { from { transform: scale(1.08) translate(0, 0); } to { transform: scale(1.18) translate(-2%, -1.5%); } }
 
   .s-top { display: flex; justify-content: space-between; align-items: center; font: 600 1.5cqw/1 Rubik, sans-serif;
@@ -179,7 +181,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261008-3';
+  var BUILD = '20261008-4';
   var ch = new BroadcastChannel('wq-beamer');
   var root = document.getElementById('root');
   var D = null, deck = [], idx = 0, step = 0, LIVE = null, RESUME = 0;
@@ -242,6 +244,18 @@
 
   // ---- Folien zeichnen (Beamer und Vorschau teilen sich das) ---------------
   // Während der Masterhinweise kein Fragenbild – das würde die Lösung verraten; erst die Auflösung zeigt es.
+  // Masterhinweise: eigenes Bild <id>_hint.jpg (Cocktail), wird von Hinweis zu Hinweis schärfer.
+  var UNBLUR = [[3.2, .5, .7], [2.4, .55, .74], [1.5, .6, .78], [.7, .66, .84], [0, .78, .95]]; // [blur cqw, Helligkeit, Deckkraft]
+  function unblurAt(n) { return UNBLUR[Math.max(0, Math.min(UNBLUR.length - 1, n - 1))]; }
+  function bgStyle(sl) {
+    var url = sl.k === 'mhint' ? '../uploads/bg/' + encodeURIComponent(sl.q.id) + '_hint.jpg' : bgUrl(sl);
+    var st = "background-image:url('" + url + "')";
+    if (sl.k !== 'mhint') return '<div class="s-bg" style="' + st + '"></div>';
+    var a = unblurAt(sl.n - 1), b = unblurAt(sl.n);
+    if (sl.n === 1) a = [4.5, .4, .6];
+    return '<div class="s-bg unblur" style="' + st + ';--b0:' + a[0] + 'cqw;--l0:' + a[1] + ';--o0:' + a[2]
+      + ';--b1:' + b[0] + 'cqw;--l1:' + b[1] + ';--o1:' + b[2] + ';filter:blur(' + b[0] + 'cqw) brightness(' + b[1] + ');opacity:' + b[2] + '"></div>';
+  }
   function bgUrl(sl) { return sl.q && sl.k !== 'mhint' ? '../uploads/bg/' + encodeURIComponent(sl.q.id) + '.jpg' : '../assets/pub.jpg'; }
   function top(left) { return '<div class="s-top"><span>' + esc(left || '') + '</span><img src="../logo-mark-white.png" alt=""></div>'; }
   /** Fließtext: Wort für Wort einblenden, lange Texte schneller. */
@@ -313,7 +327,7 @@
     return top(qLeft(sl)) + '<div class="s-q">' + body + '</div>';
   }
   function render(sl, preview, st) {
-    return '<div class="s-bg" style="background-image:url(\'' + bgUrl(sl) + '\')"></div><div class="s-shade"></div>'
+    return bgStyle(sl) + '<div class="s-shade"></div>'
       + '<div class="s-wrap">' + inner(sl, preview, st || 0) + '</div>';
   }
 
@@ -496,7 +510,7 @@
         if (msg.D) {
           D = msg.D; deck = buildDeck(D); shown = -1;
           // Bilder jetzt laden, dann gehen sie später auch ohne Netz.
-          deck.forEach(function (sl) { new Image().src = bgUrl(sl); });
+          deck.forEach(function (sl) { new Image().src = sl.k === 'mhint' ? '../uploads/bg/' + encodeURIComponent(sl.q.id) + '_hint.jpg' : bgUrl(sl); });
         }
         TIMER = msg.timer || null;
         if (msg.pauseMin && msg.pauseMin !== PAUSE_MIN) { PAUSE_MIN = msg.pauseMin; if (deck[idx] && deck[idx].k === 'rules') shown = -1; }
