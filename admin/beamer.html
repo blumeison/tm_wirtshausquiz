@@ -181,7 +181,10 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261008-4';
+  var BUILD = '20261008-5';
+  function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
+  // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
+  var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
   var ch = new BroadcastChannel('wq-beamer');
   var root = document.getElementById('root');
   var D = null, deck = [], idx = 0, step = 0, LIVE = null, RESUME = 0;
@@ -493,12 +496,19 @@
     };
     loadYT(function () { if (pendingMount && pendingMount === deck[idx]) mountVideo(pendingMount); });
     watchEnd(function () { return adapter(player, vEl); }, function () { return deck[idx] && deck[idx].q && deck[idx].q.media; });
-    ch.addEventListener('message', function (e) { if (e.data.t === 'skip') stage.classList.add('skip'); });
-    var shown = -1, shownLive = '', stage = document.getElementById('stage');
+    var shown = -1, shownLive = '', stage = document.getElementById('stage'), lock = null;
+    function accept(msg) {
+      if (!msg.ctrl) return false; // alte Steuerung ohne Kennung: ignorieren
+      if (lock && msg.ctrl.id !== lock.id && msg.ctrl.t < lock.t) return false; // ältere Steuerung
+      if (!lock || msg.ctrl.id !== lock.id) { lock = msg.ctrl; shown = -1; if (!msg.D) ch.postMessage({ t: 'hello' }); }
+      return true;
+    }
     ch.onmessage = function (e) {
       var msg = e.data;
+      if (msg.t === 'hello' || !accept(msg)) return;
+      if (msg.t === 'skip') { stage.classList.add('skip'); return; }
       if (msg.t === 'state') {
-        if (msg.build && msg.build !== BUILD) {
+        if (msg.build && buildNum(msg.build) > buildNum(BUILD)) {
           // Steuerung ist neuer als dieses Fenster: einmal frisch laden (nur einmal je Version, kein Endlos-Neuladen).
           var tried = ''; try { tried = sessionStorage.getItem('wq-reload') || ''; } catch (x) {}
           if (tried !== msg.build) {
@@ -531,7 +541,7 @@
   }
 
   // ---- Steuerung am Laptop --------------------------------------------------
-  function broadcast(full) { ch.postMessage({ t: 'state', build: BUILD, idx: idx, step: step, D: full ? D : null, live: LIVE, timer: TIMER, pauseMin: PAUSE_MIN }); }
+  function broadcast(full) { ch.postMessage({ t: 'state', ctrl: CTRL, build: BUILD, idx: idx, step: step, D: full ? D : null, live: LIVE, timer: TIMER, pauseMin: PAUSE_MIN }); }
   // Läuft der Fließtext noch, zeigt der nächste Klick ihn sofort ganz.
   var typeEnd = 0, qStart = 0;
   function typingMs(sl) {
@@ -550,7 +560,7 @@
   }
   function goto(n) { idx = Math.max(0, Math.min(deck.length - 1, n)); step = 0; moved(); }
   function forward() {
-    if (Date.now() < typeEnd) { typeEnd = 0; ch.postMessage({ t: 'skip' }); return; }
+    if (Date.now() < typeEnd) { typeEnd = 0; ch.postMessage({ t: 'skip', ctrl: CTRL }); return; }
     if (step < (deck[idx].steps || 0)) { step++; broadcast(false); draw(); return; }
     if (idx < deck.length - 1) goto(idx + 1);
   }
@@ -702,7 +712,7 @@
     tick();
   }
   function control() {
-    root.innerHTML = '<div class="ctl">'
+    root.innerHTML = '<div class="ctl"><div class="warn" id="stale" hidden style="grid-column:1/-1;font-size:16px">⚠ Es ist ein neueres Steuerfenster offen – dieses hier steuert den Beamer nicht mehr. Bitte dieses Fenster schließen.</div>'
       + '<div class="ctl-bar"><button class="btn" id="back">◀</button><span class="pos" id="pos"></span><span class="sw" id="sw" hidden></span>'
       + '<button class="btn red big" id="fwd">Weiter ▶</button>'
       + '<select class="jump" id="jump">' + deck.map(function (sl, i) { return '<option value="' + i + '">' + esc((i + 1) + '. ' + label(sl)) + '</option>'; }).join('') + '</select>'
@@ -731,7 +741,7 @@
       var b = e.target.closest('[data-media]');
       if (!b) return;
       var m = deck[idx].q && deck[idx].q.media, cmd = b.getAttribute('data-media');
-      if (m && m.video) ch.postMessage({ t: 'media', cmd: cmd });
+      if (m && m.video) ch.postMessage({ t: 'media', cmd: cmd, ctrl: CTRL });
       else mediaCmd(cmd, aPlayer, aEl, m);
     });
     document.addEventListener('keydown', function (e) {
@@ -739,7 +749,11 @@
       if (['ArrowRight', 'PageDown', ' '].indexOf(e.key) >= 0) { e.preventDefault(); forward(); }
       if (['ArrowLeft', 'PageUp'].indexOf(e.key) >= 0) { e.preventDefault(); backward(); }
     });
-    ch.onmessage = function (e) { if (e.data.t === 'hello') broadcast(true); };
+    ch.onmessage = function (e) {
+      var d = e.data;
+      if (d.t === 'hello') broadcast(true);
+      if (d.ctrl && d.ctrl.id !== CTRL.id && d.ctrl.t > CTRL.t) document.getElementById('stale').hidden = false;
+    };
     loadYT(function () { if (pendingMount && pendingMount === deck[idx]) mountAudio(pendingMount); });
     watchEnd(function () { return adapter(aPlayer, aEl); }, function () { var m = deck[idx].q && deck[idx].q.media; return m && !m.video ? m : null; });
     draw(); broadcast(true);
