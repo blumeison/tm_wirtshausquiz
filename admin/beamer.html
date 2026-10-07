@@ -146,6 +146,12 @@
   .player .yt iframe { width: 100%; height: 100%; border: 0; }
   .player audio { width: 100%; }
   .warn { background: #5a1d1d; border-radius: 8px; padding: 8px 12px; }
+  .cl-head { font-weight: 600; } .cl-head.ok { color: #7fd47a; }
+  .cl { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+  .cl li { display: flex; gap: 6px; align-items: center; opacity: .75; } .cl li.ok { opacity: 1; }
+  .cl li b { margin-left: auto; color: #7fd47a; }
+  .sw { font: 600 18px Rubik, sans-serif; padding: 6px 12px; border-radius: 99px; background: #2b2520; min-width: 86px; text-align: center; }
+  .sw.warm { background: #6b5200; } .sw.hot { background: #8a1a1a; }
   .check { background: #5a4a10; border-radius: 8px; padding: 8px 12px; font-size: 14px; }
   a { color: var(--yellow); }
   @media (max-width: 900px) { .ctl { grid-template-columns: 1fr; } }
@@ -466,7 +472,7 @@
   // ---- Steuerung am Laptop --------------------------------------------------
   function broadcast(full) { ch.postMessage({ t: 'state', idx: idx, step: step, D: full ? D : null, live: LIVE, timer: TIMER, pauseMin: PAUSE_MIN }); }
   // Läuft der Fließtext noch, zeigt der nächste Klick ihn sofort ganz.
-  var typeEnd = 0;
+  var typeEnd = 0, qStart = 0;
   function typingMs(sl) {
     if (sl.k === 'q') return nWords(sl.q.prompt) * WORD_MS + 500;
     if (sl.k === 'mhint') return nWords((sl.q.payload.hints || [])[sl.n - 1]) * WORD_MS + 500;
@@ -475,6 +481,7 @@
   function moved() {
     try { localStorage.setItem('wq-beamer-idx', idx); } catch (e) {}
     typeEnd = Date.now() + typingMs(deck[idx]);
+    qStart = deck[idx].k === 'q' || deck[idx].k === 'mhint' ? Date.now() : 0;
     // Pause-Folie: Timer startet beim Hinkommen von selbst (einmal je Pause).
     if (deck[idx].k === 'pause' && (!TIMER || TIMER.idx !== idx)) startTimer();
     broadcast(false); draw();
@@ -514,7 +521,7 @@
       liveErr = e.status === 401 ? 'Abgemeldet — im Backoffice neu anmelden, dann hier „Aktualisieren“.' : 'Punkte nicht erreichbar (' + e.message + ')';
     }).then(function () {
       broadcast(false);
-      if (needsLive(deck[idx])) { drawnIdx = -1; draw(); }
+      if (needsLive(deck[idx]) || deck[idx].k === 'pause') { drawnIdx = -1; draw(); }
     });
   }
   function fmtTime(s) { s = Math.round(s || 0); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
@@ -549,6 +556,20 @@
       playerVars: { start: Math.floor(m.start || 0), rel: 0, playsinline: 1, modestbranding: 1 }
     });
   }
+  // Wer hat für diese Runde schon Punkte? Aktualisiert sich alle 5 s von selbst.
+  function checklist(ri) {
+    if (!LIVE) return '<div class="mute">Punkte werden geladen …</div>';
+    var anyIn = Object.keys(LIVE.checkin).length > 0;
+    var ts = LIVE.teams.filter(function (t) { return !anyIn || LIVE.checkin[t.id]; });
+    var have = ts.filter(function (t) { return ((LIVE.scores[t.id] || {})[ri]) != null; }).length;
+    return '<a class="btn red big" href="live.html?r=' + ri + '#punkte" target="_blank">✍️ Punkte eintragen (Runde ' + (ri + 1) + ')</a>'
+      + '<div class="cl-head' + (have === ts.length ? ' ok' : '') + '">' + (have === ts.length ? '✓ Alle ' + ts.length + ' Teams eingetragen — bereit für die Auflösung'
+        : have + ' von ' + ts.length + ' Teams eingetragen') + '</div>'
+      + '<ul class="cl">' + ts.map(function (t) {
+        var v = (LIVE.scores[t.id] || {})[ri];
+        return '<li class="' + (v != null ? 'ok' : '') + '"><span>' + (v != null ? '✅' : '⭕') + '</span>' + esc(t.name) + (v != null ? '<b>' + v + '</b>' : '') + '</li>';
+      }).join('') + '</ul>' + (liveErr ? '<div class="warn">' + esc(liveErr) + '</div>' : '');
+  }
   function checkHtml(q) {
     return (q.tags || []).indexOf('prüfen') >= 0 ? '<div class="check">⚠ Bitte prüfen: ' + esc(String(q.factCheck || '').replace(/^⚠ Claude:\s*/, '')) + '</div>' : '';
   }
@@ -560,7 +581,7 @@
         + '<button class="btn" data-timer="restart">⟲ Neu</button></div>'
         + '<div class="row"><span class="mute" style="align-self:center">Diese Pause neu starten mit:</span>'
         + [5, 10, 15, 20].map(function (m) { return '<button class="btn" data-timer="set:' + m + '">' + m + ' min</button>'; }).join('') + '</div>'
-        + '<div class="mute">Jetzt Punkte eintragen: <a href="live.html#punkte" target="_blank">Abend live</a></div></div>';
+        + checklist(sl.r.n - 1) + '</div>';
     }
     if (sl.k === 'mhint') {
       var mp = sl.q.payload || {};
@@ -616,7 +637,7 @@
   }
   function control() {
     root.innerHTML = '<div class="ctl">'
-      + '<div class="ctl-bar"><button class="btn" id="back">◀</button><span class="pos" id="pos"></span>'
+      + '<div class="ctl-bar"><button class="btn" id="back">◀</button><span class="pos" id="pos"></span><span class="sw" id="sw" hidden></span>'
       + '<button class="btn red big" id="fwd">Weiter ▶</button>'
       + '<select class="jump" id="jump">' + deck.map(function (sl, i) { return '<option value="' + i + '">' + esc((i + 1) + '. ' + label(sl)) + '</option>'; }).join('') + '</select>'
       + '<label class="pmin">Pause-Standard <input type="number" min="1" max="60" id="pmin" value="' + PAUSE_MIN + '"> min</label>'
@@ -657,7 +678,21 @@
     watchEnd(function () { return adapter(aPlayer, aEl); }, function () { var m = deck[idx].q && deck[idx].q.media; return m && !m.video ? m : null; });
     draw(); broadcast(true);
     fetchLive();
-    setInterval(fetchLive, 30000);
+    // Pause und Zwischenstand: alle 5 s frisch, sonst alle 30 s (hält auch die Anmeldung wach).
+    var ticks = 0;
+    setInterval(function () {
+      ticks++;
+      var k = deck[idx].k;
+      if (k === 'pause' || k === 'stand' || ticks % 6 === 0) fetchLive();
+    }, 5000);
+    // Stoppuhr je Frage, nur am Laptop: gelb ab 1:00, rot ab 1:30.
+    setInterval(function () {
+      var sw = document.getElementById('sw');
+      if (!qStart) { sw.hidden = true; return; }
+      var s = Math.floor((Date.now() - qStart) / 1000);
+      sw.hidden = false; sw.textContent = '⏱ ' + Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2);
+      sw.className = 'sw' + (s >= 90 ? ' hot' : s >= 60 ? ' warm' : '');
+    }, 500);
   }
 
   if (SCREEN) { screen(); return; }

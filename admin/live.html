@@ -60,6 +60,9 @@
   var esc = WQD.esc, main = document.getElementById('main');
   var D = null, L = null, round = 0, err = '';
   try { round = localStorage.getItem('wq-live-round') || 0; round = round === 'tb' ? 'tb' : Number(round) || 0; } catch (e) {}
+  // Aus der Beamer-Pause kommt ?r=<Runde>: gleich dort aufschlagen.
+  var qr = new URLSearchParams(location.search).get('r');
+  if (qr != null && qr !== '') round = qr === 'tb' ? 'tb' : Number(qr) || 0;
 
   function view() { return (location.hash || '#checkin').slice(1); }
   function anyIn() { return Object.keys(L.checkin).length > 0; }
