@@ -169,6 +169,8 @@
   .cl li b { margin-left: auto; color: #7fd47a; }
   .sw { font: 600 18px Rubik, sans-serif; padding: 6px 12px; border-radius: 99px; background: #2b2520; min-width: 86px; text-align: center; }
   .sw.warm { background: #6b5200; } .sw.hot { background: #8a1a1a; }
+  .rt { font: 500 14px Rubik, sans-serif; padding: 6px 12px; border-radius: 99px; background: #2b2520; }
+  .rt.late { background: #6b5200; }
   .check { background: #5a4a10; border-radius: 8px; padding: 8px 12px; font-size: 14px; }
   a { color: var(--yellow); }
   @media (max-width: 900px) { .ctl { grid-template-columns: 1fr; } }
@@ -184,7 +186,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261008-7';
+  var BUILD = '20261008-8';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -207,7 +209,7 @@
         r.questions.forEach(function (q, i) { s.push({ k: 'q', r: r, i: i, q: q, steps: nOpts(q) }); });
         s.push({ k: 'collect', r: r });
       }
-      s.push({ k: 'pause', r: r });
+      s.push({ k: 'pause', r: r, min: r.n === 1 ? 5 : 10 }); // nach Runde 1 nur auswerten, später auch Durchschnaufen
       s.push({ k: 'solve', r: r });
       r.questions.forEach(function (q, i) { s.push({ k: 'a', r: r, i: i, q: q }); });
       s.push({ k: 'stand', upto: r.n - 1, r: r });
@@ -558,7 +560,41 @@
   // ---- Steuerung am Laptop --------------------------------------------------
   function broadcast(full) { ch.postMessage({ t: 'state', ctrl: CTRL, build: BUILD, idx: idx, step: step, D: full ? D : null, live: LIVE, timer: TIMER, pauseMin: PAUSE_MIN }); }
   // Läuft der Fließtext noch, zeigt der nächste Klick ihn sofort ganz.
-  var typeEnd = 0, qStart = 0;
+  var typeEnd = 0, qStart = 0, segStart = {};
+  // Zeitplan in Minuten: Erfahrungswerte, die Clips mit ihrer echten Länge.
+  function clipMin(q) { var m = q.media; if (!m || m.kind === 'missing') return 0; return m.end ? (m.end - (m.start || 0)) / 60 : 2; }
+  function planRound(r, pauseMin) {
+    return r.questions.reduce(function (s, q) { return s + 1.75 + clipMin(q); }, 0) // Fragen
+      + 2 + pauseMin + r.questions.length * 1.25 + 1.5;                         // einsammeln, Pause, Auflösung, Stand
+  }
+  function plans() {
+    var out = [{ key: 'intro', label: 'Begrüßung', min: 8 }];
+    deck.forEach(function (sl) {
+      if (sl.k === 'round') out.push({ key: 'r' + sl.r.n, label: 'Runde ' + sl.r.n, min: planRound(sl.r, sl.r.n === 1 ? 5 : 10) });
+    });
+    if (D.master) out.push({ key: 'fin', label: 'Finale', min: 12 + 5 + 10 });
+    return out;
+  }
+  function segOf(i) {
+    for (var j = i; j >= 0; j--) {
+      var k = deck[j].k;
+      if (k === 'round') return 'r' + deck[j].r.n;
+      if (k === 'minfo' || k === 'mhint') return 'fin';
+    }
+    return 'intro';
+  }
+  function fmtClock(d) { return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function drawClock() {
+    var el = document.getElementById('rt'); if (!el) return;
+    var ps = plans(), cur = segOf(idx), ci = ps.map(function (x) { return x.key; }).indexOf(cur);
+    if (!segStart[cur]) segStart[cur] = Date.now();
+    var el2 = (Date.now() - segStart[cur]) / 60000, seg = ps[ci] || ps[0];
+    var rest = Math.max(0, seg.min - el2);
+    for (var i = ci + 1; i < ps.length; i++) rest += ps[i].min;
+    var s = Math.floor(el2 * 60);
+    el.textContent = seg.label + ' ' + Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2) + ' / ~' + Math.round(seg.min) + ' min · Ende ca. ' + fmtClock(new Date(Date.now() + rest * 60000));
+    el.className = 'rt' + (el2 > seg.min + 5 ? ' late' : '');
+  }
   function typingMs(sl) {
     if (sl.k === 'q') return nWords(sl.q.prompt) * WORD_MS + 500;
     if (sl.k === 'mhint') return nWords((sl.q.payload.hints || [])[sl.n - 1]) * WORD_MS + 500;
@@ -732,7 +768,7 @@
       + '<div class="ctl-bar"><button class="btn" id="back">◀</button><span class="pos" id="pos"></span><span class="sw" id="sw" hidden></span>'
       + '<button class="btn red big" id="fwd">Weiter ▶</button>'
       + '<select class="jump" id="jump">' + deck.map(function (sl, i) { return '<option value="' + i + '">' + esc((i + 1) + '. ' + label(sl)) + '</option>'; }).join('') + '</select>'
-      + '<label class="pmin">Pause-Standard <input type="number" min="1" max="60" id="pmin" value="' + PAUSE_MIN + '"> min</label>'
+      + '<span class="rt" id="rt"></span>'
       + (RESUME > 0 ? '<button class="btn" id="resume">↪ Weiter bei Folie ' + (RESUME + 1) + '</button>' : '')
       + '<button class="btn" id="open">📽 Beamer-Fenster öffnen</button><a class="btn" href="./#abend">Backoffice</a>'
       + '<span class="hint">Pfeiltasten, Leertaste oder Präsenter-Klicker blättern.</span></div>'
@@ -744,11 +780,6 @@
     if (rb) rb.onclick = function () { rb.remove(); goto(RESUME); };
     document.getElementById('fwd').onclick = forward;
     document.getElementById('jump').onchange = function () { goto(Number(this.value)); };
-    document.getElementById('pmin').onchange = function () {
-      PAUSE_MIN = Math.max(1, Math.min(60, Number(this.value) || 10)); this.value = PAUSE_MIN;
-      try { localStorage.setItem('wq-pause-min', PAUSE_MIN); } catch (e) {}
-      drawnIdx = -1; broadcast(false); draw();
-    };
     document.getElementById('open').onclick = function () { window.open('beamer.html?b=' + BUILD + '-' + Date.now() + '#screen', 'wqscreen', 'popup,width=1280,height=720'); };
     document.getElementById('info').addEventListener('click', function (e) {
       if (e.target.closest('[data-live]')) { fetchLive(); return; }
@@ -781,6 +812,8 @@
       var k = deck[idx].k;
       if (k === 'pause' || k === 'stand' || ticks % 6 === 0) fetchLive();
     }, 5000);
+    // Rundenuhr: wie lange läuft die Runde schon, wie viel ist eingeplant, wann ist ungefähr Schluss?
+    setInterval(drawClock, 1000); drawClock();
     // Stoppuhr je Frage, nur am Laptop: gelb ab 1:00, rot ab 1:30.
     setInterval(function () {
       var sw = document.getElementById('sw');
