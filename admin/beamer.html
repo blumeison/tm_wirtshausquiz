@@ -174,6 +174,8 @@
   'use strict';
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
+  // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
+  var BUILD = '20261008-2';
   var ch = new BroadcastChannel('wq-beamer');
   var root = document.getElementById('root');
   var D = null, deck = [], idx = 0, step = 0, LIVE = null, RESUME = 0;
@@ -478,6 +480,15 @@
     ch.onmessage = function (e) {
       var msg = e.data;
       if (msg.t === 'state') {
+        if (msg.build && msg.build !== BUILD) {
+          // Steuerung ist neuer als dieses Fenster: einmal frisch laden (nur einmal je Version, kein Endlos-Neuladen).
+          var tried = ''; try { tried = sessionStorage.getItem('wq-reload') || ''; } catch (x) {}
+          if (tried !== msg.build) {
+            try { sessionStorage.setItem('wq-reload', msg.build); } catch (x) {}
+            location.replace('beamer.html?b=' + encodeURIComponent(msg.build) + '#screen');
+            return;
+          }
+        }
         if (msg.D) {
           D = msg.D; deck = buildDeck(D); shown = -1;
           // Bilder jetzt laden, dann gehen sie später auch ohne Netz.
@@ -502,7 +513,7 @@
   }
 
   // ---- Steuerung am Laptop --------------------------------------------------
-  function broadcast(full) { ch.postMessage({ t: 'state', idx: idx, step: step, D: full ? D : null, live: LIVE, timer: TIMER, pauseMin: PAUSE_MIN }); }
+  function broadcast(full) { ch.postMessage({ t: 'state', build: BUILD, idx: idx, step: step, D: full ? D : null, live: LIVE, timer: TIMER, pauseMin: PAUSE_MIN }); }
   // Läuft der Fließtext noch, zeigt der nächste Klick ihn sofort ganz.
   var typeEnd = 0, qStart = 0;
   function typingMs(sl) {
@@ -694,7 +705,7 @@
       try { localStorage.setItem('wq-pause-min', PAUSE_MIN); } catch (e) {}
       drawnIdx = -1; broadcast(false); draw();
     };
-    document.getElementById('open').onclick = function () { window.open('beamer.html#screen', 'wqscreen', 'popup,width=1280,height=720'); };
+    document.getElementById('open').onclick = function () { window.open('beamer.html?b=' + BUILD + '-' + Date.now() + '#screen', 'wqscreen', 'popup,width=1280,height=720'); };
     document.getElementById('info').addEventListener('click', function (e) {
       if (e.target.closest('[data-live]')) { fetchLive(); return; }
       var t = e.target.closest('[data-timer]');
