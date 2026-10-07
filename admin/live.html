@@ -49,18 +49,29 @@
   <nav><a href="#checkin">Check-in</a><a href="#punkte">Punkte</a><a href="#stand">Stand</a></nav></header>
 <main id="main"><p>Lädt …</p></main>
 
-<script src="assets/quiz-data.js?v=2"></script>
+<script src="assets/quiz-data.js?v=3"></script>
 <script>
 (function () {
   'use strict';
   var esc = WQD.esc, main = document.getElementById('main');
   var D = null, L = null, round = 0, err = '';
-  try { round = Number(localStorage.getItem('wq-live-round')) || 0; } catch (e) {}
+  try { round = localStorage.getItem('wq-live-round') || 0; round = round === 'tb' ? 'tb' : Number(round) || 0; } catch (e) {}
 
   function view() { return (location.hash || '#checkin').slice(1); }
   function anyIn() { return Object.keys(L.checkin).length > 0; }
   function playing() { return L.teams.filter(function (t) { return !anyIn() || L.checkin[t.id]; }); }
-  function maxPts(r) { return D.rounds[r].questions.reduce(function (s, q) { return s + q.pts; }, 0); }
+  // Spalten zum Eintippen: die Runden, dann die Masterfrage (als eigene Punktezeile),
+  // dann der Tipp zur Stechfrage — der ist keine Punktzahl, sondern der geschätzte Wert.
+  function cols() {
+    var c = D.rounds.map(function (r, i) {
+      return { key: i, label: 'Runde ' + (i + 1), title: r.title, sub: 'max. ' + r.questions.reduce(function (s, q) { return s + q.pts; }, 0) };
+    });
+    if (D.master) c.push({ key: D.rounds.length, label: 'Master', title: 'Masterfrage', sub: 'max. ' + D.master.pts });
+    if (D.tiebreak) c.push({ key: 'tb', label: 'Stechfrage', title: 'Stechfrage — geschätzter Wert je Team (Antwort: ' + D.tiebreak.answer + ')', sub: 'Tipp' });
+    return c;
+  }
+  function lastScore() { return D.rounds.length - 1 + (D.master ? 1 : 0); }
+  function tbValue() { return D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null; }
 
   function render() {
     [].forEach.call(document.querySelectorAll('nav a'), function (a) { a.classList.toggle('on', a.getAttribute('href') === '#' + view()); });
@@ -76,24 +87,27 @@
         + '<p class="hint">Wer nicht eingecheckt ist, taucht bei Punkten und Stand nicht auf — sobald mindestens ein Team eingecheckt ist. '
         + 'Spontanes Team? <a href="./#anmeldungen">Unter Anmeldungen „+ Team eintragen“</a>, dann hier neu laden.</p>';
     } else if (view() === 'punkte') {
-      html += '<div class="rounds">' + D.rounds.map(function (r, i) {
-          return '<button data-round="' + i + '"' + (i === round ? ' class="on"' : '') + '>Runde ' + (i + 1) + '<small>max. ' + maxPts(i) + '</small></button>';
+      var cs = cols(), cur = cs.filter(function (c) { return c.key === round; })[0] || cs[0];
+      round = cur.key;
+      html += '<div class="rounds">' + cs.map(function (c) {
+          return '<button data-round="' + c.key + '"' + (c.key === round ? ' class="on"' : '') + '>' + esc(c.label) + '<small>' + esc(c.sub) + '</small></button>';
         }).join('') + '</div>'
-        + '<p class="sum">' + esc(D.rounds[round].title) + ' — Rundensumme vom Zettel eintragen, wird sofort gespeichert.</p>'
+        + '<p class="sum">' + esc(cur.title) + (round === 'tb' ? ' — nur für die Teams, die gleichauf liegen.' : ' — Summe vom Zettel eintragen, wird sofort gespeichert.') + '</p>'
         + playing().map(function (t) {
           var v = (L.scores[t.id] || {})[round];
           return '<div class="row"><span class="name">' + esc(t.name) + '</span>'
-            + '<input type="number" inputmode="decimal" min="0" step="0.5" data-pts="' + esc(t.id) + '" value="' + (v == null ? '' : v) + '">'
+            + '<input type="number" inputmode="decimal"' + (round === 'tb' ? ' step="any"' : ' min="0" step="0.5"') + ' data-pts="' + esc(t.id) + '" value="' + (v == null ? '' : v) + '">'
             + '<span class="state" id="st-' + esc(t.id) + '"></span></div>';
         }).join('');
     } else {
-      var last = D.rounds.length - 1, rows = WQD.table(L, last);
+      var rows = WQD.table(L, lastScore(), tbValue()), anyTb = rows.some(function (r) { return r.guess != null; });
       html += '<table><thead><tr><th>#</th><th>Team</th>' + D.rounds.map(function (r, i) { return '<th>R' + (i + 1) + '</th>'; }).join('')
-        + '<th>Σ</th></tr></thead><tbody>' + rows.map(function (r) {
+        + (D.master ? '<th>M</th>' : '') + '<th>Σ</th>' + (anyTb ? '<th>Tipp</th>' : '') + '</tr></thead><tbody>' + rows.map(function (r) {
           return '<tr><td>' + r.rank + '.</td><td>' + esc(r.name) + '</td>'
             + r.per.map(function (v) { return '<td>' + (v == null ? '–' : v) + '</td>'; }).join('')
-            + '<td class="tot">' + r.total + '</td></tr>';
+            + '<td class="tot">' + r.total + '</td>' + (anyTb ? '<td>' + (r.guess == null ? '' : r.guess) + '</td>' : '') + '</tr>';
         }).join('') + '</tbody></table>'
+        + (anyTb ? '<p class="hint">Gleichstand wird über den Stechfrage-Tipp entschieden: näher am richtigen Wert (' + esc(D.tiebreak.answer) + ') liegt vorne.</p>' : '')
         + '<p class="hint">Am Beamer erscheint der Stand automatisch nach jeder Auflösung.</p>';
     }
     main.innerHTML = html;
@@ -117,7 +131,7 @@
     var b = e.target.closest('[data-in]');
     if (b) { post({ action: 'checkin', id: b.getAttribute('data-in'), on: !b.classList.contains('on') }).then(render, function () {}); return; }
     var r = e.target.closest('[data-round]');
-    if (r) { round = Number(r.getAttribute('data-round')); try { localStorage.setItem('wq-live-round', round); } catch (x) {} render(); }
+    if (r) { round = r.getAttribute('data-round'); round = round === 'tb' ? 'tb' : Number(round); try { localStorage.setItem('wq-live-round', round); } catch (x) {} render(); }
   });
   main.addEventListener('change', function (e) {
     var i = e.target.closest('[data-pts]');
@@ -138,7 +152,6 @@
 
   Promise.all([WQD.load(), WQD.api('live.php')]).then(function (r) {
     D = r[0]; L = r[1];
-    if (round >= D.rounds.length) round = 0;
     render();
   }).catch(function (e) { WQD.fail(e, main); });
 })();

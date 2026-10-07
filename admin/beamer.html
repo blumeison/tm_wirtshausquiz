@@ -54,6 +54,19 @@
   .s-media img { object-fit: contain; background: transparent; aspect-ratio: auto; }
   .s-note { font-size: 4cqw; }
   .s-stand { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2cqw; justify-content: center; }
+  .s-teams { list-style: none; display: flex; flex-wrap: wrap; gap: 1.2cqw; justify-content: center; }
+  .s-teams li { background: rgba(246,239,226,.1); border: .15cqw solid rgba(246,239,226,.25); border-radius: 1cqw;
+                padding: 1cqw 2cqw; font: 400 2.8cqw/1.15 'Patua One', serif; text-align: center; }
+  .s-teams small { display: block; font: 600 1.3cqw/1.3 Rubik, sans-serif; color: var(--yellow); }
+  .s-list { list-style: none; display: flex; flex-direction: column; gap: 1.5cqw; width: 82%; margin: 0 auto; }
+  .s-list li { display: flex; gap: 2cqw; align-items: center; font: 400 2cqw/1.35 Rubik, sans-serif; }
+  .s-list li > span { font-size: 3.6cqw; width: 5cqw; text-align: center; }
+  .s-list b { display: block; font: 400 2.7cqw/1.15 'Patua One', serif; color: var(--yellow); }
+  .s-hints { list-style: none; display: flex; flex-direction: column; gap: .9cqw; }
+  .s-hints li { display: flex; gap: 1.5cqw; align-items: baseline; font: 500 2.3cqw/1.3 Rubik, sans-serif; opacity: .65; }
+  .s-hints li.new { opacity: 1; font-size: 2.7cqw; }
+  .s-hints li b { font: 400 2.6cqw/1 'Patua One', serif; color: var(--yellow); min-width: 2.5cqw; }
+  .s-ladder { align-self: flex-start; background: var(--red); color: #fff; border-radius: 99cqw; padding: 1cqw 2.4cqw; font: 500 2.2cqw Rubik, sans-serif; }
   .s-rows { list-style: none; display: grid; gap: .8cqw 3cqw; width: 70%; margin: 0 auto; }
   .s-rows.two { grid-template-columns: 1fr 1fr; grid-auto-flow: column; grid-template-rows: repeat(7, auto); width: 100%; }
   .s-rows li { display: flex; align-items: center; gap: 1.4cqw; background: rgba(246,239,226,.08); border-radius: 1cqw;
@@ -100,7 +113,7 @@
 <body>
 <div id="root"><p style="padding:2rem">Lädt …</p></div>
 
-<script src="assets/quiz-data.js?v=2"></script>
+<script src="assets/quiz-data.js?v=3"></script>
 <script>
 (function () {
   'use strict';
@@ -114,9 +127,10 @@
   // Pro Runde: Rundentitel → Fragen → „Zettel abgeben“ → Auflösung mit Antworten.
   // Handout-Runden stehen am Zettel, am Beamer läuft nur die Auflösung.
   function buildDeck(D) {
-    var s = [{ k: 'title' }];
-    D.rounds.forEach(function (r) {
-      if (!r.questions.length) return;
+    var s = [{ k: 'title' }, { k: 'teams' }, { k: 'rules' }, { k: 'prizes' }];
+    var played = D.rounds.filter(function (r) { return r.questions.length; });
+    var pauseAfter = played.length >= 3 ? played[Math.floor(played.length / 2) - 1] : null;
+    played.forEach(function (r) {
       s.push({ k: 'round', r: r });
       if (r.kind !== 'HANDOUT') {
         r.questions.forEach(function (q, i) { s.push({ k: 'q', r: r, i: i, q: q }); });
@@ -125,26 +139,38 @@
       s.push({ k: 'solve', r: r });
       r.questions.forEach(function (q, i) { s.push({ k: 'a', r: r, i: i, q: q }); });
       s.push({ k: 'stand', upto: r.n - 1, r: r });
+      if (r === pauseAfter) s.push({ k: 'pause', r: r });
     });
-    function extra(key, name) {
-      if (!D[key]) return;
-      s.push({ k: 'q', label: name, q: D[key] });
-      s.push({ k: 'a', label: name, q: D[key] });
+    // Masterfrage im Countdown: Hinweis für Hinweis, nach jedem dürfen die Teams tippen.
+    var mh = D.master && D.master.payload && D.master.payload.hints;
+    if (mh && mh.length) {
+      mh.forEach(function (h, i) { s.push({ k: 'mhint', n: i + 1, q: D.master, label: 'Masterfrage' }); });
+      s.push({ k: 'a', label: 'Masterfrage', q: D.master });
+    } else if (D.master) {
+      s.push({ k: 'q', label: 'Masterfrage', q: D.master }, { k: 'a', label: 'Masterfrage', q: D.master });
     }
-    extra('master', 'Masterfrage');
-    s.push({ k: 'stand', upto: D.rounds.length - 1, final: true });
-    extra('tiebreak', 'Stechfrage');
+    var last = D.rounds.length - 1 + (D.master ? 1 : 0);
+    s.push({ k: 'stand', upto: last, final: true });
+    if (D.tiebreak) {
+      s.push({ k: 'q', label: 'Stechfrage', q: D.tiebreak }, { k: 'a', label: 'Stechfrage', q: D.tiebreak });
+      s.push({ k: 'stand', upto: last, final: true, tb: true });
+    }
     s.push({ k: 'end' });
     return s;
   }
   function label(sl) {
     switch (sl.k) {
       case 'title': return 'Begrüßung';
+      case 'teams': return 'Die Teams';
+      case 'rules': return 'Regeln';
+      case 'prizes': return 'Finale & Preise';
+      case 'pause': return 'Pause';
+      case 'mhint': return 'Masterfrage · Hinweis ' + sl.n;
       case 'round': return 'Runde ' + sl.r.n + ': ' + sl.r.title;
       case 'q': return (sl.label || 'R' + sl.r.n + ' · Frage ' + (sl.i + 1)) + ' — ' + sl.q.prompt.slice(0, 60);
       case 'collect': return 'R' + sl.r.n + ' · Zettel abgeben';
       case 'solve': return 'R' + sl.r.n + ' · Auflösung';
-      case 'stand': return sl.final ? 'Endstand' : 'Zwischenstand nach Runde ' + sl.r.n;
+      case 'stand': return sl.tb ? 'Endstand nach Stechfrage' : sl.final ? 'Endstand' : 'Zwischenstand nach Runde ' + sl.r.n;
       case 'a': return (sl.label ? sl.label + ' · Antwort' : 'R' + sl.r.n + ' · Antwort ' + (sl.i + 1)) + ' — ' + sl.q.answer;
       default: return 'Schluss';
     }
@@ -177,10 +203,17 @@
           + '<div class="s-sub">' + sl.r.questions.length + ' Fragen</div></div>';
       case 'collect':
         return top({ r: sl.r }) + '<div class="s-center"><div class="s-big">Stifte weg!</div>'
-          + '<div class="s-sub">Zettel an den Nachbartisch weitergeben —<br>ihr korrigiert gleich deren Antworten.</div></div>';
+          + '<div class="s-sub">Bringt euren Zettel zu uns nach vorne —<br>wir werten aus, ihr hört gleich die Auflösung.</div></div>';
       case 'solve':
         return top({}) + '<div class="s-center"><div class="s-sub">Runde ' + sl.r.n + '</div><div class="s-big red">Auflösung</div></div>';
       case 'stand': return standHtml(sl);
+      case 'teams': return teamsHtml();
+      case 'rules': return rulesHtml(D0);
+      case 'prizes': return prizesHtml(D0);
+      case 'mhint': return masterHtml(sl);
+      case 'pause':
+        return top({}) + '<div class="s-center"><div class="s-big red">Pause</div>'
+          + '<div class="s-sub">Zeit für ein Krügerl — gleich geht’s weiter mit Runde ' + (sl.r.n + 1) + '.</div></div>';
       case 'end':
         return '<div class="s-center"><img class="s-logo" src="../logo-mark-white.png" alt=""><div class="s-big">Danke fürs Mitraten!</div>'
           + '<div class="s-sub">Gleich gibt’s die Siegerehrung.</div></div>';
@@ -200,11 +233,61 @@
     return top(sl) + '<div class="s-q">' + body + '</div>';
   }
 
+  // ---- Begrüßung: Teams, Regeln, Preise ------------------------------------
+  function playedRounds(D0) { return (D0.rounds || []).filter(function (r) { return r.questions.length; }); }
+  function teamsHtml() {
+    var ts = LIVE ? LIVE.teams : [], anyIn = LIVE && Object.keys(LIVE.checkin).length > 0;
+    if (anyIn) ts = ts.filter(function (t) { return LIVE.checkin[t.id]; });
+    return top({ label: 'Heute dabei' }) + '<div class="s-stand"><div class="s-big" style="font-size:5cqw;text-align:center">'
+      + ts.length + ' Teams</div><ul class="s-teams">' + ts.map(function (t) {
+        return '<li>' + esc(t.name) + (t.promo ? '<small>🍺 Early Bird · Freirunde</small>' : '') + '</li>';
+      }).join('') + '</ul></div>';
+  }
+  function rulesHtml(D0) {
+    var rs = playedRounds(D0), n = rs.map(function (r) { return r.questions.length; });
+    var same = n.every(function (x) { return x === n[0]; });
+    var pause = rs.length >= 3 ? Math.floor(rs.length / 2) : 0;
+    var items = [
+      ['📝', rs.length + ' Runden' + (same && n.length ? ' à ' + n[0] + ' Fragen' : ''), 'Antworten auf euren Zettel. Bei Multiple Choice den Buchstaben einkreisen.'],
+      ['🔄', 'Nach jeder Runde', 'Zettel zu uns nach vorne — wir werten aus, ihr hört die Auflösung — dann Zwischenstand.']
+    ];
+    if (pause) items.push(['🍺', 'Nach Runde ' + pause + ': Pause', 'Zeit zum Durchschnaufen und Nachbestellen.']);
+    if (D0.master) items.push(['👑', 'Zum Schluss: die Masterfrage', 'Die Hinweise sammeln sich über den ganzen Abend — achtet auf den roten Faden!']);
+    items.push(['📵', 'Handy bleibt in der Tasche', 'Googeln ist Ehrensache.']);
+    return top({ label: 'So läuft’s' }) + listHtml('So läuft’s', items);
+  }
+  function prizesHtml(D0) {
+    var items = [];
+    if (D0.master) {
+      var lad = (D0.master.payload && D0.master.payload.ladder) || [];
+      items.push(['👑', 'Masterfrage', 'Hinweis für Hinweis. Jedes Team hat einen Tipp — je früher, desto mehr Punkte'
+        + (lad.length ? ': ' + lad.join(' · ') : '') + '. Falsch gibt 0.']);
+    }
+    items.push(['🏆', 'Plätze 1 bis 3', 'Pokale und Geschenkkörbe.']);
+    items.push(['⚖️', 'Gleichstand am Podest?', 'Stechfrage: alle betroffenen Teams schätzen — wer am nächsten dran ist, liegt vorne. Egal wie viele Teams gleichauf sind.']);
+    return top({ label: 'Finale & Preise' }) + listHtml('Finale & Preise', items);
+  }
+  function listHtml(title, items) {
+    return '<div class="s-stand"><div class="s-big" style="font-size:5cqw;text-align:center">' + esc(title) + '</div><ul class="s-list">'
+      + items.map(function (it) { return '<li><span>' + it[0] + '</span><div><b>' + esc(it[1]) + '</b>' + esc(it[2]) + '</div></li>'; }).join('')
+      + '</ul></div>';
+  }
+  function masterHtml(sl) {
+    var p = sl.q.payload || {}, hints = p.hints || [], lad = p.ladder || [];
+    return top({ label: 'Finale · Masterfrage' }) + '<div class="s-q">'
+      + '<div class="s-prompt m">' + esc(sl.q.prompt) + '</div>'
+      + '<ol class="s-hints">' + hints.slice(0, sl.n).map(function (h, i) {
+        return '<li' + (i === sl.n - 1 ? ' class="new"' : '') + '><b>' + (i + 1) + '</b>' + esc(h) + '</li>';
+      }).join('') + '</ol>'
+      + '<div class="s-ladder">Tipp jetzt: <b>' + (lad[sl.n - 1] != null ? lad[sl.n - 1] : '') + ' Punkte</b> — Karte hoch!</div></div>';
+  }
+
   // Punkte kommen aus api/live.php: die Steuerung holt sie und reicht sie ans Beamer-Fenster weiter.
   var LIVE = null;
   function standHtml(sl) {
-    var rows = LIVE ? WQD.table(LIVE, sl.upto) : [];
-    var head = '<div class="s-top"><span>' + (sl.final ? 'Endstand' : 'Nach Runde ' + sl.r.n) + '</span><img src="../logo-mark-white.png" alt=""></div>';
+    var tbv = sl.tb && D && D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null;
+    var rows = LIVE ? WQD.table(LIVE, sl.upto, tbv) : [];
+    var head = '<div class="s-top"><span>' + (sl.tb ? 'Nach der Stechfrage' : sl.final ? 'Endstand' : 'Nach Runde ' + sl.r.n) + '</span><img src="../logo-mark-white.png" alt=""></div>';
     var title = '<div class="s-big' + (sl.final ? ' red' : '') + '" style="font-size:5cqw;text-align:center">' + (sl.final ? 'Endstand' : 'Zwischenstand') + '</div>';
     if (!rows.some(function (r) { return r.per[sl.upto] != null; })) {
       return head + '<div class="s-center">' + title + '<div class="s-sub">Die Punkte werden gerade eingetragen …</div></div>';
@@ -259,7 +342,7 @@
       if (msg.t === 'state') {
         if (msg.D) { D = msg.D; deck = buildDeck(D); shown = -1; }
         var liveKey = JSON.stringify(msg.live || null);
-        if (liveKey !== shownLive) { shownLive = liveKey; LIVE = msg.live; if (deck[idx] && deck[idx].k === 'stand') shown = -1; }
+        if (liveKey !== shownLive) { shownLive = liveKey; LIVE = msg.live; if (deck[idx] && needsLive(deck[idx])) shown = -1; }
         idx = msg.idx;
         if (idx !== shown && deck[idx]) {
           shown = idx;
@@ -277,8 +360,9 @@
     idx = Math.max(0, Math.min(deck.length - 1, n));
     try { localStorage.setItem('wq-beamer-idx', idx); } catch (e) {}
     broadcast(false); draw();
-    if (deck[idx].k === 'stand') fetchLive();
+    if (needsLive(deck[idx])) fetchLive();
   }
+  function needsLive(sl) { return sl.k === 'stand' || sl.k === 'teams'; }
   // Holt die Punkte und hält nebenbei die Backoffice-Anmeldung wach (alle 30 s).
   var liveErr = '';
   function fetchLive() {
@@ -288,7 +372,7 @@
       liveErr = e.status === 401 ? 'Abgemeldet — im Backoffice neu anmelden, dann hier „Aktualisieren“.' : 'Punkte nicht erreichbar (' + e.message + ')';
     }).then(function () {
       broadcast(false);
-      if (deck[idx].k === 'stand') { drawnIdx = -1; draw(); }
+      if (needsLive(deck[idx])) { drawnIdx = -1; draw(); }
     });
   }
   function fmtTime(s) { s = Math.round(s || 0); return Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); }
@@ -308,8 +392,21 @@
     return '<div class="player"><div class="mute">🎵 Ton am Laptop' + when + '</div><audio controls preload="auto" src="' + esc(m.src) + '#t=' + (m.start || 0) + '"></audio></div>';
   }
   function infoHtml(sl) {
+    if (sl.k === 'mhint') {
+      var mp = sl.q.payload || {};
+      return '<div class="info"><div class="mute">Hinweis ' + sl.n + ' von ' + (mp.hints || []).length + ' — jetzt ' + ((mp.ladder || [])[sl.n - 1] || '') + ' Punkte</div>'
+        + '<div class="ans">' + esc(sl.q.answer) + '</div>'
+        + '<div class="mute">Helfer sammelt die hochgehaltenen Karten ein und schreibt „' + sl.n + '“ drauf.</div>'
+        + (mp.clueExplanation ? '<div class="bg">' + esc(mp.clueExplanation) + '</div>' : '') + '</div>';
+    }
+    if (sl.k === 'teams') {
+      return '<div class="info"><div class="row" style="display:flex;gap:8px"><button class="btn" data-live="1">↻ Aktualisieren</button>'
+        + '<a class="btn" href="live.html#checkin" target="_blank">Check-in</a></div>'
+        + '<div class="mute">Zeigt die eingecheckten Teams (oder alle, solange noch niemand eingecheckt ist).</div></div>';
+    }
     if (sl.k === 'stand') {
-      var rows = LIVE ? WQD.table(LIVE, sl.upto) : [];
+      var tbv = sl.tb && D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null;
+      var rows = LIVE ? WQD.table(LIVE, sl.upto, tbv) : [];
       return '<div class="info">' + (liveErr ? '<div class="warn">' + esc(liveErr) + '</div>' : '')
         + '<div class="row" style="display:flex;gap:8px"><button class="btn" data-live="1">↻ Aktualisieren</button>'
         + '<a class="btn" href="live.html#punkte" target="_blank">Punkte eintragen</a></div>'

@@ -58,7 +58,7 @@
   .z__foot { display: flex; gap: 8mm; align-items: end; margin-top: 5mm; font-size: 10pt; }
   .z__foot .sum { margin-left: auto; display: flex; align-items: center; gap: 3mm; font-weight: 600; }
   .z__foot .sum i { width: 22mm; height: 13mm; border: .5mm solid var(--red); border-radius: 2mm; }
-  .z__foot .by { flex: 1; border-bottom: .3mm solid var(--ink); padding-bottom: 1mm; color: var(--soft); }
+  .z__foot .by { flex: 1; color: var(--soft); }
 
   /* ---- Moderationskarten: A5 quer, zwei pro Blatt ---- */
   .sheet.k { display: grid; grid-template-rows: 1fr 1fr; }
@@ -89,7 +89,7 @@
   <div class="bar" id="bar"></div>
   <div id="out"><p style="padding:2rem;color:#fff">Lädt …</p></div>
 
-<script src="assets/quiz-data.js?v=2"></script>
+<script src="assets/quiz-data.js?v=3"></script>
 <script>
 (function () {
   'use strict';
@@ -144,7 +144,7 @@
             + opts(q, handout) + '</div>'
             + '<div class="zr__pts"><i></i>von ' + q.pts + '</div></div>';
         }).join('') + '</div>'
-      + '<div class="z__foot"><span class="by">Korrigiert von Team:</span>'
+      + '<div class="z__foot"><span class="by">Nach der Runde bitte nach vorne bringen — wir werten aus.</span>'
       + '<span class="sum">Summe Runde ' + round.n + ' <i></i></span></div>'
       + '</section>';
   }

@@ -6,7 +6,8 @@
  *
  *   GET -> teams (active registrations, signup order) + checkin + scores
  *   POST {action:"checkin", id, on}
- *   POST {action:"score", id, round, pts}   pts null/"" clears the cell
+ *   POST {action:"score", id, round, pts}   pts null/"" clears the cell;
+ *        round "tb" = the team's guess for the tie-break estimate, not points
  *
  * Every write touches exactly one cell under an exclusive lock, so a helper on
  * the phone and the laptop at the beamer can type at the same time.
@@ -23,7 +24,7 @@ $file = $dir . '/' . $sid . '.json';
 
 $teams = [];
 foreach (standings(read_registrations($sid), $cfg)['entries'] as $e) {
-    $teams[] = ['id' => $e['id'], 'name' => $e['teamName'], 'slot' => $e['slot']];
+    $teams[] = ['id' => $e['id'], 'name' => $e['teamName'], 'slot' => $e['slot'], 'promo' => $e['promoRank'] > 0];
 }
 
 function live_read_doc($raw)
@@ -59,12 +60,14 @@ if (!in_array($id, array_column($teams, 'id'), true)) {
 $action = isset($in['action']) ? $in['action'] : '';
 if ($action === 'score') {
     $round = isset($in['round']) ? $in['round'] : null;
-    if (!is_int($round) || $round < 0 || $round > 19) {
+    if ($round !== 'tb' && (!is_int($round) || $round < 0 || $round > 19)) {
         fail(400, 'ungültige Runde');
     }
     $pts = isset($in['pts']) ? $in['pts'] : null;
-    if ($pts !== null && $pts !== '' && (!is_numeric($pts) || $pts < 0 || $pts > 1000)) {
-        fail(422, 'Punkte bitte als Zahl zwischen 0 und 1000.');
+    $lo = $round === 'tb' ? -1e9 : 0;
+    $hi = $round === 'tb' ? 1e9 : 1000;
+    if ($pts !== null && $pts !== '' && (!is_numeric($pts) || $pts < $lo || $pts > $hi)) {
+        fail(422, 'Bitte eine Zahl' . ($round === 'tb' ? '.' : ' zwischen 0 und 1000.'));
     }
 } elseif ($action !== 'checkin') {
     fail(400, 'Unbekannte Aktion');
@@ -86,7 +89,7 @@ if ($action === 'checkin') {
     if ($pts === null || $pts === '') {
         unset($doc['scores'][$id][$key]);
     } else {
-        $doc['scores'][$id][$key] = round((float)$pts, 1);
+        $doc['scores'][$id][$key] = $round === 'tb' ? (float)$pts : round((float)$pts, 1);
     }
 }
 $doc['updatedAt'] = now_iso();

@@ -83,16 +83,22 @@
   /**
    * Standings from api/live.php: rounds 0..upto summed, ties share a rank.
    * Once anyone is checked in, only checked-in teams count — no-shows vanish.
+   * With tbValue (the tie-break answer) equal totals are split by how close each
+   * team's guess (scores[id].tb) came; no guess sorts behind any guess.
    */
-  function table(live, upto) {
+  function table(live, upto, tbValue) {
     var anyIn = Object.keys(live.checkin || {}).length > 0;
     var rows = live.teams.filter(function (t) { return !anyIn || live.checkin[t.id]; }).map(function (t) {
       var s = (live.scores || {})[t.id] || {}, per = [], total = 0;
       for (var r = 0; r <= upto; r++) { var v = s[r]; per.push(v == null ? null : v); total += v || 0; }
-      return { id: t.id, name: t.name, per: per, total: Math.round(total * 10) / 10 };
+      var tb = tbValue == null || s.tb == null ? Infinity : Math.abs(s.tb - tbValue);
+      return { id: t.id, name: t.name, promo: !!t.promo, per: per, total: Math.round(total * 10) / 10, tb: tb, guess: s.tb };
     });
-    rows.sort(function (a, b) { return b.total - a.total || a.name.localeCompare(b.name, 'de'); });
-    rows.forEach(function (r, i) { r.rank = i && rows[i - 1].total === r.total ? rows[i - 1].rank : i + 1; });
+    rows.sort(function (a, b) { return b.total - a.total || a.tb - b.tb || a.name.localeCompare(b.name, 'de'); });
+    rows.forEach(function (r, i) {
+      var p = rows[i - 1];
+      r.rank = p && p.total === r.total && p.tb === r.tb ? p.rank : i + 1;
+    });
     return rows;
   }
 
