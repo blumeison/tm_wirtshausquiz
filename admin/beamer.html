@@ -25,7 +25,7 @@
            background: radial-gradient(ellipse at 50% 35%, #5a4030 0%, #3f2c20 55%, #22170f 100%); color: var(--cream); }
   .stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: .7cqw; z-index: 3;
            background: linear-gradient(90deg, var(--red) 0 45%, var(--green) 45% 63%, var(--yellow) 63% 81%, #e6007e 81%); }
-  .s-bg { position: absolute; inset: -4%; background: center / cover no-repeat; filter: blur(.6cqw) brightness(.7) saturate(1.2);
+  .s-bg { position: absolute; inset: -4%; background: center / cover no-repeat; filter: blur(.28cqw) brightness(.68) saturate(1.2);
           opacity: .8; transform: scale(1.08); animation: drift 40s ease-in-out infinite alternate; }
   .s-shade { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(30,20,12,.3) 0%, rgba(20,13,8,.75) 100%); }
   .s-wrap { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; padding: 4cqw 5cqw; }
@@ -112,6 +112,7 @@
   @keyframes okFlash { 0% { box-shadow: 0 0 0 0 rgba(58,170,53,.9); transform: scale(1); } 40% { transform: scale(1.06); } 100% { box-shadow: 0 0 0 2.5cqw rgba(58,170,53,0); transform: scale(1); } }
   @keyframes pulse { 50% { transform: scale(1.08); } }
   .nofx * { animation: none !important; transition: none !important; }
+  .skip .w { animation: none !important; opacity: 1 !important; }
 
   /* ---- Beamer-Fenster ---- */
   body.screen { background: #000; display: grid; place-items: center; overflow: hidden; cursor: none; }
@@ -161,7 +162,7 @@
   var SCREEN = location.hash === '#screen';
   var ch = new BroadcastChannel('wq-beamer');
   var root = document.getElementById('root');
-  var D = null, deck = [], idx = 0, step = 0, LIVE = null;
+  var D = null, deck = [], idx = 0, step = 0, LIVE = null, RESUME = 0;
   var PAUSE_MIN = 10, TIMER = null; // TIMER: {idx, total, ends, left, running}
   try { PAUSE_MIN = Number(localStorage.getItem('wq-pause-min')) || 10; } catch (e) {}
 
@@ -221,8 +222,10 @@
   function bgUrl(sl) { return sl.q ? '../uploads/bg/' + encodeURIComponent(sl.q.id) + '.jpg' : '../assets/pub.jpg'; }
   function top(left) { return '<div class="s-top"><span>' + esc(left || '') + '</span><img src="../logo-mark-white.png" alt=""></div>'; }
   /** Fließtext: Wort für Wort einblenden, lange Texte schneller. */
+  var WORD_MS = 330; // ~3 Wörter pro Sekunde, ungefähr Vorlesetempo
+  function nWords(t) { return String(t || '').split(/\s+/).filter(Boolean).length; }
   function words(t) {
-    var w = String(t).split(/\s+/).filter(Boolean), d = Math.max(18, Math.min(45, 2200 / w.length));
+    var w = String(t).split(/\s+/).filter(Boolean), d = WORD_MS;
     return '<span style="--wd:' + Math.round(d) + 'ms">' + w.map(function (x, i) { return '<span class="w" style="--i:' + i + '">' + esc(x) + '</span>'; }).join(' ') + '</span>';
   }
   function promptCls(t) { return t.length > 220 ? ' l' : t.length > 130 ? ' m' : ''; }
@@ -301,7 +304,7 @@
     var same = n.every(function (x) { return x === n[0]; });
     var items = [
       ['📝', rs.length + ' Runden' + (same && n.length ? ' à ' + n[0] + ' Fragen' : ''), 'Antworten auf euren Zettel. Bei Multiple Choice den Buchstaben einkreisen.'],
-      ['🍺', 'Nach jeder Runde', 'Zettel zu uns nach vorne — ' + PAUSE_MIN + ' Minuten Pause, wir werten aus — dann Auflösung und Zwischenstand.']
+      ['🍺', 'Nach jeder Runde', 'Zettel zu uns nach vorne — kurze Pause, wir werten aus — dann Auflösung und Zwischenstand.']
     ];
     var est = [];
     rs.forEach(function (r) { r.questions.forEach(function (q) { if (q.type === 'ESTIMATE') est.push(q.payload.scoring); }); });
@@ -341,9 +344,7 @@
     var rows = LIVE ? WQD.table(LIVE, sl.upto, tbv) : [];
     var head = top(sl.tb ? 'Nach der Stechfrage' : sl.final ? 'Endstand' : 'Nach Runde ' + sl.r.n);
     var title = '<div class="s-big zoom' + (sl.final ? ' red' : '') + '" style="font-size:5cqw;text-align:center">' + (sl.final ? 'Endstand' : 'Zwischenstand') + '</div>';
-    if (!rows.some(function (r) { return r.per[sl.upto] != null; })) {
-      return head + '<div class="s-center">' + title + '<div class="s-sub">Die Punkte werden gerade eingetragen …</div></div>';
-    }
+    if (!rows.length) return head + '<div class="s-center">' + title + '<div class="s-sub">Punkte werden geladen …</div></div>';
     // Von hinten nach vorne aufdecken: der letzte Platz zuerst, Platz 1 zum Schluss.
     return head + '<div class="s-stand">' + title + '<ol class="s-rows' + (rows.length > 7 ? ' two' : '') + '">' + rows.map(function (r, i) {
       return '<li class="rise p' + r.rank + '" style="--d:' + (0.6 + (rows.length - 1 - i) * 0.45).toFixed(2) + 's"><b>' + r.rank + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
@@ -379,18 +380,43 @@
     if (!ytReady) { pendingMount = sl; return; }
     player = new YT.Player('vmount', {
       host: 'https://www.youtube-nocookie.com', videoId: m.id,
-      playerVars: { start: Math.floor(m.start || 0), end: m.end ? Math.ceil(m.end) : undefined, rel: 0, controls: 0, playsinline: 1, modestbranding: 1 }
+      playerVars: { start: Math.floor(m.start || 0), rel: 0, controls: 0, playsinline: 1, modestbranding: 1 }
     });
   }
+  // Einheitliche Steuerung für YouTube-Player und <audio>/<video>: Lautstärke
+  // 0–100, sanftes Ausblenden beim Stopp und vor dem eingestellten Clip-Ende.
+  function adapter(p, el) {
+    if (el) return { play: function () { el.play(); }, pause: function () { el.pause(); }, seek: function (s) { el.currentTime = s; },
+      time: function () { return el.currentTime; }, vol: function (v) { el.volume = v / 100; }, playing: function () { return !el.paused; } };
+    if (p && p.playVideo) return { play: function () { p.playVideo(); }, pause: function () { p.pauseVideo(); }, seek: function (s) { p.seekTo(s, true); },
+      time: function () { return p.getCurrentTime ? p.getCurrentTime() : 0; }, vol: function (v) { p.setVolume(v); },
+      playing: function () { return p.getPlayerState && p.getPlayerState() === 1; } };
+    return null;
+  }
+  var fadeT = null;
+  function fade(a, ms, done) {
+    clearInterval(fadeT);
+    var n = Math.max(1, Math.round(ms / 50)), i = 0;
+    fadeT = setInterval(function () {
+      i++; try { a.vol(Math.max(0, 100 * (1 - i / n))); } catch (e) {}
+      if (i >= n) { clearInterval(fadeT); fadeT = null; try { done(); } catch (e) {} }
+    }, 50);
+  }
   function mediaCmd(cmd, p, el, m) {
-    if (el) {
-      if (cmd === 'restart') el.currentTime = (m && m.start) || 0;
-      if (cmd === 'pause') el.pause(); else el.play();
-      return;
-    }
-    if (!p || !p.playVideo) return;
-    if (cmd === 'restart') p.seekTo((m && m.start) || 0, true);
-    if (cmd === 'pause') p.pauseVideo(); else p.playVideo();
+    var a = adapter(p, el);
+    if (!a) return;
+    if (cmd === 'pause') { fade(a, 1000, function () { a.pause(); }); return; }
+    clearInterval(fadeT); fadeT = null; a.vol(100);
+    if (cmd === 'restart') a.seek((m && m.start) || 0);
+    a.play();
+  }
+  // Clip-Ende selbst überwachen, damit es ausblendet statt hart abzureißen.
+  function watchEnd(getA, getM) {
+    setInterval(function () {
+      var a = getA(), m = getM();
+      if (!a || !m || !m.end || fadeT) return;
+      try { if (a.playing() && a.time() >= m.end - 3) fade(a, Math.max(300, (m.end - a.time()) * 1000), function () { a.pause(); }); } catch (e) {}
+    }, 200);
   }
   function loadYT(cb) {
     window.onYouTubeIframeAPIReady = function () { ytReady = true; cb(); };
@@ -408,6 +434,8 @@
       if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
     };
     loadYT(function () { if (pendingMount && pendingMount === deck[idx]) mountVideo(pendingMount); });
+    watchEnd(function () { return adapter(player, vEl); }, function () { return deck[idx] && deck[idx].q && deck[idx].q.media; });
+    ch.addEventListener('message', function (e) { if (e.data.t === 'skip') stage.classList.add('skip'); });
     var shown = -1, shownLive = '', stage = document.getElementById('stage');
     ch.onmessage = function (e) {
       var msg = e.data;
@@ -423,6 +451,7 @@
         if (liveKey !== shownLive) { shownLive = liveKey; LIVE = msg.live; if (deck[idx] && needsLive(deck[idx])) shown = -1; }
         if (msg.idx !== shown && deck[msg.idx]) {
           idx = msg.idx; step = msg.step || 0; shown = idx;
+          stage.classList.remove('skip');
           stage.innerHTML = render(deck[idx], false, step);
           mountVideo(deck[idx]);
         } else if ((msg.step || 0) !== step) {
@@ -436,8 +465,16 @@
 
   // ---- Steuerung am Laptop --------------------------------------------------
   function broadcast(full) { ch.postMessage({ t: 'state', idx: idx, step: step, D: full ? D : null, live: LIVE, timer: TIMER, pauseMin: PAUSE_MIN }); }
+  // Läuft der Fließtext noch, zeigt der nächste Klick ihn sofort ganz.
+  var typeEnd = 0;
+  function typingMs(sl) {
+    if (sl.k === 'q') return nWords(sl.q.prompt) * WORD_MS + 500;
+    if (sl.k === 'mhint') return nWords((sl.q.payload.hints || [])[sl.n - 1]) * WORD_MS + 500;
+    return 0;
+  }
   function moved() {
     try { localStorage.setItem('wq-beamer-idx', idx); } catch (e) {}
+    typeEnd = Date.now() + typingMs(deck[idx]);
     // Pause-Folie: Timer startet beim Hinkommen von selbst (einmal je Pause).
     if (deck[idx].k === 'pause' && (!TIMER || TIMER.idx !== idx)) startTimer();
     broadcast(false); draw();
@@ -445,6 +482,7 @@
   }
   function goto(n) { idx = Math.max(0, Math.min(deck.length - 1, n)); step = 0; moved(); }
   function forward() {
+    if (Date.now() < typeEnd) { typeEnd = 0; ch.postMessage({ t: 'skip' }); return; }
     if (step < (deck[idx].steps || 0)) { step++; broadcast(false); draw(); return; }
     if (idx < deck.length - 1) goto(idx + 1);
   }
@@ -452,9 +490,10 @@
     if (step > 0) { step--; broadcast(false); draw(); return; }
     if (idx > 0) { idx--; step = deck[idx].steps || 0; moved(); }
   }
-  function startTimer() { TIMER = { idx: idx, total: PAUSE_MIN * 60000, ends: Date.now() + PAUSE_MIN * 60000, left: 0, running: true }; }
+  function startTimer(min) { min = min || PAUSE_MIN; TIMER = { idx: idx, total: min * 60000, ends: Date.now() + min * 60000, left: 0, running: true }; }
   function timerCmd(c) {
-    if (c === 'restart' || !TIMER) { startTimer(); }
+    if (/^set:\d+$/.test(c)) { startTimer(Number(c.slice(4))); }
+    else if (c === 'restart' || !TIMER) { startTimer(); }
     else if (c === 'toggle') {
       if (TIMER.running) { TIMER.left = TIMER.ends - Date.now(); TIMER.running = false; }
       else { TIMER.ends = Date.now() + TIMER.left; TIMER.running = true; }
@@ -507,7 +546,7 @@
     if (!ytReady) { pendingMount = sl; return; }
     aPlayer = new YT.Player('aplayer', {
       host: 'https://www.youtube-nocookie.com', videoId: m.id,
-      playerVars: { start: Math.floor(m.start || 0), end: m.end ? Math.ceil(m.end) : undefined, rel: 0, playsinline: 1, modestbranding: 1 }
+      playerVars: { start: Math.floor(m.start || 0), rel: 0, playsinline: 1, modestbranding: 1 }
     });
   }
   function checkHtml(q) {
@@ -518,7 +557,9 @@
       return '<div class="info"><div class="mute">Pause-Timer — startet von selbst, läuft am Beamer mit.</div><div class="row">'
         + '<button class="btn red" data-timer="toggle">' + (TIMER && TIMER.running ? '⏸ Anhalten' : '▶ Weiter') + '</button>'
         + '<button class="btn" data-timer="minus">− 1 min</button><button class="btn" data-timer="plus">+ 1 min</button>'
-        + '<button class="btn" data-timer="restart">⟲ Neu (' + PAUSE_MIN + ' min)</button></div>'
+        + '<button class="btn" data-timer="restart">⟲ Neu</button></div>'
+        + '<div class="row"><span class="mute" style="align-self:center">Diese Pause neu starten mit:</span>'
+        + [5, 10, 15, 20].map(function (m) { return '<button class="btn" data-timer="set:' + m + '">' + m + ' min</button>'; }).join('') + '</div>'
         + '<div class="mute">Jetzt Punkte eintragen: <a href="live.html#punkte" target="_blank">Abend live</a></div></div>';
     }
     if (sl.k === 'mhint') {
@@ -539,8 +580,12 @@
       return '<div class="info">' + (liveErr ? '<div class="warn">' + esc(liveErr) + '</div>' : '')
         + '<div class="row"><button class="btn" data-live="1">↻ Aktualisieren</button>'
         + '<a class="btn" href="live.html#punkte" target="_blank">Punkte eintragen</a></div>'
-        + rows.map(function (r) { return '<div>' + r.rank + '. ' + esc(r.name) + ' — <b>' + r.total + '</b>'
-          + (r.per[sl.upto] == null ? ' <span class="mute">(Runde fehlt)</span>' : '') + '</div>'; }).join('')
+        + (function () {
+          var miss = rows.filter(function (r) { return r.per[sl.upto] == null; }).map(function (r) { return r.name; });
+          return miss.length ? '<div class="warn">⚠ ' + (sl.final ? 'Es fehlen noch Punkte von' : 'Runde ' + (sl.upto + 1) + ' fehlt noch bei')
+            + ': ' + esc(miss.join(', ')) + '</div>' : '<div class="mute">✓ Alle Teams eingetragen</div>';
+        })()
+        + rows.map(function (r) { return '<div>' + r.rank + '. ' + esc(r.name) + ' — <b>' + r.total + '</b></div>'; }).join('')
         + '</div>';
     }
     if (!sl.q) {
@@ -574,13 +619,16 @@
       + '<div class="ctl-bar"><button class="btn" id="back">◀</button><span class="pos" id="pos"></span>'
       + '<button class="btn red big" id="fwd">Weiter ▶</button>'
       + '<select class="jump" id="jump">' + deck.map(function (sl, i) { return '<option value="' + i + '">' + esc((i + 1) + '. ' + label(sl)) + '</option>'; }).join('') + '</select>'
-      + '<label class="pmin">Pause <input type="number" min="1" max="60" id="pmin" value="' + PAUSE_MIN + '"> min</label>'
+      + '<label class="pmin">Pause-Standard <input type="number" min="1" max="60" id="pmin" value="' + PAUSE_MIN + '"> min</label>'
+      + (RESUME > 0 ? '<button class="btn" id="resume">↪ Weiter bei Folie ' + (RESUME + 1) + '</button>' : '')
       + '<button class="btn" id="open">📽 Beamer-Fenster öffnen</button><a class="btn" href="./#abend">Backoffice</a>'
       + '<span class="hint">Pfeiltasten, Leertaste oder Präsenter-Klicker blättern.</span></div>'
       + '<div class="col"><h3>Jetzt am Beamer</h3><div class="stage nofx" id="prev-stage"></div>'
       + '<h3>Als Nächstes</h3><div class="next" id="next"></div></div>'
       + '<div class="col"><h3>Für dich</h3><div id="info"></div></div></div>';
     document.getElementById('back').onclick = backward;
+    var rb = document.getElementById('resume');
+    if (rb) rb.onclick = function () { rb.remove(); goto(RESUME); };
     document.getElementById('fwd').onclick = forward;
     document.getElementById('jump').onchange = function () { goto(Number(this.value)); };
     document.getElementById('pmin').onchange = function () {
@@ -606,6 +654,7 @@
     });
     ch.onmessage = function (e) { if (e.data.t === 'hello') broadcast(true); };
     loadYT(function () { if (pendingMount && pendingMount === deck[idx]) mountAudio(pendingMount); });
+    watchEnd(function () { return adapter(aPlayer, aEl); }, function () { var m = deck[idx].q && deck[idx].q.media; return m && !m.video ? m : null; });
     draw(); broadcast(true);
     fetchLive();
     setInterval(fetchLive, 30000);
@@ -614,7 +663,9 @@
   if (SCREEN) { screen(); return; }
   WQD.load().then(function (data) {
     D = data; deck = buildDeck(D);
-    try { idx = Math.min(deck.length - 1, Number(localStorage.getItem('wq-beamer-idx')) || 0); } catch (e) { idx = 0; }
+    // Immer bei Folie 1 anfangen; die zuletzt gezeigte Folie gibt's als Knopf (für Neuladen am Abend).
+    try { RESUME = Math.min(deck.length - 1, Number(localStorage.getItem('wq-beamer-idx')) || 0); } catch (e) { RESUME = 0; }
+    idx = 0;
     control();
   }).catch(function (e) { WQD.fail(e, root); });
 })();

@@ -30,7 +30,11 @@
   .rounds button { flex: 1; min-width: 70px; padding: 9px 6px; border-radius: 10px; border: 2px solid var(--line); background: #fff; font: 600 15px Rubik, sans-serif; cursor: pointer; }
   .rounds button.on { border-color: var(--red); color: var(--red); }
   .rounds button small { display: block; font-weight: 400; font-size: 12px; color: var(--soft); }
-  .row input { width: 92px; font: 600 20px Rubik, sans-serif; text-align: center; padding: 8px; border: 2px solid var(--line); border-radius: 10px; }
+  .pm { min-width: 54px; min-height: 46px; border-radius: 10px; border: 2px solid var(--line); background: #fff;
+        font: 700 16px Rubik, sans-serif; color: var(--ink); cursor: pointer; }
+  .pm.plus { border-color: var(--green); color: var(--green); }
+  .pm:active { transform: scale(.94); }
+  .row input { width: 80px; font: 600 20px Rubik, sans-serif; text-align: center; padding: 8px; border: 2px solid var(--line); border-radius: 10px; }
   .row input:focus { outline: none; border-color: var(--red); }
   .state { width: 22px; text-align: center; }
   .state.ok { color: var(--green); } .state.err { color: var(--red); }
@@ -95,8 +99,10 @@
         + '<p class="sum">' + esc(cur.title) + (round === 'tb' ? ' — nur für die Teams, die gleichauf liegen.' : ' — Summe vom Zettel eintragen, wird sofort gespeichert.') + '</p>'
         + playing().map(function (t) {
           var v = (L.scores[t.id] || {})[round];
-          return '<div class="row"><span class="name">' + esc(t.name) + '</span>'
-            + '<input type="number" inputmode="decimal"' + (round === 'tb' ? ' step="any"' : ' min="0" step="0.5"') + ' data-pts="' + esc(t.id) + '" value="' + (v == null ? '' : v) + '">'
+          var pm = round === 'tb' ? ['', ''] : ['<button class="pm" data-add="-10" data-id="' + esc(t.id) + '">−10</button>',
+            '<button class="pm plus" data-add="10" data-id="' + esc(t.id) + '">+10</button>'];
+          return '<div class="row"><span class="name">' + esc(t.name) + '</span>' + pm[0]
+            + '<input type="number" inputmode="decimal"' + (round === 'tb' ? ' step="any"' : ' min="0" step="0.5"') + ' data-pts="' + esc(t.id) + '" value="' + (v == null ? '' : v) + '">' + pm[1]
             + '<span class="state" id="st-' + esc(t.id) + '"></span></div>';
         }).join('');
     } else {
@@ -133,11 +139,20 @@
     var r = e.target.closest('[data-round]');
     if (r) { round = r.getAttribute('data-round'); round = round === 'tb' ? 'tb' : Number(round); try { localStorage.setItem('wq-live-round', round); } catch (x) {} render(); }
   });
+  function savePts(id, v) {
+    post({ action: 'score', id: id, round: round, pts: v === '' ? null : Number(v) }, document.getElementById('st-' + id)).catch(function () {});
+  }
   main.addEventListener('change', function (e) {
     var i = e.target.closest('[data-pts]');
-    if (!i) return;
-    var id = i.getAttribute('data-pts'), v = i.value.trim().replace(',', '.');
-    post({ action: 'score', id: id, round: round, pts: v === '' ? null : Number(v) }, document.getElementById('st-' + id)).catch(function () {});
+    if (i) savePts(i.getAttribute('data-pts'), i.value.trim().replace(',', '.'));
+  });
+  // ±10: pro richtiger Antwort einmal tippen, wird sofort gespeichert.
+  main.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-add]');
+    if (!b) return;
+    var id = b.getAttribute('data-id'), inp = main.querySelector('[data-pts="' + id + '"]');
+    var v = Math.max(0, (Number(String(inp.value).replace(',', '.')) || 0) + Number(b.getAttribute('data-add')));
+    inp.value = v; savePts(id, String(v));
   });
   window.addEventListener('hashchange', render);
 
