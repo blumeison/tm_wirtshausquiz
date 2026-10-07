@@ -42,7 +42,8 @@
         var q = byId[rq.questionId];
         if (!q) return null;
         var pts = rq.pointsOverride != null ? rq.pointsOverride : q.points;
-        return Object.assign({}, q, { pts: Math.round(pts * ((round && round.multiplier) || 1)), media: media(q) });
+        return Object.assign({}, q, { pts: Math.round(pts * ((round && round.multiplier) || 1)), media: media(q),
+          masterClue: !!rq.masterClue, clueNote: rq.clueNote || '' });
       }
       var rounds = S.rounds.map(function (round, i) {
         return {
@@ -51,8 +52,11 @@
         };
       });
       var fin = S.finale || {};
+      // 👑-Stichworte für die Masterfrage, in Rundenreihenfolge.
+      var clues = [];
+      rounds.forEach(function (r) { r.questions.forEach(function (q) { if (q.masterClue && q.clueNote) clues.push({ round: r.n, note: q.clueNote }); }); });
       return {
-        title: S.title, event: r[0].event || {}, rounds: rounds,
+        title: S.title, event: r[0].event || {}, rounds: rounds, clues: clues,
         master: fin.masterId ? full({ questionId: fin.masterId }) : null,
         tiebreak: fin.tiebreakId ? full({ questionId: fin.tiebreakId }) : null,
         teams: r[2].rows.filter(function (t) { return t.status !== 'CANCELLED'; })

@@ -83,35 +83,58 @@
   .card ol.list { padding-left: 6mm; display: flex; flex-direction: column; gap: 1.2mm; font-size: .95em; }
   .card ol.list b { color: var(--green); }
   .card .note { font-size: .92em; color: var(--soft); }
+
+  /* ---- Masterkarten: A6, 2×2 auf A4 ---- */
+  .sheet.m4 { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+  .sheet.m4 .cut-v, .sheet.m4 .cut-h { position: absolute; background: #bbb; }
+  .sheet.m4 .cut-v { left: 50%; top: 0; bottom: 0; width: .2mm; }
+  .sheet.m4 .cut-h { top: 50%; left: 0; right: 0; height: .2mm; }
+  .mk { padding: 9mm 9mm 8mm; display: flex; flex-direction: column; gap: 3mm; font-size: 10pt; }
+  .mk__head { display: flex; gap: 3mm; align-items: center; border-bottom: .5mm solid var(--red); padding-bottom: 2.5mm; }
+  .mk__head img { height: 11mm; }
+  .mk__head small { display: block; font: 600 7pt Rubik, sans-serif; text-transform: uppercase; letter-spacing: .3mm; color: var(--soft); }
+  .mk__head b { font: 400 18pt/1 'Patua One', Georgia, serif; color: var(--red); }
+  .mk__team small, .mk__lab { font: 600 7pt Rubik, sans-serif; text-transform: uppercase; letter-spacing: .3mm; color: var(--soft); }
+  .mk__team b { display: block; font: 400 15pt/1.1 'Patua One', Georgia, serif; }
+  .mk__team i { display: block; height: 8mm; border-bottom: .3mm solid var(--ink); }
+  .mk__row { display: flex; gap: 3mm; align-items: flex-end; }
+  .mk__row span { font: 600 10pt Rubik, sans-serif; white-space: nowrap; }
+  .mk__row i { flex: 1; height: 8mm; border-bottom: .3mm solid var(--ink); }
+  .mk__tip { flex: 1; min-height: 18mm; border: .5mm solid var(--red); border-radius: 2mm; }
+  .mk__foot { display: flex; justify-content: space-between; align-items: center; gap: 3mm; font-size: 7.5pt; color: var(--soft); }
+  .mk__stufe { display: flex; align-items: center; gap: 2mm; font-weight: 600; color: var(--ink); }
+  .mk__stufe i { width: 11mm; height: 11mm; border: .4mm solid var(--ink); border-radius: 50%; }
 </style>
 </head>
 <body>
   <div class="bar" id="bar"></div>
   <div id="out"><p style="padding:2rem;color:#fff">Lädt …</p></div>
 
-<script src="assets/quiz-data.js?v=5"></script>
+<script src="assets/quiz-data.js?v=6"></script>
 <script>
 (function () {
   'use strict';
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var params = new URLSearchParams(location.search);
-  var MODE = params.get('was') === 'karten' ? 'karten' : 'zettel';
+  var MODE = ['karten', 'master'].indexOf(params.get('was')) >= 0 ? params.get('was') : 'zettel';
   var BLANKS = Math.max(0, Math.min(20, parseInt(params.get('leer') || '3', 10) || 0));
   var out = document.getElementById('out');
 
   function bar(D) {
-    var nSheets = MODE === 'zettel'
+    var nSheets = MODE === 'master' ? document.querySelectorAll('.sheet').length + ' Blätter, je vier Masterkarten (A6) — entlang der Linien schneiden'
+      : MODE === 'zettel'
       ? D.rounds.length * (D.teams.length + BLANKS) + ' Blätter: ' + D.rounds.length + ' Runden × (' + D.teams.length + ' Teams + ' + BLANKS + ' leer)'
       : document.querySelectorAll('.sheet').length + ' Blätter, je zwei Karten — in der Mitte durchschneiden';
     document.getElementById('bar').innerHTML =
         '<a href="?was=zettel&leer=' + BLANKS + '"' + (MODE === 'zettel' ? ' class="on"' : '') + '>Antwortzettel</a>'
       + '<a href="?was=karten"' + (MODE === 'karten' ? ' class="on"' : '') + '>Moderationskarten</a>'
-      + (MODE === 'zettel' ? '<label>Leere Zettel je Runde <input type="number" min="0" max="20" value="' + BLANKS + '" id="leer"></label>' : '')
+      + '<a href="?was=master&leer=' + BLANKS + '"' + (MODE === 'master' ? ' class="on"' : '') + '>Masterkarten</a>'
+      + (MODE !== 'karten' ? '<label>Leere ' + (MODE === 'master' ? 'Masterkarten' : 'Zettel je Runde') + ' <input type="number" min="0" max="20" value="' + BLANKS + '" id="leer"></label>' : '')
       + '<a href="./#abend">← Abend</a>'
       + '<button class="print" type="button" onclick="print()">Drucken / als PDF speichern</button>'
       + '<span class="info">' + esc(nSheets) + '. Im Druckdialog: A4, Ränder „Keine“ oder „Standard“, Hintergrundgrafiken an.</span>';
     var l = document.getElementById('leer');
-    if (l) l.onchange = function () { location.search = '?was=zettel&leer=' + l.value; };
+    if (l) l.onchange = function () { location.search = '?was=' + MODE + '&leer=' + l.value; };
   }
 
   // ---- Antwortzettel -------------------------------------------------------
@@ -169,15 +192,19 @@
     return '<div class="ans">Antwort: <b>' + esc(q.answer) + '</b>' + (extra ? '<small>' + extra + '</small>' : '') + '</div>';
   }
   function qCard(q, top) {
-    var o = (q.payload && q.payload.options) || [];
+    var o = (q.payload && q.payload.options) || [], p = q.payload || {};
     return '<article class="card"><div class="card__top"><span>' + top + '</span><span>'
       + esc(TYPE[q.type] || q.type) + ' · ' + q.pts + ' Punkte</span></div>'
       + mediaCue(q)
+      + (q.masterClue && q.clueNote ? '<div class="media">👑 Bei der Auflösung Masterhinweis ansagen: <b>' + esc(q.clueNote) + '</b></div>' : '')
       + '<p class="q">' + esc(q.prompt) + '</p>'
       + (q.type === 'MULTIPLE_CHOICE' ? '<ul class="opts">' + o.map(function (t, i) {
           return '<li' + (i === q.payload.correctIndex ? ' class="ok"' : '') + '>' + 'ABCDEFGH'[i] + ') ' + esc(t) + '</li>';
         }).join('') + '</ul>' : '')
+      + (q.type === 'MASTER' && p.hints ? '<ol class="list">' + p.hints.map(function (h, i) {
+          return '<li><b>' + ((p.ladder || [])[i] || '') + ' P.</b> ' + esc(h) + '</li>'; }).join('') + '</ol>' : '')
       + answer(q)
+      + (q.type === 'MASTER' && p.clueExplanation ? '<p class="bg">' + esc(p.clueExplanation) + '</p>' : '')
       + (q.background ? '<p class="bg">' + esc(q.background) + '</p>' : '')
       + (q.factCheck ? '<p class="src">Quelle: ' + esc(q.factCheck) + '</p>' : '')
       + '</article>';
@@ -189,7 +216,7 @@
       + '<h2>Runde ' + round.n + ' · ' + esc(round.title) + '</h2>'
       + (round.kind === 'HANDOUT' ? '<p class="note">📄 Handout-Runde: Fragen stehen am Zettel, am Beamer nur die Auflösung.</p>' : '')
       + '<ol class="list">' + round.questions.map(function (q) {
-          return '<li>' + esc(short(q.prompt, 95)) + ' → <b>' + esc(q.answer) + '</b></li>';
+          return '<li>' + esc(short(q.prompt, 95)) + ' → <b>' + esc(q.answer) + '</b>' + (q.masterClue ? ' 👑 ' + esc(q.clueNote) : '') + '</li>';
         }).join('') + '</ol></article>';
   }
   function karten(D) {
@@ -207,6 +234,25 @@
     return html;
   }
 
+  // ---- Masterkarten: A6, vier pro A4, bleiben den ganzen Abend am Tisch -----
+  function masterCard(D, team) {
+    var rounds = D.rounds.filter(function (r) { return r.questions.some(function (q) { return q.masterClue; }); });
+    return '<div class="mk"><div class="mk__head"><img src="../logo-mark.png" alt=""><div><small>Wirtshausquiz</small><b>👑 Masterkarte</b></div></div>'
+      + '<div class="mk__team"><small>Team</small>' + (team ? '<b>' + esc(team) + '</b>' : '<i></i>') + '</div>'
+      + '<div class="mk__lab">Masterhinweise mitschreiben</div>'
+      + rounds.map(function (r) { return '<div class="mk__row"><span>Runde ' + r.n + '</span><i></i></div>'; }).join('')
+      + '<div class="mk__lab">Euer Tipp im Finale</div><div class="mk__tip"></div>'
+      + '<div class="mk__foot"><span>Nur ein Versuch: Karte hochhalten, wir sammeln ein.</span><span class="mk__stufe">Stufe<i></i></span></div></div>';
+  }
+  function masterSheets(D) {
+    var teams = D.teams.concat(new Array(BLANKS).fill('')), html = '';
+    for (var i = 0; i < teams.length; i += 4) {
+      html += '<section class="sheet m4">' + [0, 1, 2, 3].map(function (k) { return i + k < teams.length ? masterCard(D, teams[i + k]) : '<div class="mk empty"></div>'; }).join('')
+        + '<i class="cut-v"></i><i class="cut-h"></i></section>';
+    }
+    return html;
+  }
+
   /** Long background texts must never be cut off: shrink the card's type until it fits. */
   function fit() {
     [].forEach.call(document.querySelectorAll('.card'), function (c) {
@@ -220,11 +266,13 @@
       var html = '', teams = D.teams.concat(new Array(BLANKS).fill(''));
       D.rounds.forEach(function (r) { teams.forEach(function (t) { html += zettel(D, r, t); }); });
       out.innerHTML = html || '<p style="padding:2rem;color:#fff">Im Abend sind noch keine Runden angelegt.</p>';
+    } else if (MODE === 'master') {
+      out.innerHTML = masterSheets(D);
     } else {
       out.innerHTML = karten(D);
       (document.fonts ? document.fonts.ready : Promise.resolve()).then(fit);
     }
-    document.title = (MODE === 'zettel' ? 'Antwortzettel' : 'Moderationskarten') + ' – ' + D.title;
+    document.title = ({ zettel: 'Antwortzettel', karten: 'Moderationskarten', master: 'Masterkarten' })[MODE] + ' – ' + D.title;
     bar(D);
   }).catch(function (e) { WQD.fail(e, out); });
 })();

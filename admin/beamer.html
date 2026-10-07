@@ -76,6 +76,14 @@
   .s-hints li { display: flex; gap: 1.5cqw; align-items: baseline; font: 500 2.3cqw/1.3 Rubik, sans-serif; opacity: .6; }
   .s-hints li.new { opacity: 1; font-size: 2.7cqw; }
   .s-hints li b { font: 400 2.6cqw/1 'Patua One', serif; color: var(--yellow); min-width: 2.5cqw; }
+  .s-crown { align-self: flex-start; background: var(--yellow); color: #3a2a00; border-radius: 1.2cqw; padding: 1.2cqw 2.4cqw;
+             font: 500 2.1cqw/1.25 Rubik, sans-serif; box-shadow: 0 0 3cqw rgba(255,204,0,.45); }
+  .s-crown b { font: 400 3.6cqw/1.1 'Patua One', serif; text-transform: uppercase; letter-spacing: .15cqw; margin-left: .6cqw; }
+  .s-crown small { display: block; font: 600 1.4cqw Rubik, sans-serif; opacity: .8; margin-top: .4cqw; }
+  .fx .s-crown { animation: pop .7s cubic-bezier(.2,1.4,.4,1) both, glow 2.4s 2.6s ease-in-out infinite; animation-delay: var(--d, .1s), calc(var(--d, .1s) + .8s); }
+  @keyframes glow { 50% { box-shadow: 0 0 5cqw rgba(255,204,0,.8); } }
+  .s-tafel { display: flex; flex-wrap: wrap; gap: 1cqw; align-items: center; font: 600 1.5cqw Rubik, sans-serif; text-transform: uppercase; letter-spacing: .12cqw; color: var(--yellow); }
+  .s-tafel b { font: 400 2.4cqw/1 'Patua One', serif; text-transform: none; letter-spacing: 0; color: #3a2a00; background: var(--yellow); border-radius: 99cqw; padding: .6cqw 1.6cqw; }
   .s-ladder { align-self: flex-start; background: var(--red); color: #fff; border-radius: 99cqw; padding: 1cqw 2.4cqw; font: 500 2.2cqw Rubik, sans-serif; }
   .s-rows { list-style: none; display: grid; gap: .8cqw 3cqw; width: 70%; margin: 0 auto; }
   .s-rows.two { grid-template-columns: 1fr 1fr; grid-auto-flow: column; grid-template-rows: repeat(7, auto); width: 100%; }
@@ -160,7 +168,7 @@
 <body>
 <div id="root"><p style="padding:2rem">Lädt …</p></div>
 
-<script src="assets/quiz-data.js?v=5"></script>
+<script src="assets/quiz-data.js?v=6"></script>
 <script>
 (function () {
   'use strict';
@@ -191,6 +199,7 @@
       s.push({ k: 'stand', upto: r.n - 1, r: r });
     });
     var mh = D.master && D.master.payload && D.master.payload.hints;
+    if (D.master) s.push({ k: 'minfo' });
     if (mh && mh.length) {
       mh.forEach(function (h, i) { s.push({ k: 'mhint', n: i + 1, q: D.master, label: 'Masterfrage' }); });
       s.push({ k: 'a', label: 'Masterfrage', q: D.master });
@@ -214,6 +223,7 @@
       case 'prizes': return 'Finale & Preise';
       case 'pause': return 'R' + sl.r.n + ' · Pause (Timer)';
       case 'mhint': return 'Masterfrage · Hinweis ' + sl.n;
+      case 'minfo': return 'Finale: So geht die Masterfrage';
       case 'round': return 'Runde ' + sl.r.n + ': ' + sl.r.title;
       case 'q': return (sl.label || 'R' + sl.r.n + ' · Frage ' + (sl.i + 1)) + ' — ' + sl.q.prompt.slice(0, 60);
       case 'collect': return 'R' + sl.r.n + ' · Zettel nach vorne';
@@ -225,7 +235,8 @@
   }
 
   // ---- Folien zeichnen (Beamer und Vorschau teilen sich das) ---------------
-  function bgUrl(sl) { return sl.q ? '../uploads/bg/' + encodeURIComponent(sl.q.id) + '.jpg' : '../assets/pub.jpg'; }
+  // Während der Masterhinweise kein Fragenbild – das würde die Lösung verraten; erst die Auflösung zeigt es.
+  function bgUrl(sl) { return sl.q && sl.k !== 'mhint' ? '../uploads/bg/' + encodeURIComponent(sl.q.id) + '.jpg' : '../assets/pub.jpg'; }
   function top(left) { return '<div class="s-top"><span>' + esc(left || '') + '</span><img src="../logo-mark-white.png" alt=""></div>'; }
   /** Fließtext: Wort für Wort einblenden, lange Texte schneller. */
   var WORD_MS = 330; // ~3 Wörter pro Sekunde, ungefähr Vorlesetempo
@@ -271,6 +282,7 @@
       case 'rules': return rulesHtml(D0);
       case 'prizes': return prizesHtml(D0);
       case 'mhint': return masterHtml(sl);
+      case 'minfo': return minfoHtml(D0);
       case 'end':
         return '<div class="s-center"><img class="s-logo pop" src="../logo-mark-white.png" alt=""><div class="s-big">' + words('Danke fürs Mitraten!') + '</div>'
           + '<div class="s-sub rise" style="--d:1s">Gleich gibt’s die Siegerehrung.</div></div>';
@@ -289,6 +301,9 @@
     }
     if (reveal && q.type !== 'MULTIPLE_CHOICE') body += '<div class="s-ans pop" style="--d:.5s"><small>Richtige Antwort</small>' + esc(q.answer)
       + (q.type === 'ESTIMATE' && sl.label !== 'Stechfrage' ? '<em>' + esc(WQD.estimateRule(q)) + '</em>' : '') + '</div>';
+    // 👑 Masterhinweis erst bei der Auflösung – während der Frage weiß niemand, welche zählt.
+    if (reveal && q.masterClue && q.clueNote) body += '<div class="s-crown pop" style="--d:1.8s">👑 Hinweis für die Masterfrage: <b>' + esc(q.clueNote) + '</b><small>Schreibt’s euch auf eure Masterkarte!</small></div>';
+    if (reveal && q.type === 'MASTER') body += tafelHtml(D0, .8);
     return top(qLeft(sl)) + '<div class="s-q">' + body + '</div>';
   }
   function render(sl, preview, st) {
@@ -336,9 +351,26 @@
       + items.map(function (it, i) { return '<li class="rise" style="--d:' + (0.3 + i * 0.25).toFixed(2) + 's"><span>' + it[0] + '</span><div><b>' + esc(it[1]) + '</b>' + esc(it[2]) + '</div></li>'; }).join('')
       + '</ul></div>';
   }
+  function tafelHtml(D0, d) {
+    var cl = D0.clues || [];
+    if (!cl.length) return '';
+    return '<div class="s-tafel rise" style="--d:' + (d || 0) + 's"><span>👑 Eure Masterhinweise</span>'
+      + cl.map(function (c) { return '<b title="Runde ' + c.round + '">' + esc(c.note) + '</b>'; }).join('') + '</div>';
+  }
+  function minfoHtml(D0) {
+    var lad = (D0.master && D0.master.payload && D0.master.payload.ladder) || [];
+    return top('Finale') + '<div class="s-stand"><div class="s-big zoom" style="font-size:6cqw;text-align:center">👑 Die Masterfrage</div>'
+      + '<ul class="s-list">'
+      + [['🔎', 'Hinweis für Hinweis', 'Wir decken einen Hinweis nach dem anderen auf – vom schwersten zum leichtesten.'],
+         ['✋', 'Karte hoch!', 'Wer sich traut, schreibt den Tipp auf die Masterkarte und hält sie hoch. Wir sammeln sie ein.'],
+         ['☝️', 'Nur ein Versuch', 'Jedes Team tippt genau einmal. Je früher, desto mehr Punkte' + (lad.length ? ': ' + lad.join(' · ') : '') + '. Falsch gibt 0.']]
+        .map(function (it, i) { return '<li class="rise" style="--d:' + (0.4 + i * 0.3).toFixed(2) + 's"><span>' + it[0] + '</span><div><b>' + esc(it[1]) + '</b>' + esc(it[2]) + '</div></li>'; }).join('')
+      + '</ul>' + tafelHtml(D0, 1.5) + '</div>';
+  }
   function masterHtml(sl) {
     var p = sl.q.payload || {}, hints = p.hints || [], lad = p.ladder || [];
     return top('Finale · Masterfrage') + '<div class="s-q">'
+      + tafelHtml(D || {}, 0)
       + '<div class="s-prompt m">' + esc(sl.q.prompt) + '</div>'
       + '<ol class="s-hints">' + hints.slice(0, sl.n).map(function (h, i) {
         return '<li' + (i === sl.n - 1 ? ' class="new"' : '') + '><b>' + (i + 1) + '</b>' + (i === sl.n - 1 ? words(h) : esc(h)) + '</li>';
@@ -570,6 +602,11 @@
         return '<li class="' + (v != null ? 'ok' : '') + '"><span>' + (v != null ? '✅' : '⭕') + '</span>' + esc(t.name) + (v != null ? '<b>' + v + '</b>' : '') + '</li>';
       }).join('') + '</ul>' + (liveErr ? '<div class="warn">' + esc(liveErr) + '</div>' : '');
   }
+  function clueHtml(sl) {
+    var q = sl.q;
+    if (sl.k !== 'a' || !q.masterClue || !q.clueNote) return '';
+    return '<div class="check">👑 Jetzt Masterhinweis ansagen: <b>' + esc(q.clueNote) + '</b> – „Schreibt’s euch auf eure Masterkarte!“ (Banner kommt nach der Antwort)</div>';
+  }
   function checkHtml(q) {
     return (q.tags || []).indexOf('prüfen') >= 0 ? '<div class="check">⚠ Bitte prüfen: ' + esc(String(q.factCheck || '').replace(/^⚠ Claude:\s*/, '')) + '</div>' : '';
   }
@@ -617,7 +654,7 @@
     var q = sl.q;
     return '<div class="info"><div class="mute">' + esc(TYPE[q.type] || q.type) + ' · ' + q.pts + ' Punkte'
       + (sl.steps ? ' · Klick blendet die Antworten einzeln ein' : '') + '</div>'
-      + checkHtml(q)
+      + clueHtml(sl) + checkHtml(q)
       + '<div class="ans">' + esc(q.answer) + '</div>'
       + playerHtml(q, sl)
       + (q.background ? '<div class="bg">' + esc(q.background) + '</div>' : '')
