@@ -89,7 +89,7 @@
   <div class="bar" id="bar"></div>
   <div id="out"><p style="padding:2rem;color:#fff">Lädt …</p></div>
 
-<script src="assets/quiz-data.js?v=3"></script>
+<script src="assets/quiz-data.js?v=4"></script>
 <script>
 (function () {
   'use strict';
@@ -164,7 +164,7 @@
   function answer(q) {
     var p = q.payload || {}, extra = '';
     if (q.type === 'OPEN_TEXT' && p.acceptedAnswers && p.acceptedAnswers.length) extra = 'Gilt auch: ' + p.acceptedAnswers.map(esc).join(', ');
-    if (q.type === 'ESTIMATE') extra = p.scoring === 'TOLERANCE' ? 'Punkte, wenn höchstens ' + p.tolerancePercent + ' % daneben' : 'Wer am nächsten dran ist, bekommt die Punkte';
+    if (q.type === 'ESTIMATE') extra = WQD.estimateRule(q);
     if (q.type === 'MAP') extra = 'Radius ' + p.radiusKm + ' km';
     return '<div class="ans">Antwort: <b>' + esc(q.answer) + '</b>' + (extra ? '<small>' + extra + '</small>' : '') + '</div>';
   }

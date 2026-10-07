@@ -47,6 +47,7 @@
            padding: .7cqw 1.4cqw; border-radius: 99cqw; }
   .s-ans { background: var(--green); color: #fff; border-radius: 1.2cqw; padding: 1.6cqw 2.4cqw;
            font: 400 4cqw/1.15 'Patua One', Georgia, serif; }
+  .s-ans em { display: block; font: 500 1.7cqw/1.3 Rubik, sans-serif; font-style: normal; opacity: .9; margin-top: .8cqw; }
   .s-ans small { display: block; font: 600 1.4cqw/1 Rubik, sans-serif; text-transform: uppercase; letter-spacing: .15cqw; opacity: .85; margin-bottom: .8cqw; }
   .s-media { flex: 1; min-height: 0; display: flex; justify-content: center; }
   .s-media > * { height: 100%; aspect-ratio: 16 / 9; max-width: 100%; border: 0; border-radius: 1cqw; background: #000; }
@@ -113,7 +114,7 @@
 <body>
 <div id="root"><p style="padding:2rem">Lädt …</p></div>
 
-<script src="assets/quiz-data.js?v=3"></script>
+<script src="assets/quiz-data.js?v=4"></script>
 <script>
 (function () {
   'use strict';
@@ -229,7 +230,8 @@
         ? '<div class="ph">🎬 ' + (m.kind === 'missing' ? 'Video fehlt noch' : 'Video läuft am Beamer') + '</div>'
         : '<div id="vmount"></div>') + '</div>';
     }
-    if (reveal && q.type !== 'MULTIPLE_CHOICE') body += '<div class="s-ans"><small>Richtige Antwort</small>' + esc(q.answer) + '</div>';
+    if (reveal && q.type !== 'MULTIPLE_CHOICE') body += '<div class="s-ans"><small>Richtige Antwort</small>' + esc(q.answer)
+      + (q.type === 'ESTIMATE' && sl.label !== 'Stechfrage' ? '<em>' + esc(WQD.estimateRule(q)) + '</em>' : '') + '</div>';
     return top(sl) + '<div class="s-q">' + body + '</div>';
   }
 
@@ -251,6 +253,10 @@
       ['📝', rs.length + ' Runden' + (same && n.length ? ' à ' + n[0] + ' Fragen' : ''), 'Antworten auf euren Zettel. Bei Multiple Choice den Buchstaben einkreisen.'],
       ['🔄', 'Nach jeder Runde', 'Zettel zu uns nach vorne — wir werten aus, ihr hört die Auflösung — dann Zwischenstand.']
     ];
+    var est = [];
+    rs.forEach(function (r) { r.questions.forEach(function (q) { if (q.type === 'ESTIMATE') est.push(q.payload.scoring); }); });
+    if (est.length && est.every(function (x) { return x === 'TOLERANCE'; })) items.push(['🎯', 'Schätzfragen', 'Punkte für alle, die nah genug dran sind — wie nah, seht ihr bei der Auflösung.']);
+    else if (est.length && est.every(function (x) { return x !== 'TOLERANCE'; })) items.push(['🎯', 'Schätzfragen', 'Die Punkte bekommt das Team, das am nächsten dran ist.']);
     if (pause) items.push(['🍺', 'Nach Runde ' + pause + ': Pause', 'Zeit zum Durchschnaufen und Nachbestellen.']);
     if (D0.master) items.push(['👑', 'Zum Schluss: die Masterfrage', 'Die Hinweise sammeln sich über den ganzen Abend — achtet auf den roten Faden!']);
     items.push(['📵', 'Handy bleibt in der Tasche', 'Googeln ist Ehrensache.']);

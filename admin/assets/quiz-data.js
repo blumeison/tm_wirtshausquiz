@@ -102,5 +102,20 @@
     return rows;
   }
 
-  window.WQD = { load: load, api: api, table: table, TYPE: TYPE, esc: esc, fail: fail, youtubeId: youtubeId };
+  /**
+   * Scoring rule of an estimate question as one sentence, with the concrete
+   * range for TOLERANCE so nobody does percentages in their head at the pub.
+   * Whole-number answers get a whole-number range (7 ± 10 % → "genau 7").
+   */
+  function estimateRule(q) {
+    var p = q.payload || {}, unit = p.unit ? ' ' + p.unit : '';
+    if (p.scoring !== 'TOLERANCE') return 'Punkte für das Team, das am nächsten dran ist (bei Gleichstand alle gleich nahen).';
+    var v = Number(p.value), d = Math.abs(v) * (p.tolerancePercent || 10) / 100, lo = v - d, hi = v + d;
+    if (v === Math.round(v)) { lo = Math.ceil(lo); hi = Math.floor(hi); }
+    var f = function (n) { return n.toLocaleString('de-AT', { maximumFractionDigits: 2 }); };
+    if (lo >= hi) return 'Punkte nur für genau ' + f(v) + unit + '.';
+    return 'Punkte für alle Tipps von ' + f(lo) + ' bis ' + f(hi) + unit + ' (± ' + (p.tolerancePercent || 10) + ' %).';
+  }
+
+  window.WQD = { estimateRule: estimateRule, load: load, api: api, table: table, TYPE: TYPE, esc: esc, fail: fail, youtubeId: youtubeId };
 })();
