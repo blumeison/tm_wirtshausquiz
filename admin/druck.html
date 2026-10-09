@@ -110,7 +110,7 @@
   <div class="bar" id="bar"></div>
   <div id="out"><p style="padding:2rem;color:#fff">Lädt …</p></div>
 
-<script src="assets/quiz-data.js?v=6"></script>
+<script src="assets/quiz-data.js?v=7"></script>
 <script>
 (function () {
   'use strict';
@@ -141,7 +141,7 @@
   function hint(q) {
     var p = q.payload || {};
     if (q.type === 'MULTIPLE_CHOICE') return '';
-    if (q.type === 'ESTIMATE') return 'Schätzung' + (p.unit ? ' in ' + esc(p.unit) : '');
+    if (q.type === 'ESTIMATE') return 'Schätzung' + (p.unit ? ' in ' + esc(p.unit) : '') + ' · ' + esc(WQD.estimateShort(q));
     if (q.type === 'AUDIO') return '🎵 Hörfrage';
     if (q.type === 'VIDEO') return '🎬 Videofrage';
     if (q.type === 'IMAGE') return '🖼 Bildfrage';
@@ -158,14 +158,14 @@
     return '<section class="sheet z">'
       + '<div class="z__head"><img src="../logo-mark.png" alt="">'
       + '<div><div class="z__ev">' + esc(D.title) + ' · ' + esc(D.event.dateLong || '') + '</div>'
-      + '<div class="z__round">Runde ' + round.n + '</div><div class="z__rsub">' + esc(round.title) + '</div></div>'
+      + '<div class="z__round">Runde ' + round.n + '</div><div class="z__rsub">' + esc(round.title) + ' · jede richtige Antwort 10 Punkte</div></div>'
       + '<div class="z__team"><small>Team</small>' + (team ? '<b>' + esc(team) + '</b>' : '<div class="blank"></div>') + '</div></div>'
       + '<div class="z__rows">' + round.questions.map(function (q, i) {
           return '<div class="zr"><div class="zr__n">' + (i + 1) + '</div><div class="zr__mid">'
             + (handout ? '<div class="zr__q">' + esc(q.prompt) + '</div>' : '')
             + (hint(q) ? '<div class="zr__hint">' + hint(q) + '</div>' : '')
             + opts(q, handout) + '</div>'
-            + '<div class="zr__pts"><i></i>von ' + q.pts + '</div></div>';
+            + '<div class="zr__pts"><i></i></div></div>';
         }).join('') + '</div>'
       + '<div class="z__foot"><span class="by">Nach der Runde bitte nach vorne bringen — wir werten aus.</span>'
       + '<span class="sum">Summe Runde ' + round.n + ' <i></i></span></div>'

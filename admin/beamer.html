@@ -179,14 +179,14 @@
 <body>
 <div id="root"><p style="padding:2rem">Lädt …</p></div>
 
-<script src="assets/quiz-data.js?v=6"></script>
+<script src="assets/quiz-data.js?v=7"></script>
 <script>
 (function () {
   'use strict';
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261008-8';
+  var BUILD = '20261009-1';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -200,6 +200,8 @@
   // Pro Runde: Rundentitel → Fragen → Zettel nach vorne → Pause (Timer, wir werten
   // aus) → Auflösung mit Antworten → Zwischenstand. Multiple Choice hat Klickschritte:
   // jeder Klick blendet eine Antwortmöglichkeit ein.
+  // Pausenlängen: nach Runde 1 kürzer, danach mit Zeit zum Durchschnaufen. Am Abend per Schnellwahl kürzbar.
+  function pauseMin(r) { return r.n === 1 ? 10 : 15; }
   function nOpts(q) { return q.type === 'MULTIPLE_CHOICE' ? ((q.payload && q.payload.options) || []).length : 0; }
   function buildDeck(D) {
     var s = [{ k: 'title' }, { k: 'teams' }, { k: 'rules' }, { k: 'prizes' }];
@@ -209,7 +211,7 @@
         r.questions.forEach(function (q, i) { s.push({ k: 'q', r: r, i: i, q: q, steps: nOpts(q) }); });
         s.push({ k: 'collect', r: r });
       }
-      s.push({ k: 'pause', r: r, min: r.n === 1 ? 5 : 10 }); // nach Runde 1 nur auswerten, später auch Durchschnaufen
+      s.push({ k: 'pause', r: r, min: pauseMin(r) });
       s.push({ k: 'solve', r: r });
       r.questions.forEach(function (q, i) { s.push({ k: 'a', r: r, i: i, q: q }); });
       s.push({ k: 'stand', upto: r.n - 1, r: r });
@@ -283,7 +285,10 @@
       return '<div data-step="' + (i + 1) + '" class="' + c + '"><b>' + 'ABCDEFGH'[i] + '</b>' + esc(t) + '</div>';
     }).join('') + '</div>';
   }
-  function qLeft(sl) { return sl.label || (sl.r ? 'Runde ' + sl.r.n + ' · Frage ' + (sl.i + 1) + ' von ' + sl.r.questions.length : ''); }
+  function qLeft(sl) {
+    if (sl.label) return sl.label;
+    return sl.r ? 'Runde ' + sl.r.n + ' · Frage ' + (sl.i + 1) + ' von ' + sl.r.questions.length + (sl.q ? ' · ' + sl.q.pts + ' Punkte' : '') : '';
+  }
   function inner(sl, preview, st) {
     var D0 = D || {};
     switch (sl.k) {
@@ -318,7 +323,7 @@
           + '<div class="s-sub rise" style="--d:1s">Gleich gibt’s die Siegerehrung.</div></div>';
     }
     var q = sl.q, m = q.media, p = q.payload || {}, reveal = sl.k === 'a', body = '';
-    if (!reveal && q.type === 'ESTIMATE') body += '<span class="s-tag pop">Schätzfrage' + (p.unit ? ' · Antwort in ' + esc(p.unit) : '') + '</span>';
+    if (!reveal && q.type === 'ESTIMATE') body += '<span class="s-tag pop">Schätzfrage' + (p.unit ? ' · Antwort in ' + esc(p.unit) : '') + ' · ' + esc(WQD.estimateShort(q)) + '</span>';
     if (!reveal && m && !m.video) body += '<span class="s-tag pop">🎵 Hört gut zu</span>';
     if (!reveal && m && m.video) body += '<span class="s-tag pop">🎬 Schaut gut hin</span>';
     body += '<div class="s-prompt' + promptCls(q.prompt) + (reveal ? ' rise' : '') + '">' + (reveal ? esc(q.prompt) : words(q.prompt)) + '</div>';
@@ -354,7 +359,7 @@
     var rs = (D0.rounds || []).filter(function (r) { return r.questions.length; }), n = rs.map(function (r) { return r.questions.length; });
     var same = n.every(function (x) { return x === n[0]; });
     var items = [
-      ['📝', rs.length + ' Runden' + (same && n.length ? ' à ' + n[0] + ' Fragen' : ''), 'Antworten auf euren Zettel. Bei Multiple Choice den Buchstaben einkreisen.'],
+      ['📝', rs.length + ' Runden' + (same && n.length ? ' à ' + n[0] + ' Fragen' : ''), 'Jede richtige Antwort bringt 10 Punkte. Antworten auf euren Zettel, bei Multiple Choice den Buchstaben einkreisen.'],
       ['🍺', 'Nach jeder Runde', 'Zettel zu uns nach vorne — kurze Pause, wir werten aus — dann Auflösung und Zwischenstand.']
     ];
     var est = [];
@@ -362,7 +367,7 @@
     if (est.length && est.every(function (x) { return x === 'TOLERANCE'; })) items.push(['🎯', 'Schätzfragen', 'Punkte für alle, die nah genug dran sind — wie nah, seht ihr bei der Auflösung.']);
     else if (est.length && est.every(function (x) { return x !== 'TOLERANCE'; })) items.push(['🎯', 'Schätzfragen', 'Die Punkte bekommt das Team, das am nächsten dran ist.']);
     if (D0.master) items.push(['👑', 'Zum Schluss: die Masterfrage', 'Die Hinweise sammeln sich über den ganzen Abend — achtet auf den roten Faden!']);
-    items.push(['📵', 'Handy bleibt in der Tasche', 'Googeln ist Ehrensache.']);
+    items.push(['📵', 'Handy bleibt in der Tasche', 'Nicht googeln ist Ehrensache.']);
     return top('So läuft’s') + listHtml('So läuft’s', items);
   }
   function prizesHtml(D0) {
@@ -570,7 +575,7 @@
   function plans() {
     var out = [{ key: 'intro', label: 'Begrüßung', min: 8 }];
     deck.forEach(function (sl) {
-      if (sl.k === 'round') out.push({ key: 'r' + sl.r.n, label: 'Runde ' + sl.r.n, min: planRound(sl.r, sl.r.n === 1 ? 5 : 10) });
+      if (sl.k === 'round') out.push({ key: 'r' + sl.r.n, label: 'Runde ' + sl.r.n, min: planRound(sl.r, pauseMin(sl.r)) });
     });
     if (D.master) out.push({ key: 'fin', label: 'Finale', min: 12 + 5 + 10 });
     return out;

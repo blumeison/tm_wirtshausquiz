@@ -121,5 +121,11 @@
     return 'Punkte für alle Tipps von ' + f(lo) + ' bis ' + f(hi) + unit + ' (± ' + (p.tolerancePercent || 10) + ' %).';
   }
 
-  window.WQD = { estimateRule: estimateRule, load: load, api: api, table: table, TYPE: TYPE, esc: esc, fail: fail, youtubeId: youtubeId };
+  /** Kurzform für die Frage selbst: wie genau muss man sein? */
+  function estimateShort(q) {
+    var p = q.payload || {};
+    return p.scoring === 'TOLERANCE' ? 'Punkte bei ± ' + (p.tolerancePercent || 10) + ' %' : 'Wer am nächsten dran ist, gewinnt';
+  }
+
+  window.WQD = { estimateRule: estimateRule, estimateShort: estimateShort, load: load, api: api, table: table, TYPE: TYPE, esc: esc, fail: fail, youtubeId: youtubeId };
 })();
