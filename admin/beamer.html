@@ -212,14 +212,14 @@
 <body>
 <div id="root"><p style="padding:2rem">Lädt …</p></div>
 
-<script src="assets/quiz-data.js?v=8"></script>
+<script src="assets/quiz-data.js?v=9"></script>
 <script>
 (function () {
   'use strict';
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261013-1';
+  var BUILD = '20261013-2';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -509,11 +509,14 @@
     var head = top(sl.tb ? 'Nach der Stechfrage' : sl.final ? 'Endstand' : 'Nach Runde ' + sl.r.n);
     var title = '<div class="s-big zoom' + (sl.final ? ' red' : '') + '" style="font-size:5cqw;text-align:center">' + (sl.final ? 'Endstand' : 'Zwischenstand') + '</div>';
     if (!rows.length) return head + '<div class="s-center">' + title + '<div class="s-sub">Punkte werden geladen …</div></div>';
+    // Endstand mit Gleichstand am Podest: diese Teams bekommen gleich die Stechfrage-Karten.
+    var tied = sl.final && D && D.tiebreak ? tiedPodium() || {} : {};
     // Von hinten nach vorne aufdecken: der letzte Platz zuerst, Platz 1 zum Schluss.
     return head + '<div class="s-stand">' + title + '<ol class="s-rows' + (rows.length > 7 ? ' two" style="grid-template-rows:repeat(' + Math.ceil(rows.length / 2) + ',auto)' : '') + '">' + rows.map(function (r, i) {
       if (sl.final) {
         var n = rows.length - i; // letzter Platz = Klick 1, Sieger = letzter Klick
-        return '<li data-step="' + n + '" class="p' + r.rank + (r.ak ? ' ak' : '') + (n <= (st || 0) ? ' on' : '') + '"><b>' + WQD.rankLabel(r) + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
+        return '<li data-step="' + n + '" class="p' + r.rank + (r.ak ? ' ak' : '') + (tied[r.id] ? ' tie' : '') + (n <= (st || 0) ? ' on' : '') + '"><b>' + WQD.rankLabel(r) + '</b><span>' + esc(r.name)
+          + (tied[r.id] ? '<em class="tip">⚖️ ins Stechen</em>' : '') + '</span><i>' + r.total + '</i></li>';
       }
       return '<li class="rise p' + r.rank + (r.ak ? ' ak' : '') + '" style="--d:' + (0.6 + (rows.length - 1 - i) * 0.45).toFixed(2) + 's"><b>' + WQD.rankLabel(r) + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
     }).join('') + '</ol></div>';
@@ -876,6 +879,10 @@
           var miss = rows.filter(function (r) { return r.per[sl.upto] == null; }).map(function (r) { return r.name; });
           return miss.length ? '<div class="warn">⚠ ' + (sl.final ? 'Es fehlen noch Punkte von' : 'Runde ' + (sl.upto + 1) + ' fehlt noch bei')
             + ': ' + esc(miss.join(', ')) + '</div>' : '<div class="mute">✓ Alle Teams eingetragen</div>';
+        })()
+        + (function () {
+          var t = sl.final && !sl.tb && D.tiebreak ? tiedPodium() || {} : {}, n = Object.keys(t).length;
+          return n ? '<div class="check">⚖️ Gleichstand am Podest – Stechfrage-Karten an: <b>' + esc(rows.filter(function (r) { return t[r.id]; }).map(function (r) { return r.name; }).join(', ')) + '</b></div>' : '';
         })()
         + rows.map(function (r) { return '<div>' + WQD.rankLabel(r) + (r.rank == null ? ' ' : '. ') + esc(r.name) + ' — <b>' + r.total + '</b></div>'; }).join('')
         + '</div>';

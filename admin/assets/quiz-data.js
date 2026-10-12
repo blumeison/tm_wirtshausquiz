@@ -98,7 +98,8 @@
       var tb = tbValue == null || s.tb == null ? Infinity : Math.abs(s.tb - tbValue);
       return { id: t.id, name: t.name, promo: !!t.promo, ak: !!(live.ak || {})[t.id], per: per, total: Math.round(total * 10) / 10, tb: tb, guess: s.tb };
     });
-    rows.sort(function (a, b) { return b.total - a.total || a.tb - b.tb || a.name.localeCompare(b.name, 'de'); });
+    // Bei gleicher Punktzahl stehen Teams außer Konkurrenz hinter den anderen – sie mischen sich nicht in einen Gleichstand.
+    rows.sort(function (a, b) { return b.total - a.total || (a.ak ? 1 : 0) - (b.ak ? 1 : 0) || a.tb - b.tb || a.name.localeCompare(b.name, 'de'); });
     // Teams außer Konkurrenz bleiben in der Liste, bekommen aber keinen Platz – die anderen rücken auf.
     var n = 0, p = null;
     rows.forEach(function (r) {
