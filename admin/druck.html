@@ -32,6 +32,17 @@
   .bar input { width: 3.5em; font: inherit; padding: 4px 6px; border-radius: 6px; border: 0; }
   .bar .info { opacity: .75; font-weight: 400; flex-basis: 100%; font-size: 13px; }
 
+  /* ---- Auswertung (Spickzettel) ---- */
+  .a__rows { flex: 1; display: flex; flex-direction: column; }
+  .ar { flex: 1; display: grid; grid-template-columns: 12mm 1fr 18mm; gap: 4mm; align-items: center; border-bottom: .3mm solid var(--line); padding: 2mm 0; }
+  .ar__ans { font: 400 17pt/1.15 'Patua One', Georgia, serif; }
+  .ar__ok { font-size: 10.5pt; font-weight: 600; color: var(--green); margin-top: 1mm; }
+  .ar__q { font-size: 8.5pt; color: var(--soft); margin-top: 1mm; }
+  .ar__mc { width: 15mm; height: 15mm; border: .7mm solid var(--red); border-radius: 50%; display: grid; place-items: center;
+            font: 400 22pt/1 'Patua One', Georgia, serif; color: var(--red); }
+  .a__rows.fin { flex: none; } .fin .ar { flex: none; padding: 6mm 0 2mm; border: 0; }
+  .a__note { font-size: 10pt; padding: 3mm 0 5mm; border-bottom: .3mm solid var(--line); }
+
   /* ---- Antwortzettel ---- */
   .z { padding: 13mm 14mm 11mm; display: flex; flex-direction: column; }
   .z__head { display: flex; align-items: flex-start; gap: 6mm; padding-bottom: 4mm; border-bottom: .6mm solid var(--red); }
@@ -122,12 +133,13 @@
   'use strict';
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var params = new URLSearchParams(location.search);
-  var MODE = ['karten', 'master', 'stech'].indexOf(params.get('was')) >= 0 ? params.get('was') : 'zettel';
+  var MODE = ['karten', 'master', 'stech', 'auswertung'].indexOf(params.get('was')) >= 0 ? params.get('was') : 'zettel';
   var BLANKS = Math.max(0, Math.min(20, parseInt(params.get('leer') || '3', 10) || 0));
   var out = document.getElementById('out');
 
   function bar(D) {
-    var nSheets = MODE === 'stech' ? document.querySelectorAll('.sheet').length + ' Blätter, je zwei Stechfragen-Karten — in der Mitte durchschneiden'
+    var nSheets = MODE === 'auswertung' ? document.querySelectorAll('.sheet').length + ' Blätter: ein Spickzettel je Runde plus Finale – für die Helfer beim Auswerten'
+      : MODE === 'stech' ? document.querySelectorAll('.sheet').length + ' Blätter, je zwei Stechfragen-Karten — in der Mitte durchschneiden'
       : MODE === 'master' ? document.querySelectorAll('.sheet').length + ' Blätter, je vier Masterkarten (A6) — entlang der Linien schneiden'
       : MODE === 'zettel'
       ? D.rounds.length * (D.teams.length + BLANKS) + ' Blätter: ' + D.rounds.length + ' Runden × (' + D.teams.length + ' Teams + ' + BLANKS + ' leer)'
@@ -137,7 +149,8 @@
       + '<a href="?was=karten"' + (MODE === 'karten' ? ' class="on"' : '') + '>Moderationskarten</a>'
       + '<a href="?was=master&leer=' + BLANKS + '"' + (MODE === 'master' ? ' class="on"' : '') + '>Masterkarten</a>'
       + '<a href="?was=stech&leer=' + BLANKS + '"' + (MODE === 'stech' ? ' class="on"' : '') + '>Stechfragen-Karten</a>'
-      + (MODE !== 'karten' ? '<label>Leere ' + (MODE === 'master' ? 'Masterkarten' : MODE === 'stech' ? 'Karten' : 'Zettel je Runde') + ' <input type="number" min="0" max="20" value="' + BLANKS + '" id="leer"></label>' : '')
+      + '<a href="?was=auswertung"' + (MODE === 'auswertung' ? ' class="on"' : '') + '>Auswertung</a>'
+      + (MODE !== 'karten' && MODE !== 'auswertung' ? '<label>Leere ' + (MODE === 'master' ? 'Masterkarten' : MODE === 'stech' ? 'Karten' : 'Zettel je Runde') + ' <input type="number" min="0" max="20" value="' + BLANKS + '" id="leer"></label>' : '')
       + '<a href="./#abend">← Abend</a>'
       + '<button class="print" type="button" onclick="print()">Drucken / als PDF speichern</button>'
       + '<span class="info">' + esc(nSheets) + '. Im Druckdialog: A4, Ränder „Standard“, Hintergrundgrafiken an.</span>';
@@ -264,6 +277,41 @@
     for (var i = 0; i < teams.length; i += 2) html += '<section class="sheet k">' + stechCard(D, teams[i]) + (i + 1 < teams.length ? stechCard(D, teams[i + 1]) : '') + '</section>';
     return html;
   }
+  // ---- Auswertung: Spickzettel je Runde – nur das, was man zum Abhaken der Zettel braucht.
+  function aHead(D, title, sub) {
+    return '<div class="z__head"><img src="../logo-mark.png" alt=""><div><div class="z__ev">' + esc(D.title) + ' · Auswertung</div>'
+      + '<div class="z__round">' + title + '</div><div class="z__rsub">' + sub + '</div></div></div>';
+  }
+  function aRow(n, q, mc, noRule) {
+    var p = q.payload || {}, ok = '';
+    if (q.type === 'ESTIMATE' && !noRule) ok = WQD.estimateRule(q);
+    var alt = (p.acceptedAnswers || []).filter(function (a) { return a.toLowerCase() !== String(q.answer).toLowerCase(); });
+    if (alt.length) ok = 'Gilt auch: ' + alt.map(esc).join(' · ');
+    return '<div class="ar"><div class="zr__n">' + n + '</div><div><div class="ar__ans">' + esc(q.answer) + '</div>'
+      + (ok ? '<div class="ar__ok">✓ ' + ok + '</div>' : '')
+      + '<div class="ar__q">' + esc(short(q.prompt, 110)) + '</div></div>'
+      + (mc ? '<div class="ar__mc">' + mc + '</div>' : '<div></div>') + '</div>';
+  }
+  function auswertung(D) {
+    var html = D.rounds.map(function (r) {
+      return '<section class="sheet z a">' + aHead(D, 'Runde ' + r.n, esc(r.title) + ' · jede richtige Antwort 10 Punkte')
+        + '<div class="a__rows">' + r.questions.map(function (q, i) {
+          return aRow(i + 1, q, q.type === 'MULTIPLE_CHOICE' ? 'ABCDEFGH'[q.payload.correctIndex] : '');
+        }).join('') + '</div>'
+        + '<div class="z__foot"><span class="by">MC: eingekreister Buchstabe zählt. Schätzfrage: Bereich gilt inklusive.</span>'
+        + '<span class="sum">Summe = richtige × 10</span></div></section>';
+    }).join('');
+    if (D.master || D.tiebreak) {
+      var m = D.master, mp = (m && m.payload) || {}, tb = D.tiebreak;
+      html += '<section class="sheet z a">' + aHead(D, 'Finale', 'Masterfrage und Stechfrage') + '<div class="a__rows fin">'
+        + (m ? aRow('👑', m, '') + '<div class="a__note"><b>Punkte nach Stufe</b> (steht auf der Karte = Hinweis, bei dem eingesammelt wurde): '
+          + (mp.ladder || []).map(function (v, i) { return 'Stufe ' + (i + 1) + ' → <b>' + v + '</b>'; }).join(' · ') + '. Falsch = 0.</div>' : '')
+        + (tb ? aRow('⚖️', tb, '', true) + '<div class="a__note">Nur die punktgleichen Teams. Untereinander nach Abstand zum richtigen Wert reihen – '
+          + 'kleinster Abstand = bester Platz. Tipp unverändert eintragen, die Reihung rechnet das System.</div>' : '')
+        + '</div></section>';
+    }
+    return html;
+  }
   function masterSheets(D) {
     var teams = D.teams.concat(new Array(BLANKS).fill('')), html = '';
     for (var i = 0; i < teams.length; i += 4) {
@@ -286,6 +334,8 @@
       var html = '', teams = D.teams.concat(new Array(BLANKS).fill(''));
       D.rounds.forEach(function (r) { teams.forEach(function (t) { html += zettel(D, r, t); }); });
       out.innerHTML = html || '<p style="padding:2rem;color:#fff">Im Abend sind noch keine Runden angelegt.</p>';
+    } else if (MODE === 'auswertung') {
+      out.innerHTML = auswertung(D);
     } else if (MODE === 'stech') {
       out.innerHTML = stechSheets(D);
     } else if (MODE === 'master') {
@@ -294,7 +344,7 @@
       out.innerHTML = karten(D);
       (document.fonts ? document.fonts.ready : Promise.resolve()).then(fit);
     }
-    document.title = ({ zettel: 'Antwortzettel', karten: 'Moderationskarten', master: 'Masterkarten', stech: 'Stechfragen-Karten' })[MODE] + ' – ' + D.title;
+    document.title = ({ zettel: 'Antwortzettel', karten: 'Moderationskarten', master: 'Masterkarten', stech: 'Stechfragen-Karten', auswertung: 'Auswertung' })[MODE] + ' – ' + D.title;
     bar(D);
   }).catch(function (e) { WQD.fail(e, out); });
 })();
