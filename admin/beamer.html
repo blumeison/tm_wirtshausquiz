@@ -194,7 +194,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261012-3';
+  var BUILD = '20261012-4';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -236,8 +236,10 @@
     if (D.master) s.push({ k: 'pause', master: true, min: 5 });
     s.push({ k: 'stand', upto: last, final: true });
     if (D.tiebreak) {
-      s.push({ k: 'q', label: 'Stechfrage', q: D.tiebreak, steps: 0 }, { k: 'a', label: 'Stechfrage', q: D.tiebreak });
+      // Auflösung erst nach der Pause: wer am nächsten dran war, bleibt bis zum Endstand spannend.
+      s.push({ k: 'q', label: 'Stechfrage', q: D.tiebreak, steps: 0 });
       s.push({ k: 'pause', tb: true, min: 2 });
+      s.push({ k: 'a', label: 'Stechfrage', q: D.tiebreak });
       s.push({ k: 'stand', upto: last, final: true, tb: true, steps: 1 });
     }
     s.push({ k: 'end' });
