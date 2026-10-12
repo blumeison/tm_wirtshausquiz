@@ -77,6 +77,14 @@
     if (D.tiebreak) c.push({ key: 'tb', label: 'Stechfrage', title: 'Stechfrage — geschätzter Wert je Team (Antwort: ' + D.tiebreak.answer + ')', sub: 'Tipp' });
     return c;
   }
+  // Am Podest punktgleiche Teams – nur die brauchen einen Stechfrage-Tipp.
+  function tied() {
+    var rows = WQD.table(L, lastScore());
+    return playing().filter(function (t) {
+      var r = rows.filter(function (x) { return x.id === t.id; })[0];
+      return r && r.rank <= 3 && rows.filter(function (o) { return o.rank === r.rank; }).length > 1;
+    });
+  }
   function lastScore() { return D.rounds.length - 1 + (D.master ? 1 : 0); }
   function tbValue() { return D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null; }
 
@@ -99,8 +107,10 @@
       html += '<div class="rounds">' + cs.map(function (c) {
           return '<button data-round="' + c.key + '"' + (c.key === round ? ' class="on"' : '') + '>' + esc(c.label) + '<small>' + esc(c.sub) + '</small></button>';
         }).join('') + '</div>'
-        + '<p class="sum">' + esc(cur.title) + (round === 'tb' ? ' — nur für die Teams, die gleichauf liegen.' : ' — Summe vom Zettel eintragen, wird sofort gespeichert.') + '</p>'
-        + playing().map(function (t) {
+        + '<p class="sum">' + esc(cur.title) + (round === 'tb'
+          ? (tied().length ? ' — die Zahl vom Kärtchen eintragen, so wie sie draufsteht. Die Reihung rechnet das System.' : ' — derzeit kein Gleichstand am Podest, Stechfrage nicht nötig.')
+          : ' — Summe vom Zettel eintragen, wird sofort gespeichert.') + '</p>'
+        + (round === 'tb' ? tied() : playing()).map(function (t) {
           var v = (L.scores[t.id] || {})[round];
           var pm = round === 'tb' ? ['', ''] : ['<button class="pm" data-add="-10" data-id="' + esc(t.id) + '">−10</button>',
             '<button class="pm plus" data-add="10" data-id="' + esc(t.id) + '">+10</button>'];
