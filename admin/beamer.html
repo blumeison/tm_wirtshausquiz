@@ -193,7 +193,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261012-7';
+  var BUILD = '20261012-8';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -375,7 +375,7 @@
     ];
     var est = [];
     rs.forEach(function (r) { r.questions.forEach(function (q) { if (q.type === 'ESTIMATE') est.push(q.payload.scoring); }); });
-    if (est.length && est.every(function (x) { return x === 'TOLERANCE'; })) items.push(['🎯', 'Schätzfragen', 'Punkte für alle, die nah genug dran sind — wie nah, seht ihr bei der Auflösung.']);
+    if (est.length && est.every(function (x) { return x === 'TOLERANCE'; })) items.push(['🎯', 'Schätzfragen', 'Punkte für alle, die nah genug dran sind — wie nah, steht bei der Frage und auf eurem Antwortzettel.']);
     else if (est.length && est.every(function (x) { return x !== 'TOLERANCE'; })) items.push(['🎯', 'Schätzfragen', 'Die Punkte bekommt das Team, das am nächsten dran ist.']);
     if (D0.master) items.push(['👑', 'Zum Schluss: die Masterfrage', 'Die Hinweise sammeln sich über den ganzen Abend — achtet auf den roten Faden!']);
     items.push(['📵', 'Handy bleibt in der Tasche', 'Nicht googeln ist Ehrensache.']);
