@@ -14,12 +14,13 @@
      (A5 quer, zwei pro A4-Blatt zum Durchschneiden). Drucken oder „Als PDF
      speichern“ direkt aus dem Browser — die Seite rechnet immer mit dem
      aktuellen Stand aus dem Backoffice. */
-  @page { size: A4 portrait; margin: 0; }
+  /* Mit 16 mm Rand: passt auch, wenn der Browser (Firefox) eigene Druckränder setzt. */
+  @page { size: A4 portrait; margin: 16mm; }
   :root { --red: #e51324; --green: #2f8f2b; --ink: #3a332b; --soft: #7a7064; --line: #cfc6b8; --board: #f6f1e7; }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font: 400 11pt/1.4 Rubik, Arial, sans-serif; color: var(--ink); background: #8a8178; }
-  .sheet { width: 210mm; height: 297mm; background: #fff; margin: 8mm auto; overflow: hidden; position: relative; break-after: page; }
-  @media print { body { background: #fff; } .sheet { margin: 0; } .bar { display: none !important; } }
+  .sheet { width: 178mm; height: 264mm; background: #fff; margin: 8mm auto; overflow: hidden; position: relative; break-after: page; }
+  @media print { body { background: #fff; } .sheet { margin: 0; } .sheet:last-child { break-after: auto; } .bar { display: none !important; } }
 
   /* ---- Bedienleiste (nur am Bildschirm) ---- */
   .bar { position: sticky; top: 0; z-index: 9; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
@@ -62,7 +63,7 @@
 
   /* ---- Moderationskarten: A5 quer, zwei pro Blatt ---- */
   .sheet.k { display: grid; grid-template-rows: 1fr 1fr; }
-  .card { font-size: 12.5pt; height: 148.5mm; padding: 9mm 11mm; overflow: hidden; position: relative; display: flex; flex-direction: column; gap: 2.4mm; }
+  .card { font-size: 12.5pt; height: 132mm; padding: 9mm 11mm; overflow: hidden; position: relative; display: flex; flex-direction: column; gap: 2.4mm; }
   .card + .card { border-top: .3mm dashed #aaa; }
   .card__top { display: flex; justify-content: space-between; gap: 4mm; font: 600 8.5pt/1.2 Rubik, sans-serif;
                text-transform: uppercase; letter-spacing: .3mm; color: var(--soft); }
@@ -139,7 +140,7 @@
       + (MODE !== 'karten' ? '<label>Leere ' + (MODE === 'master' ? 'Masterkarten' : MODE === 'stech' ? 'Karten' : 'Zettel je Runde') + ' <input type="number" min="0" max="20" value="' + BLANKS + '" id="leer"></label>' : '')
       + '<a href="./#abend">← Abend</a>'
       + '<button class="print" type="button" onclick="print()">Drucken / als PDF speichern</button>'
-      + '<span class="info">' + esc(nSheets) + '. Im Druckdialog: A4, Ränder „Keine“ oder „Standard“, Hintergrundgrafiken an.</span>';
+      + '<span class="info">' + esc(nSheets) + '. Im Druckdialog: A4, Ränder „Standard“, Hintergrundgrafiken an.</span>';
     var l = document.getElementById('leer');
     if (l) l.onchange = function () { location.search = '?was=' + MODE + '&leer=' + l.value; };
   }
