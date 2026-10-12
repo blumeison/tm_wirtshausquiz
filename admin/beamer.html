@@ -193,7 +193,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261012-9';
+  var BUILD = '20261012-10';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -236,10 +236,11 @@
     s.push({ k: 'stand', upto: last, final: true });
     if (D.tiebreak) {
       // Auflösung erst nach der Pause: wer am nächsten dran war, bleibt bis zum Endstand spannend.
-      s.push({ k: 'q', label: 'Stechfrage', q: D.tiebreak, steps: 0 });
-      s.push({ k: 'pause', tb: true, min: 2 });
-      s.push({ k: 'a', label: 'Stechfrage', q: D.tiebreak });
-      s.push({ k: 'stand', upto: last, final: true, tb: true, steps: 1 });
+      // Nur bei Gleichstand am Podest: sonst überspringt „Weiter“ den ganzen Block (tbBlock).
+      s.push({ k: 'q', label: 'Stechfrage', q: D.tiebreak, steps: 0, tbBlock: true });
+      s.push({ k: 'pause', tb: true, min: 2, tbBlock: true });
+      s.push({ k: 'a', label: 'Stechfrage', q: D.tiebreak, tbBlock: true });
+      s.push({ k: 'stand', upto: last, final: true, tb: true, steps: 1, tbBlock: true });
     }
     s.push({ k: 'end' });
     return s;
@@ -660,7 +661,7 @@
     lastFwd = Date.now();
     if (Date.now() < typeEnd) { typeEnd = 0; ch.postMessage({ t: 'skip', ctrl: CTRL }); return; }
     if (step < stepsOf(deck[idx])) { step++; broadcast(false); draw(); return; }
-    if (idx < deck.length - 1) goto(idx + 1);
+    if (idx < deck.length - 1) goto(nextIdx());
   }
   // Millionenshow-„Kandidat kommt“ beim Rundenstart – startet nur per Knopf auf der Rundenfolie.
   // Ton kommt wie alle Clips aus dem Laptop (Steuerfenster).
@@ -672,8 +673,20 @@
   }
   function backward() {
     if (step > 0) { step--; broadcast(false); draw(); return; }
-    if (idx > 0) { idx--; step = stepsOf(deck[idx]); moved(); }
+    var p = idx - 1;
+    while (p > 0 && skipTb(p)) p--;
+    if (p >= 0) { idx = p; step = stepsOf(deck[idx]); moved(); }
   }
+  // Teams, die am Podest punktgleich liegen (nach allen Runden + Masterfrage) – null, solange die Punkte noch laden.
+  function tiedPodium() {
+    if (!LIVE) return null;
+    var rows = WQD.table(LIVE, D.rounds.length - 1 + (D.master ? 1 : 0)), tied = {};
+    rows.forEach(function (r) { if (r.rank <= 3 && rows.filter(function (o) { return o.rank === r.rank; }).length > 1) tied[r.id] = 1; });
+    return tied;
+  }
+  // Stechfrage-Block überspringen, wenn sicher kein Gleichstand am Podest ist. Über die Folienliste bleibt er erreichbar.
+  function skipTb(i) { var t; return !!(deck[i] && deck[i].tbBlock && (t = tiedPodium()) && !Object.keys(t).length); }
+  function nextIdx() { var n = idx + 1; while (n < deck.length - 1 && skipTb(n)) n++; return n; }
   function startTimer(min) { min = min || PAUSE_MIN; TIMER = { idx: idx, total: min * 60000, ends: Date.now() + min * 60000, left: 0, running: true }; }
   function timerCmd(c) {
     if (/^set:\d+$/.test(c)) { startTimer(Number(c.slice(4))); }
@@ -740,8 +753,7 @@
     var anyIn = Object.keys(LIVE.checkin).length > 0;
     var ts = LIVE.teams.filter(function (t) { return !anyIn || LIVE.checkin[t.id]; });
     if (ri === 'tb') {
-      var rows = WQD.table(LIVE, D.rounds.length - 1 + (D.master ? 1 : 0)), tied = {};
-      rows.forEach(function (r) { if (r.rank <= 3 && rows.filter(function (o) { return o.rank === r.rank; }).length > 1) tied[r.id] = 1; });
+      var tied = tiedPodium();
       ts = ts.filter(function (t) { return tied[t.id]; });
       if (!ts.length) return '<div class="mute">Kein Gleichstand am Podest – Stechfrage nicht nötig.</div>';
     }
@@ -829,12 +841,12 @@
   // Vorschau zeigt den Beamer-Zustand: Lauftext blinkt, bis er steht; Kronen-Banner grau, bis es da ist.
   // Unten nur eine Warnung, wenn der nächste Klick die Folie wechselt.
   function nextLabel() {
-    var sl = deck[idx], nx = deck[idx + 1], typing = Date.now() < typeEnd;
+    var sl = deck[idx], nx = deck[nextIdx()], typing = Date.now() < typeEnd;
     var pv = document.getElementById('prev-stage'), el = document.getElementById('next');
     pv.classList.toggle('typing', typing);
     pv.classList.toggle('crown-wait', Date.now() < crownAt);
     var jump = !typing && step >= stepsOf(sl);
-    var txt = jump ? (nx ? '⚠ Nächster Klick → ' + label(nx) : '— Ende —') : '';
+    var txt = jump ? (idx < deck.length - 1 ? '⚠ Nächster Klick → ' + label(nx) + (nx.k === 'end' && deck[idx + 1].tbBlock ? ' (kein Gleichstand am Podest – Stechfrage entfällt)' : '') : '— Ende —') : '';
     if (el.textContent !== txt) el.textContent = txt;
     el.classList.toggle('jump', jump);
   }
