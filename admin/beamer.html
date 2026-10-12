@@ -194,7 +194,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261012-4';
+  var BUILD = '20261012-5';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -657,6 +657,14 @@
     if (step < stepsOf(deck[idx])) { step++; broadcast(false); draw(); return; }
     if (idx < deck.length - 1) goto(idx + 1);
   }
+  // Millionenshow-„Kandidat kommt“ beim Rundenstart – startet nur per Knopf auf der Rundenfolie.
+  // Ton kommt wie alle Clips aus dem Laptop (Steuerfenster).
+  var JINGLE = null;
+  function jingle(cmd) {
+    if (!JINGLE) { JINGLE = new Audio('assets/runde.m4a'); JINGLE.preload = 'auto'; }
+    JINGLE.pause(); JINGLE.currentTime = 0;
+    if (cmd === 'play') JINGLE.play().catch(function () {});
+  }
   function backward() {
     if (step > 0) { step--; broadcast(false); draw(); return; }
     if (idx > 0) { idx--; step = stepsOf(deck[idx]); moved(); }
@@ -786,7 +794,9 @@
         + '</div>';
     }
     if (!sl.q) {
-      if (sl.k === 'round' || sl.k === 'solve') return '<div class="info"><div class="mute">' + sl.r.questions.length + ' Fragen</div>'
+      if (sl.k === 'round' || sl.k === 'solve') return '<div class="info">'
+        + (sl.k === 'round' ? '<div class="row"><button class="btn red" data-jingle="play">🎵 Jingle abspielen</button><button class="btn" data-jingle="stop">⏹ Jingle stopp</button></div>' : '')
+        + '<div class="mute">' + sl.r.questions.length + ' Fragen</div>'
         + sl.r.questions.map(function (q, i) { return '<div>' + (i + 1) + '. ' + esc(q.prompt.slice(0, 70)) + '… → <b>' + esc(q.answer) + '</b></div>'; }).join('') + '</div>';
       return '';
     }
@@ -844,6 +854,8 @@
       if (e.target.closest('[data-live]')) { fetchLive(); return; }
       var t = e.target.closest('[data-timer]');
       if (t) { timerCmd(t.getAttribute('data-timer')); return; }
+      var j = e.target.closest('[data-jingle]');
+      if (j) { jingle(j.getAttribute('data-jingle')); return; }
       var b = e.target.closest('[data-media]');
       if (!b) return;
       var m = deck[idx].q && deck[idx].q.media, cmd = b.getAttribute('data-media');
@@ -862,6 +874,7 @@
     };
     loadYT(function () { if (pendingMount && pendingMount === deck[idx]) mountAudio(pendingMount); });
     watchEnd(function () { return adapter(aPlayer, aEl); }, function () { var m = deck[idx].q && deck[idx].q.media; return m && !m.video ? m : null; });
+    jingle('stop'); // vorladen, damit er beim ersten Rundenstart sofort da ist
     draw(); broadcast(true);
     fetchLive();
     // Pause und Zwischenstand: alle 5 s frisch, sonst alle 30 s (hält auch die Anmeldung wach).
