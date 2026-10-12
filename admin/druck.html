@@ -257,7 +257,7 @@
     return '<article class="card sk"><div class="mk__head"><img src="../logo-mark.png" alt=""><div><small>Wirtshausquiz · Finale</small><b>⚖️ Stechfrage</b></div></div>'
       + '<div class="mk__team"><small>Team</small>' + (team ? '<b>' + esc(team) + '</b>' : '<i></i>') + '</div>'
       + '<div class="mk__lab">Euer Tipp</div><div class="sk__tip"></div>'
-      + '<p class="sk__foot">Wer am nächsten am richtigen Wert liegt, gewinnt. Nur eine Zahl, kein Bereich.</p></article>';
+      + '<p class="sk__foot">Nur die punktgleichen Teams schätzen und werden untereinander nach ihrem Tipp gereiht: je näher am richtigen Wert, desto besser der Platz. Nur eine Zahl, kein Bereich.</p></article>';
   }
   function stechSheets(D) {
     var teams = D.teams.concat(new Array(BLANKS).fill('')), html = '';
