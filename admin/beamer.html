@@ -101,6 +101,15 @@
   .s-rows li.p2 { background: rgba(246,239,226,.3); } .s-rows li.p3 { background: rgba(205,127,50,.5); }
   .fx .s-rows li[data-step] { opacity: 0; transform: translateY(2cqw) scale(.96); transition: opacity .5s, transform .6s cubic-bezier(.2,1.3,.4,1); }
   .fx .s-rows li[data-step].on { opacity: 1; transform: none; }
+  /* Stechfrage-Endstand */
+  .s-tbhead { text-align: center; font-size: 2cqw; margin: -1cqw 0 1.6cqw; opacity: .85; }
+  .s-tbhead.on { color: var(--yellow); opacity: 1; } .s-tbhead b { font-family: 'Patua One', serif; font-size: 2.6cqw; }
+  .s-rows li { transition: opacity .6s; }
+  .s-rows li.dim { opacity: .35; }
+  .s-rows li.tie { outline: .3cqw solid var(--yellow); outline-offset: .2cqw; }
+  .s-rows li em.tip { display: table; margin-top: .4cqw; font-style: normal; font-size: 1.5cqw; font-weight: 600; padding: .3cqw 1cqw; border-radius: 99px; background: rgba(0,0,0,.4); color: #fff; white-space: nowrap; }
+  .fx .s-rows li em.tip.pop { animation: pop .6s cubic-bezier(.2,1.4,.4,1) both; }
+  .fx .s-rows li.up { animation: okFlash 1.4s 1.5s both; }
   .fx .s-rows li.p1.on { animation: okFlash 1.4s .3s both; box-shadow: 0 0 4cqw rgba(255,204,0,.6); }
   .s-timer { position: relative; width: 26cqw; aspect-ratio: 1; }
   .s-timer svg { width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -193,7 +202,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261012-10';
+  var BUILD = '20261012-12';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -240,7 +249,7 @@
       s.push({ k: 'q', label: 'Stechfrage', q: D.tiebreak, steps: 0, tbBlock: true });
       s.push({ k: 'pause', tb: true, min: 2, tbBlock: true });
       s.push({ k: 'a', label: 'Stechfrage', q: D.tiebreak, tbBlock: true });
-      s.push({ k: 'stand', upto: last, final: true, tb: true, steps: 1, tbBlock: true });
+      s.push({ k: 'stand', upto: last, final: true, tb: true, steps: 2, tbBlock: true });
     }
     s.push({ k: 'end' });
     return s;
@@ -430,18 +439,33 @@
     return LIVE ? WQD.table(LIVE, sl.upto, tbv) : [];
   }
   function stepsOf(sl) { return sl.k === 'stand' && sl.final && !sl.tb ? standRows(sl).length : (sl.steps || 0); }
+  // Nach der Stechfrage in drei Schritten: Stand davor (Gleichauf-Teams markiert) → Klick: ihre Tipps
+  // samt Abstand zur Lösung → Klick: Plätze tauschen, wer aufgestiegen ist, leuchtet kurz auf.
+  function fmtN(n) { return String(Math.round(Number(n) * 100) / 100).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function tbStandHtml(sl, st) {
+    var tbv = D.tiebreak.payload.value, before = WQD.table(LIVE, sl.upto, null), after = WQD.table(LIVE, sl.upto, tbv);
+    var tied = tiedPodium() || {}, was = {};
+    before.forEach(function (r) { was[r.id] = r.rank; });
+    var rows = st >= 2 ? after : before;
+    var head = '<div class="s-tbhead' + (st >= 1 ? ' on' : '') + '">' + (st >= 1 ? 'Richtig: <b>' + esc(D.tiebreak.answer) + '</b> – wer näher dran ist, kommt nach vorne'
+      : 'Gleichauf am Podest – die Stechfrage entscheidet') + '</div>';
+    return top('Nach der Stechfrage') + '<div class="s-stand"><div class="s-big zoom red" style="font-size:5cqw;text-align:center">Endstand</div>' + head
+      + '<ol class="s-rows' + (rows.length > 7 ? ' two" style="grid-template-rows:repeat(' + Math.ceil(rows.length / 2) + ',auto)' : '') + '">' + rows.map(function (r) {
+        var tie = tied[r.id], up = st >= 2 && r.rank < was[r.id];
+        var tip = !tie ? '' : '<em class="tip' + (st === 1 ? ' pop' : '') + '">' + (st < 1 || r.guess == null ? 'Tipp ?'
+          : 'Tipp ' + fmtN(r.guess) + ' · ' + fmtN(Math.abs(r.guess - tbv)) + ' daneben') + '</em>';
+        return '<li data-id="' + esc(r.id) + '" class="p' + r.rank + (tie ? ' tie' : st === 1 ? ' dim' : '') + (up ? ' up' : '') + '"><b>' + r.rank + '</b><span>'
+          + esc(r.name) + tip + '</span><i>' + r.total + '</i></li>';
+      }).join('') + '</ol></div>';
+  }
   function standHtml(sl, st) {
-    // Nach der Stechfrage: zuerst der Stand davor, ein Klick ordnet nach dem Stechfrage-Tipp neu.
-    var tbv = sl.tb && (st || 0) >= 1 && D && D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null;
-    var rows = LIVE ? WQD.table(LIVE, sl.upto, tbv) : [];
+    if (sl.tb && LIVE && D && D.tiebreak && D.tiebreak.payload) return tbStandHtml(sl, st || 0);
+    var rows = LIVE ? WQD.table(LIVE, sl.upto, null) : [];
     var head = top(sl.tb ? 'Nach der Stechfrage' : sl.final ? 'Endstand' : 'Nach Runde ' + sl.r.n);
     var title = '<div class="s-big zoom' + (sl.final ? ' red' : '') + '" style="font-size:5cqw;text-align:center">' + (sl.final ? 'Endstand' : 'Zwischenstand') + '</div>';
     if (!rows.length) return head + '<div class="s-center">' + title + '<div class="s-sub">Punkte werden geladen …</div></div>';
     // Von hinten nach vorne aufdecken: der letzte Platz zuerst, Platz 1 zum Schluss.
     return head + '<div class="s-stand">' + title + '<ol class="s-rows' + (rows.length > 7 ? ' two" style="grid-template-rows:repeat(' + Math.ceil(rows.length / 2) + ',auto)' : '') + '">' + rows.map(function (r, i) {
-      if (sl.tb) {
-        return '<li data-id="' + esc(r.id) + '" class="p' + r.rank + '"><b>' + r.rank + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
-      }
       if (sl.final) {
         var n = rows.length - i; // letzter Platz = Klick 1, Sieger = letzter Klick
         return '<li data-step="' + n + '" class="p' + r.rank + (n <= (st || 0) ? ' on' : '') + '"><b>' + r.rank + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
@@ -535,6 +559,8 @@
     [].forEach.call(old.children, function (li) { var b = li.getBoundingClientRect(); first[li.getAttribute('data-id')] = [b.left, b.top]; });
     var tmp = document.createElement('div'); tmp.innerHTML = html;
     var neu = tmp.querySelector('.s-rows'); old.parentNode.replaceChild(neu, old);
+    var h = stage.querySelector('.s-tbhead'), nh = tmp.querySelector('.s-tbhead');
+    if (h && nh) h.parentNode.replaceChild(nh, h);
     [].forEach.call(neu.children, function (li) {
       var f = first[li.getAttribute('data-id')], b = li.getBoundingClientRect();
       if (!f) return;
