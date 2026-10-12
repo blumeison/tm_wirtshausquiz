@@ -26,12 +26,11 @@
   .stage::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: .7cqw; z-index: 3;
            background: linear-gradient(90deg, var(--red) 0 45%, var(--green) 45% 63%, var(--yellow) 63% 81%, #e6007e 81%); }
   .s-bg { position: absolute; inset: -4%; background: center / cover no-repeat; filter: blur(.28cqw) brightness(.68) saturate(1.2);
-          opacity: .8; transform: scale(1.08); animation: drift 40s ease-in-out infinite alternate; }
+          opacity: .8; transform: scale(1.08); }  /* bewusst ohne Bewegung – Drift macht das Bild unruhig */
   .s-shade { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(30,20,12,.3) 0%, rgba(20,13,8,.75) 100%); }
   .s-wrap { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; padding: 4cqw 5cqw; }
-  .fx .s-bg.unblur { animation: unblur 1.8s ease-out both, drift 40s ease-in-out infinite alternate; }
+  .fx .s-bg.unblur { animation: unblur 1.8s ease-out both; }
   @keyframes unblur { from { filter: blur(var(--b0)) brightness(var(--l0)); opacity: var(--o0); } to { filter: blur(var(--b1)) brightness(var(--l1)); opacity: var(--o1); } }
-  @keyframes drift { from { transform: scale(1.08) translate(0, 0); } to { transform: scale(1.18) translate(-2%, -1.5%); } }
 
   .s-top { display: flex; justify-content: space-between; align-items: center; font: 600 1.5cqw/1 Rubik, sans-serif;
            text-transform: uppercase; letter-spacing: .15cqw; opacity: .8; }
@@ -194,7 +193,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261012-6';
+  var BUILD = '20261012-7';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
