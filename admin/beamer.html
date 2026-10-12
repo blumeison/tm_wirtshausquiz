@@ -131,6 +131,10 @@
   .nofx * { animation: none !important; transition: none !important; }
   .nofx .s-opts:not(.all) div[data-step]:not(.on), .nofx .s-rows li[data-step]:not(.on) {
     opacity: .25; outline: .2cqw dashed rgba(246,239,226,.7); outline-offset: -.2cqw; }
+  #prev-stage.typing .s-prompt, #prev-stage.typing .s-hints li.new { animation: blink 1s steps(2, start) infinite !important; }
+  #prev-stage.crown-wait .s-crown { opacity: .25; outline: .2cqw dashed rgba(246,239,226,.7); }
+  @keyframes blink { to { visibility: hidden; } }
+  .next.jump { color: #ffcc00; font-weight: 600; }
   .skip .w { animation: none !important; opacity: 1 !important; }
 
   /* ---- Beamer-Fenster ---- */
@@ -188,7 +192,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261012-1';
+  var BUILD = '20261012-2';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -567,7 +571,7 @@
   // ---- Steuerung am Laptop --------------------------------------------------
   function broadcast(full) { ch.postMessage({ t: 'state', ctrl: CTRL, build: BUILD, idx: idx, step: step, D: full ? D : null, live: LIVE, timer: TIMER, pauseMin: PAUSE_MIN }); }
   // Läuft der Fließtext noch, zeigt der nächste Klick ihn sofort ganz.
-  var typeEnd = 0, qStart = 0, segStart = {};
+  var typeEnd = 0, qStart = 0, segStart = {}, crownAt = 0;
   // Zeitplan in Minuten: Erfahrungswerte, die Clips mit ihrer echten Länge.
   function clipMin(q) { var m = q.media; if (!m || m.kind === 'missing') return 0; return m.end ? (m.end - (m.start || 0)) / 60 : 2; }
   function planRound(r, pauseMin) {
@@ -610,6 +614,7 @@
   function moved() {
     try { localStorage.setItem('wq-beamer-idx', idx); } catch (e) {}
     typeEnd = Date.now() + typingMs(deck[idx]);
+    crownAt = deck[idx].k === 'a' && deck[idx].q.masterClue ? Date.now() + 2600 : 0; // Banner kommt am Beamer mit Verzögerung
     qStart = deck[idx].k === 'q' || deck[idx].k === 'mhint' ? Date.now() : 0;
     // Pause-Folie: Timer startet beim Hinkommen von selbst (einmal je Pause).
     if (deck[idx].k === 'pause' && (!TIMER || TIMER.idx !== idx)) startTimer(deck[idx].min);
@@ -771,13 +776,17 @@
     tick();
   }
   // „Als Nächstes“: sagt genau, was der nächste Klick tut – auch wenn man den Beamer nicht sieht.
+  // Vorschau zeigt den Beamer-Zustand: Lauftext blinkt, bis er steht; Kronen-Banner grau, bis es da ist.
+  // Unten nur eine Warnung, wenn der nächste Klick die Folie wechselt.
   function nextLabel() {
-    var sl = deck[idx], nx = deck[idx + 1], ns = stepsOf(sl), el = document.getElementById('next');
-    var txt = Date.now() < typeEnd ? '⌨ Fragetext läuft noch am Beamer – nächster Klick zeigt ihn sofort ganz'
-      : step < ns ? (sl.k === 'stand' ? 'Nächster Klick: Platz ' + (ns - step) + ' aufdecken'
-        : 'Nächster Klick: Antwort ' + 'ABCDEFGH'[step] + ' einblenden (' + step + ' von ' + ns + ' sichtbar)')
-      : nx ? 'Nächster Klick: ' + label(nx) : '— Ende —';
+    var sl = deck[idx], nx = deck[idx + 1], typing = Date.now() < typeEnd;
+    var pv = document.getElementById('prev-stage'), el = document.getElementById('next');
+    pv.classList.toggle('typing', typing);
+    pv.classList.toggle('crown-wait', Date.now() < crownAt);
+    var jump = !typing && step >= stepsOf(sl);
+    var txt = jump ? (nx ? '⚠ Nächster Klick → ' + label(nx) : '— Ende —') : '';
     if (el.textContent !== txt) el.textContent = txt;
+    el.classList.toggle('jump', jump);
   }
   function control() {
     root.innerHTML = '<div class="ctl"><div class="warn" id="stale" hidden style="grid-column:1/-1;font-size:16px">⚠ Es ist ein neueres Steuerfenster offen – dieses hier steuert den Beamer nicht mehr. Bitte dieses Fenster schließen.</div>'
@@ -789,7 +798,7 @@
       + '<button class="btn" id="open">📽 Beamer-Fenster öffnen</button><a class="btn" href="./#abend">Backoffice</a>'
       + '<span class="hint">Pfeiltasten, Leertaste oder Präsenter-Klicker blättern.</span></div>'
       + '<div class="col"><h3>Jetzt am Beamer</h3><div class="stage nofx" id="prev-stage"></div>'
-      + '<h3>Als Nächstes</h3><div class="next" id="next"></div></div>'
+      + '<div class="next" id="next" style="margin-top:8px"></div></div>'
       + '<div class="col"><h3>Für dich</h3><div id="info"></div></div></div>';
     document.getElementById('back').onclick = backward;
     var rb = document.getElementById('resume');
