@@ -101,8 +101,25 @@
   .s-rows li.p2 { background: rgba(246,239,226,.3); } .s-rows li.p3 { background: rgba(205,127,50,.5); }
   .fx .s-rows li[data-step] { opacity: 0; transform: translateY(2cqw) scale(.96); transition: opacity .5s, transform .6s cubic-bezier(.2,1.3,.4,1); }
   .fx .s-rows li[data-step].on { opacity: 1; transform: none; }
+  .s-rows li.ak { opacity: .6; font-style: italic; } .s-rows li.ak b { font-size: 1.6cqw; }
+  /* Podest */
+  .s-podium { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2cqw; }
+  .pods { display: flex; align-items: flex-end; justify-content: center; gap: 1.5cqw; }
+  .pod { width: 24cqw; display: flex; flex-direction: column; align-items: center; gap: 1cqw; }
+  .pod__name { font: 400 2.6cqw/1.15 'Patua One', serif; text-align: center; min-height: 3cqw; }
+  .pod__block { width: 100%; display: grid; place-items: center; border-radius: 1cqw 1cqw 0 0; background: rgba(246,239,226,.3); }
+  .pod__block b { font: 400 6cqw/1 'Patua One', serif; }
+  .pod.p1 .pod__block { height: 17cqw; background: var(--yellow); color: #3a2a00; }
+  .pod.p2 .pod__block { height: 12cqw; }
+  .pod.p3 .pod__block { height: 8cqw; background: rgba(205,127,50,.65); }
+  .pod.p1 .pod__name { font-size: 3.4cqw; color: var(--yellow); }
+  .pod__ak { text-align: center; font-size: 1.7cqw; opacity: .7; }
+  .fx .pod[data-step] { opacity: 0; transform: translateY(6cqw); transition: opacity .6s, transform .9s cubic-bezier(.2,1.3,.4,1); }
+  .fx .pod[data-step].on { opacity: 1; transform: none; }
+  .fx .pod.p1.on .pod__block { animation: okFlash 1.4s .5s both; box-shadow: 0 0 5cqw rgba(255,204,0,.6); }
+  .nofx .pod[data-step]:not(.on) { opacity: .25; }
   /* Stechfrage-Endstand */
-  .s-tbhead { text-align: center; font-size: 2cqw; margin: -1cqw 0 1.6cqw; opacity: .85; }
+  .s-tbhead { text-align: center; font-size: 2.4cqw; margin: 0 0 1.6cqw; opacity: .85; }
   .s-tbhead.on { color: var(--yellow); opacity: 1; } .s-tbhead b { font-family: 'Patua One', serif; font-size: 2.6cqw; }
   .s-rows li { transition: opacity .6s; }
   .s-rows li.dim { opacity: .35; }
@@ -195,14 +212,14 @@
 <body>
 <div id="root"><p style="padding:2rem">Lädt …</p></div>
 
-<script src="assets/quiz-data.js?v=7"></script>
+<script src="assets/quiz-data.js?v=8"></script>
 <script>
 (function () {
   'use strict';
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261012-12';
+  var BUILD = '20261013-1';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -252,6 +269,7 @@
       s.push({ k: 'stand', upto: last, final: true, tb: true, steps: 2, tbBlock: true });
     }
     s.push({ k: 'end' });
+    s.push({ k: 'podium', upto: last });
     return s;
   }
   function label(sl) {
@@ -269,6 +287,7 @@
       case 'solve': return 'R' + sl.r.n + ' · Auflösung';
       case 'stand': return sl.tb ? 'Endstand nach Stechfrage' : sl.final ? 'Endstand' : 'Zwischenstand nach Runde ' + sl.r.n;
       case 'a': return (sl.label ? sl.label + ' · Antwort' : 'R' + sl.r.n + ' · Antwort ' + (sl.i + 1)) + ' — ' + sl.q.answer;
+      case 'podium': return 'Siegerehrung: Podest';
       default: return 'Schluss';
     }
   }
@@ -334,6 +353,7 @@
       case 'solve':
         return top('') + '<div class="s-center"><div class="s-sub rise">Runde ' + sl.r.n + '</div><div class="s-big red zoom">Auflösung</div></div>';
       case 'stand': return standHtml(sl, st);
+      case 'podium': return podiumHtml(sl, st);
       case 'teams': return teamsHtml();
       case 'rules': return rulesHtml(D0);
       case 'prizes': return prizesHtml(D0);
@@ -438,25 +458,50 @@
     var tbv = sl.tb && D && D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null;
     return LIVE ? WQD.table(LIVE, sl.upto, tbv) : [];
   }
-  function stepsOf(sl) { return sl.k === 'stand' && sl.final && !sl.tb ? standRows(sl).length : (sl.steps || 0); }
-  // Nach der Stechfrage in drei Schritten: Stand davor (Gleichauf-Teams markiert) → Klick: ihre Tipps
-  // samt Abstand zur Lösung → Klick: Plätze tauschen, wer aufgestiegen ist, leuchtet kurz auf.
+  function stepsOf(sl) {
+    if (sl.k === 'stand' && sl.tb) return LIVE && D && D.tiebreak ? tbOrder(sl).length + 1 : 1;
+    if (sl.k === 'podium') return 3;
+    return sl.k === 'stand' && sl.final ? standRows(sl).length : (sl.steps || 0);
+  }
+  // Nach der Stechfrage, Klick für Klick: Stand davor (Gleichauf-Teams markiert) → je Klick der Tipp eines
+  // Gleichauf-Teams, vom weitesten zum nächsten (Spannung bis zum Schluss) → letzter Klick: Plätze tauschen.
   function fmtN(n) { return String(Math.round(Number(n) * 100) / 100).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  function tbOrder(sl) {
+    var tied = tiedPodium() || {};
+    return WQD.table(LIVE, sl.upto, D.tiebreak.payload.value).filter(function (r) { return tied[r.id]; })
+      .sort(function (a, b) { return a.tb === b.tb ? 0 : a.tb < b.tb ? 1 : -1; }); // ohne Tipp (∞) zuerst
+  }
   function tbStandHtml(sl, st) {
     var tbv = D.tiebreak.payload.value, before = WQD.table(LIVE, sl.upto, null), after = WQD.table(LIVE, sl.upto, tbv);
-    var tied = tiedPodium() || {}, was = {};
+    var order = tbOrder(sl), k = order.length, shown = {}, was = {};
+    order.forEach(function (r, i) { if (i < st) shown[r.id] = i + 1; });
     before.forEach(function (r) { was[r.id] = r.rank; });
-    var rows = st >= 2 ? after : before;
+    var rows = st > k ? after : before, reveal = st >= 1 && st <= k;
     var head = '<div class="s-tbhead' + (st >= 1 ? ' on' : '') + '">' + (st >= 1 ? 'Richtig: <b>' + esc(D.tiebreak.answer) + '</b> – wer näher dran ist, kommt nach vorne'
       : 'Gleichauf am Podest – die Stechfrage entscheidet') + '</div>';
-    return top('Nach der Stechfrage') + '<div class="s-stand"><div class="s-big zoom red" style="font-size:5cqw;text-align:center">Endstand</div>' + head
+    // Ohne große Überschrift: die Gleichauf-Zeilen sind mit Tipp höher, sonst ragt die Liste aus dem Bild.
+    return top('Endstand nach der Stechfrage') + '<div class="s-stand">' + head
       + '<ol class="s-rows' + (rows.length > 7 ? ' two" style="grid-template-rows:repeat(' + Math.ceil(rows.length / 2) + ',auto)' : '') + '">' + rows.map(function (r) {
-        var tie = tied[r.id], up = st >= 2 && r.rank < was[r.id];
-        var tip = !tie ? '' : '<em class="tip' + (st === 1 ? ' pop' : '') + '">' + (st < 1 || r.guess == null ? 'Tipp ?'
+        var tie = order.some(function (o) { return o.id === r.id; }), up = st > k && r.rank != null && was[r.id] != null && r.rank < was[r.id];
+        var tip = !tie ? '' : '<em class="tip' + (shown[r.id] === st && reveal ? ' pop' : '') + '">' + (!shown[r.id] ? 'Tipp ?' : r.guess == null ? 'kein Tipp'
           : 'Tipp ' + fmtN(r.guess) + ' · ' + fmtN(Math.abs(r.guess - tbv)) + ' daneben') + '</em>';
-        return '<li data-id="' + esc(r.id) + '" class="p' + r.rank + (tie ? ' tie' : st === 1 ? ' dim' : '') + (up ? ' up' : '') + '"><b>' + r.rank + '</b><span>'
+        return '<li data-id="' + esc(r.id) + '" class="p' + r.rank + (r.ak ? ' ak' : '') + (tie ? ' tie' : reveal ? ' dim' : '') + (up ? ' up' : '') + '"><b>' + WQD.rankLabel(r) + '</b><span>'
           + esc(r.name) + tip + '</span><i>' + r.total + '</i></li>';
       }).join('') + '</ol></div>';
+  }
+  // Siegerehrung: Podest, Klick für Klick 3. → 2. → 1. Bleibt stehen, solange geehrt wird.
+  function podiumHtml(sl, st) {
+    var tbv = D && D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null;
+    var rows = LIVE ? WQD.table(LIVE, sl.upto, tbv) : [];
+    function col(rank, step) {
+      var n = rows.filter(function (r) { return r.rank === rank; });
+      return '<div class="pod p' + rank + (step <= st ? ' on' : '') + '" data-step="' + step + '"><div class="pod__name">'
+        + (n.length ? n.map(function (r) { return esc(r.name); }).join('<br>') : '–') + '</div><div class="pod__block"><b>' + rank + '</b></div></div>';
+    }
+    var ak = rows.filter(function (r) { return r.ak; }).map(function (r) { return esc(r.name); });
+    return top('Siegerehrung') + '<div class="s-podium"><div class="s-big zoom red" style="font-size:5cqw;text-align:center">Unsere Sieger</div>'
+      + '<div class="pods">' + col(2, 2) + col(1, 3) + col(3, 1) + '</div>'
+      + (ak.length ? '<div class="pod__ak">Außer Konkurrenz: ' + ak.join(', ') + '</div>' : '') + '</div>';
   }
   function standHtml(sl, st) {
     if (sl.tb && LIVE && D && D.tiebreak && D.tiebreak.payload) return tbStandHtml(sl, st || 0);
@@ -468,9 +513,9 @@
     return head + '<div class="s-stand">' + title + '<ol class="s-rows' + (rows.length > 7 ? ' two" style="grid-template-rows:repeat(' + Math.ceil(rows.length / 2) + ',auto)' : '') + '">' + rows.map(function (r, i) {
       if (sl.final) {
         var n = rows.length - i; // letzter Platz = Klick 1, Sieger = letzter Klick
-        return '<li data-step="' + n + '" class="p' + r.rank + (n <= (st || 0) ? ' on' : '') + '"><b>' + r.rank + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
+        return '<li data-step="' + n + '" class="p' + r.rank + (r.ak ? ' ak' : '') + (n <= (st || 0) ? ' on' : '') + '"><b>' + WQD.rankLabel(r) + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
       }
-      return '<li class="rise p' + r.rank + '" style="--d:' + (0.6 + (rows.length - 1 - i) * 0.45).toFixed(2) + 's"><b>' + r.rank + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
+      return '<li class="rise p' + r.rank + (r.ak ? ' ak' : '') + '" style="--d:' + (0.6 + (rows.length - 1 - i) * 0.45).toFixed(2) + 's"><b>' + WQD.rankLabel(r) + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
     }).join('') + '</ol></div>';
   }
 
@@ -706,9 +751,7 @@
   // Teams, die am Podest punktgleich liegen (nach allen Runden + Masterfrage) – null, solange die Punkte noch laden.
   function tiedPodium() {
     if (!LIVE) return null;
-    var rows = WQD.table(LIVE, D.rounds.length - 1 + (D.master ? 1 : 0)), tied = {};
-    rows.forEach(function (r) { if (r.rank <= 3 && rows.filter(function (o) { return o.rank === r.rank; }).length > 1) tied[r.id] = 1; });
-    return tied;
+    return WQD.tiedPodium(WQD.table(LIVE, D.rounds.length - 1 + (D.master ? 1 : 0)));
   }
   // Stechfrage-Block überspringen, wenn sicher kein Gleichstand am Podest ist. Über die Folienliste bleibt er erreichbar.
   function skipTb(i) { var t; return !!(deck[i] && deck[i].tbBlock && (t = tiedPodium()) && !Object.keys(t).length); }
@@ -727,7 +770,7 @@
     }
     broadcast(false); drawnIdx = -1; draw(); tick();
   }
-  function needsLive(sl) { return sl.k === 'stand' || sl.k === 'teams'; }
+  function needsLive(sl) { return sl.k === 'stand' || sl.k === 'teams' || sl.k === 'podium'; }
   // Holt die Punkte und hält nebenbei die Backoffice-Anmeldung wach (alle 30 s).
   var liveErr = '';
   function fetchLive() {
@@ -834,7 +877,7 @@
           return miss.length ? '<div class="warn">⚠ ' + (sl.final ? 'Es fehlen noch Punkte von' : 'Runde ' + (sl.upto + 1) + ' fehlt noch bei')
             + ': ' + esc(miss.join(', ')) + '</div>' : '<div class="mute">✓ Alle Teams eingetragen</div>';
         })()
-        + rows.map(function (r) { return '<div>' + r.rank + '. ' + esc(r.name) + ' — <b>' + r.total + '</b></div>'; }).join('')
+        + rows.map(function (r) { return '<div>' + WQD.rankLabel(r) + (r.rank == null ? ' ' : '. ') + esc(r.name) + ' — <b>' + r.total + '</b></div>'; }).join('')
         + '</div>';
     }
     if (!sl.q) {
@@ -926,7 +969,7 @@
     setInterval(function () {
       ticks++;
       var k = deck[idx].k;
-      if (k === 'pause' || k === 'stand' || ticks % 6 === 0) fetchLive();
+      if (k === 'pause' || k === 'stand' || k === 'podium' || ticks % 6 === 0) fetchLive();
     }, 5000);
     // Rundenuhr: wie lange läuft die Runde schon, wie viel ist eingeplant, wann ist ungefähr Schluss?
     setInterval(drawClock, 1000); drawClock();

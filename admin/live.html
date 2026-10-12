@@ -26,6 +26,8 @@
   .row small { display: block; font-weight: 400; color: var(--soft); font-size: 13px; }
   .chk { min-width: 108px; min-height: 44px; border-radius: 99px; border: 2px solid var(--green); background: #fff; color: var(--green); font: 600 15px Rubik, sans-serif; cursor: pointer; }
   .chk.on { background: var(--green); color: #fff; }
+  .ak { min-width: 52px; min-height: 44px; border-radius: 99px; border: 2px solid var(--line); background: #fff; color: var(--soft); font: 600 14px Rubik, sans-serif; cursor: pointer; }
+  .ak.on { border-color: var(--ink); background: var(--ink); color: #fff; }
   .rounds { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
   .rounds button { flex: 1; min-width: 70px; padding: 9px 6px; border-radius: 10px; border: 2px solid var(--line); background: #fff; font: 600 15px Rubik, sans-serif; cursor: pointer; }
   .rounds button.on { border-color: var(--red); color: var(--red); }
@@ -53,7 +55,7 @@
   <nav><a href="#checkin">Check-in</a><a href="#punkte">Punkte</a><a href="#stand">Stand</a></nav></header>
 <main id="main"><p>Lädt …</p></main>
 
-<script src="assets/quiz-data.js?v=7"></script>
+<script src="assets/quiz-data.js?v=8"></script>
 <script>
 (function () {
   'use strict';
@@ -79,11 +81,8 @@
   }
   // Am Podest punktgleiche Teams – nur die brauchen einen Stechfrage-Tipp.
   function tied() {
-    var rows = WQD.table(L, lastScore());
-    return playing().filter(function (t) {
-      var r = rows.filter(function (x) { return x.id === t.id; })[0];
-      return r && r.rank <= 3 && rows.filter(function (o) { return o.rank === r.rank; }).length > 1;
-    });
+    var t = WQD.tiedPodium(WQD.table(L, lastScore()));
+    return playing().filter(function (x) { return t[x.id]; });
   }
   function lastScore() { return D.rounds.length - 1 + (D.master ? 1 : 0); }
   function tbValue() { return D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null; }
@@ -96,9 +95,14 @@
       html += '<p class="sum">' + n + ' von ' + L.teams.length + ' Teams da</p>'
         + L.teams.map(function (t) {
           var on = !!L.checkin[t.id];
-          return '<div class="row"><span class="name">' + esc(t.name) + (t.slot === 'WAITLIST' ? '<small>Warteliste</small>' : '') + '</span>'
+          var ak = !!(L.ak || {})[t.id];
+          return '<div class="row"><span class="name">' + esc(t.name) + (t.slot === 'WAITLIST' ? '<small>Warteliste</small>' : '')
+            + (ak ? '<small>spielt außer Konkurrenz – kein Platz, kein Preis</small>' : '') + '</span>'
+            + '<button class="ak' + (ak ? ' on' : '') + '" data-ak="' + esc(t.id) + '" title="Außer Konkurrenz: Punkte zählen, aber kein Platz und kein Preis">a.K.</button>'
             + '<button class="chk' + (on ? ' on' : '') + '" data-in="' + esc(t.id) + '">' + (on ? '✓ Da' : 'Check-in') + '</button></div>';
         }).join('')
+        + '<p class="hint"><b>a.K.</b> = außer Konkurrenz (z. B. wir als Veranstalter): Das Team spielt mit und sieht seine Punkte, bekommt aber keinen Platz – '
+        + 'alle anderen rücken auf, Stechfrage und Podest gelten nur unter den übrigen.</p>'
         + '<p class="hint">Wer nicht eingecheckt ist, taucht bei Punkten und Stand nicht auf — sobald mindestens ein Team eingecheckt ist. '
         + 'Spontanes Team? <a href="./#anmeldungen">Unter Anmeldungen „+ Team eintragen“</a>, dann hier neu laden.</p>';
     } else if (view() === 'punkte') {
@@ -122,7 +126,7 @@
       var rows = WQD.table(L, lastScore(), tbValue()), anyTb = rows.some(function (r) { return r.guess != null; });
       html += '<table><thead><tr><th>#</th><th>Team</th>' + D.rounds.map(function (r, i) { return '<th>R' + (i + 1) + '</th>'; }).join('')
         + (D.master ? '<th>M</th>' : '') + '<th>Σ</th>' + (anyTb ? '<th>Tipp</th>' : '') + '</tr></thead><tbody>' + rows.map(function (r) {
-          return '<tr><td>' + r.rank + '.</td><td>' + esc(r.name) + '</td>'
+          return '<tr><td>' + WQD.rankLabel(r) + (r.rank == null ? '' : '.') + '</td><td>' + esc(r.name) + '</td>'
             + r.per.map(function (v) { return '<td>' + (v == null ? '–' : v) + '</td>'; }).join('')
             + '<td class="tot">' + r.total + '</td>' + (anyTb ? '<td>' + (r.guess == null ? '' : r.guess) + '</td>' : '') + '</tr>';
         }).join('') + '</tbody></table>'
@@ -149,6 +153,8 @@
   main.addEventListener('click', function (e) {
     var b = e.target.closest('[data-in]');
     if (b) { post({ action: 'checkin', id: b.getAttribute('data-in'), on: !b.classList.contains('on') }).then(render, function () {}); return; }
+    var k = e.target.closest('[data-ak]');
+    if (k) { post({ action: 'ak', id: k.getAttribute('data-ak'), on: !k.classList.contains('on') }).then(render, function () {}); return; }
     var r = e.target.closest('[data-round]');
     if (r) { round = r.getAttribute('data-round'); round = round === 'tb' ? 'tb' : Number(round); try { localStorage.setItem('wq-live-round', round); } catch (x) {} render(); }
   });

@@ -96,14 +96,27 @@
       var s = (live.scores || {})[t.id] || {}, per = [], total = 0;
       for (var r = 0; r <= upto; r++) { var v = s[r]; per.push(v == null ? null : v); total += v || 0; }
       var tb = tbValue == null || s.tb == null ? Infinity : Math.abs(s.tb - tbValue);
-      return { id: t.id, name: t.name, promo: !!t.promo, per: per, total: Math.round(total * 10) / 10, tb: tb, guess: s.tb };
+      return { id: t.id, name: t.name, promo: !!t.promo, ak: !!(live.ak || {})[t.id], per: per, total: Math.round(total * 10) / 10, tb: tb, guess: s.tb };
     });
     rows.sort(function (a, b) { return b.total - a.total || a.tb - b.tb || a.name.localeCompare(b.name, 'de'); });
-    rows.forEach(function (r, i) {
-      var p = rows[i - 1];
-      r.rank = p && p.total === r.total && p.tb === r.tb ? p.rank : i + 1;
+    // Teams außer Konkurrenz bleiben in der Liste, bekommen aber keinen Platz – die anderen rücken auf.
+    var n = 0, p = null;
+    rows.forEach(function (r) {
+      if (r.ak) { r.rank = null; return; }
+      n++;
+      r.rank = p && p.total === r.total && p.tb === r.tb ? p.rank : n;
+      p = r;
     });
     return rows;
+  }
+  function rankLabel(r) { return r.rank == null ? 'a.K.' : r.rank; }
+  /** Teams, die sich einen Podestplatz teilen (ohne Stechfrage gerechnet): { id: 1 }. */
+  function tiedPodium(rows) {
+    var tied = {};
+    rows.forEach(function (r) {
+      if (r.rank != null && r.rank <= 3 && rows.filter(function (o) { return o.rank === r.rank; }).length > 1) tied[r.id] = 1;
+    });
+    return tied;
   }
 
   /**
@@ -127,5 +140,5 @@
     return p.scoring === 'TOLERANCE' ? 'Punkte bei ± ' + (p.tolerancePercent || 10) + ' %' : 'Wer am nächsten dran ist, gewinnt';
   }
 
-  window.WQD = { estimateRule: estimateRule, estimateShort: estimateShort, load: load, api: api, table: table, TYPE: TYPE, esc: esc, fail: fail, youtubeId: youtubeId };
+  window.WQD = { rankLabel: rankLabel, tiedPodium: tiedPodium, estimateRule: estimateRule, estimateShort: estimateShort, load: load, api: api, table: table, TYPE: TYPE, esc: esc, fail: fail, youtubeId: youtubeId };
 })();

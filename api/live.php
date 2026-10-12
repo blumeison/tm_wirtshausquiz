@@ -2,10 +2,12 @@
 /**
  * The evening itself: who showed up, and the round scores.
  * One document per quiz night in data/live/<session_id>.json:
- *   {"checkin": {"<regId>": true}, "scores": {"<regId>": {"<roundIndex>": 8.5}}}
+ *   {"checkin": {"<regId>": true}, "ak": {"<regId>": true}, "scores": {"<regId>": {"<roundIndex>": 8.5}}}
+ *   ak = spielt außer Konkurrenz (z. B. die Veranstalter): Punkte zählen, aber kein Platz/Preis.
  *
  *   GET -> teams (active registrations, signup order) + checkin + scores
  *   POST {action:"checkin", id, on}
+ *   POST {action:"ak", id, on}
  *   POST {action:"score", id, round, pts}   pts null/"" clears the cell;
  *        round "tb" = the team's guess for the tie-break estimate, not points
  *
@@ -33,7 +35,7 @@ function live_read_doc($raw)
     if (!is_array($doc)) {
         $doc = [];
     }
-    foreach (['checkin', 'scores'] as $k) {
+    foreach (['checkin', 'ak', 'scores'] as $k) {
         if (!isset($doc[$k]) || !is_array($doc[$k])) {
             $doc[$k] = [];
         }
@@ -43,7 +45,7 @@ function live_read_doc($raw)
 
 function live_out($doc, $teams)
 {
-    ok(['teams' => $teams, 'checkin' => (object)$doc['checkin'], 'scores' => (object)array_map(function ($s) {
+    ok(['teams' => $teams, 'checkin' => (object)$doc['checkin'], 'ak' => (object)$doc['ak'], 'scores' => (object)array_map(function ($s) {
         return (object)$s;
     }, $doc['scores'])]);
 }
@@ -69,7 +71,7 @@ if ($action === 'score') {
     if ($pts !== null && $pts !== '' && (!is_numeric($pts) || $pts < $lo || $pts > $hi)) {
         fail(422, 'Bitte eine Zahl' . ($round === 'tb' ? '.' : ' zwischen 0 und 1000.'));
     }
-} elseif ($action !== 'checkin') {
+} elseif ($action !== 'checkin' && $action !== 'ak') {
     fail(400, 'Unbekannte Aktion');
 }
 
@@ -78,11 +80,11 @@ if ($fh === false || !flock($fh, LOCK_EX)) {
     fail(500, 'Speicher belegt, bitte nochmal');
 }
 $doc = live_read_doc(stream_get_contents($fh));
-if ($action === 'checkin') {
+if ($action === 'checkin' || $action === 'ak') {
     if (!empty($in['on'])) {
-        $doc['checkin'][$id] = true;
+        $doc[$action][$id] = true;
     } else {
-        unset($doc['checkin'][$id]);
+        unset($doc[$action][$id]);
     }
 } else {
     $key = (string)$round;
