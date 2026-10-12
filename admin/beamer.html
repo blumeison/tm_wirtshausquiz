@@ -129,6 +129,8 @@
   @keyframes okFlash { 0% { box-shadow: 0 0 0 0 rgba(58,170,53,.9); transform: scale(1); } 40% { transform: scale(1.06); } 100% { box-shadow: 0 0 0 2.5cqw rgba(58,170,53,0); transform: scale(1); } }
   @keyframes pulse { 50% { transform: scale(1.08); } }
   .nofx * { animation: none !important; transition: none !important; }
+  .nofx .s-opts:not(.all) div[data-step]:not(.on), .nofx .s-rows li[data-step]:not(.on) {
+    opacity: .25; outline: .2cqw dashed rgba(246,239,226,.7); outline-offset: -.2cqw; }
   .skip .w { animation: none !important; opacity: 1 !important; }
 
   /* ---- Beamer-Fenster ---- */
@@ -186,7 +188,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261009-1';
+  var BUILD = '20261012-1';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -615,7 +617,10 @@
     if (needsLive(deck[idx])) fetchLive();
   }
   function goto(n) { idx = Math.max(0, Math.min(deck.length - 1, n)); step = 0; moved(); }
+  var lastFwd = 0;
   function forward() {
+    if (Date.now() - lastFwd < 300) return; // Doppelklick / prellender Klicker zählt einmal
+    lastFwd = Date.now();
     if (Date.now() < typeEnd) { typeEnd = 0; ch.postMessage({ t: 'skip', ctrl: CTRL }); return; }
     if (step < stepsOf(deck[idx])) { step++; broadcast(false); draw(); return; }
     if (idx < deck.length - 1) goto(idx + 1);
@@ -761,12 +766,18 @@
     document.getElementById('pos').textContent = (idx + 1) + ' / ' + deck.length;
     document.getElementById('jump').value = idx;
     document.getElementById('prev-stage').innerHTML = render(sl, true, step);
-    var ns = stepsOf(sl);
-    document.getElementById('next').textContent = step < ns
-      ? (sl.k === 'stand' ? 'Nächster Klick: Platz ' + (ns - step) + ' aufdecken' : 'Nächster Klick: Antwort ' + 'ABCDEFGH'[step] + ' einblenden')
-      : nx ? label(nx) : '— Ende —';
+    nextLabel();
     if (drawnIdx !== idx) { document.getElementById('info').innerHTML = infoHtml(sl); drawnIdx = idx; mountAudio(sl); }
     tick();
+  }
+  // „Als Nächstes“: sagt genau, was der nächste Klick tut – auch wenn man den Beamer nicht sieht.
+  function nextLabel() {
+    var sl = deck[idx], nx = deck[idx + 1], ns = stepsOf(sl), el = document.getElementById('next');
+    var txt = Date.now() < typeEnd ? '⌨ Fragetext läuft noch am Beamer – nächster Klick zeigt ihn sofort ganz'
+      : step < ns ? (sl.k === 'stand' ? 'Nächster Klick: Platz ' + (ns - step) + ' aufdecken'
+        : 'Nächster Klick: Antwort ' + 'ABCDEFGH'[step] + ' einblenden (' + step + ' von ' + ns + ' sichtbar)')
+      : nx ? 'Nächster Klick: ' + label(nx) : '— Ende —';
+    if (el.textContent !== txt) el.textContent = txt;
   }
   function control() {
     root.innerHTML = '<div class="ctl"><div class="warn" id="stale" hidden style="grid-column:1/-1;font-size:16px">⚠ Es ist ein neueres Steuerfenster offen – dieses hier steuert den Beamer nicht mehr. Bitte dieses Fenster schließen.</div>'
@@ -827,6 +838,7 @@
       sw.hidden = false; sw.textContent = '⏱ ' + Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2);
       sw.className = 'sw' + (s >= 90 ? ' hot' : s >= 60 ? ' warm' : '');
     }, 500);
+    setInterval(nextLabel, 250);
   }
 
   if (SCREEN) { screen(); return; }
