@@ -175,7 +175,9 @@
   .cl li b { margin-left: auto; color: #7fd47a; }
   .sw { font: 600 18px Rubik, sans-serif; padding: 6px 12px; border-radius: 99px; background: #2b2520; min-width: 86px; text-align: center; }
   .sw.warm { background: #6b5200; } .sw.hot { background: #8a1a1a; }
-  .rt { font: 500 14px Rubik, sans-serif; padding: 6px 12px; border-radius: 99px; background: #2b2520; }
+  .rt { font: 500 14px Rubik, sans-serif; padding: 6px 12px; border-radius: 99px; background: #2b2520;
+        font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 330px; text-align: center; }
+  .sw, .pos { font-variant-numeric: tabular-nums; }
   .rt.late { background: #6b5200; }
   .check { background: #5a4a10; border-radius: 8px; padding: 8px 12px; font-size: 14px; }
   a { color: var(--yellow); }
@@ -192,7 +194,7 @@
   var esc = WQD.esc, TYPE = WQD.TYPE;
   var SCREEN = location.hash === '#screen';
   // Beim Deploy hochzählen: ein noch offenes Beamer-Fenster mit altem Code lädt sich dann selbst neu.
-  var BUILD = '20261012-2';
+  var BUILD = '20261012-3';
   function buildNum(b) { var m = String(b || '').split('-'); return Number(m[0] || 0) * 1000 + Number(m[1] || 0); }
   // Jede Steuerung hat eine Kennung; das Beamer-Fenster folgt nur der zuletzt geöffneten.
   var CTRL = { id: Math.random().toString(36).slice(2), t: Date.now() };
@@ -235,7 +237,8 @@
     s.push({ k: 'stand', upto: last, final: true });
     if (D.tiebreak) {
       s.push({ k: 'q', label: 'Stechfrage', q: D.tiebreak, steps: 0 }, { k: 'a', label: 'Stechfrage', q: D.tiebreak });
-      s.push({ k: 'stand', upto: last, final: true, tb: true });
+      s.push({ k: 'pause', tb: true, min: 2 });
+      s.push({ k: 'stand', upto: last, final: true, tb: true, steps: 1 });
     }
     s.push({ k: 'end' });
     return s;
@@ -246,7 +249,7 @@
       case 'teams': return 'Die Teams';
       case 'rules': return 'Regeln';
       case 'prizes': return 'Finale & Preise';
-      case 'pause': return sl.master ? 'Pause: Masterpunkte eintragen' : 'R' + sl.r.n + ' · Pause (Timer)';
+      case 'pause': return sl.tb ? 'Pause: Stechfrage eintragen' : sl.master ? 'Pause: Masterpunkte eintragen' : 'R' + sl.r.n + ' · Pause (Timer)';
       case 'mhint': return 'Masterfrage · Hinweis ' + sl.n;
       case 'minfo': return 'Finale: So geht die Masterfrage';
       case 'round': return 'Runde ' + sl.r.n + ': ' + sl.r.title;
@@ -310,11 +313,12 @@
         return top('Runde ' + sl.r.n) + '<div class="s-center"><div class="s-big zoom">Stifte weg!</div>'
           + '<div class="s-sub rise" style="--d:.5s">Bringt euren Zettel zu uns nach vorne —<br>wir werten aus, gleich gibt’s die Auflösung.</div></div>';
       case 'pause':
-        return top(sl.master ? 'Finale' : 'Runde ' + sl.r.n) + '<div class="s-center"><div class="s-big rise" style="font-size:5cqw">Pause</div>'
+        return top(sl.master || sl.tb ? 'Finale' : 'Runde ' + sl.r.n) + '<div class="s-center"><div class="s-big rise" style="font-size:5cqw">Pause</div>'
           + '<div class="s-timer pop" id="timer"><svg viewBox="0 0 100 100"><circle class="track" cx="50" cy="50" r="44"/>'
           + '<circle class="bar" id="tbar" cx="50" cy="50" r="44" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg><div class="t" id="tleft">'
           + (sl.min || PAUSE_MIN) + ':00</div></div>'
-          + '<div class="s-sub rise" style="--d:.4s">' + (sl.master ? 'Wir zählen die Masterfrage aus — gleich kommt der Endstand!'
+          + '<div class="s-sub rise" style="--d:.4s">' + (sl.tb ? 'Gleich wissen wir, wer am nächsten dran war …'
+            : sl.master ? 'Wir zählen die Masterfrage aus — gleich kommt der Endstand!'
             : 'Wir werten aus — danach: Auflösung Runde ' + sl.r.n) + '</div></div>';
       case 'solve':
         return top('') + '<div class="s-center"><div class="s-sub rise">Runde ' + sl.r.n + '</div><div class="s-big red zoom">Auflösung</div></div>';
@@ -423,15 +427,19 @@
     var tbv = sl.tb && D && D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null;
     return LIVE ? WQD.table(LIVE, sl.upto, tbv) : [];
   }
-  function stepsOf(sl) { return sl.k === 'stand' && sl.final ? standRows(sl).length : (sl.steps || 0); }
+  function stepsOf(sl) { return sl.k === 'stand' && sl.final && !sl.tb ? standRows(sl).length : (sl.steps || 0); }
   function standHtml(sl, st) {
-    var tbv = sl.tb && D && D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null;
+    // Nach der Stechfrage: zuerst der Stand davor, ein Klick ordnet nach dem Stechfrage-Tipp neu.
+    var tbv = sl.tb && (st || 0) >= 1 && D && D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null;
     var rows = LIVE ? WQD.table(LIVE, sl.upto, tbv) : [];
     var head = top(sl.tb ? 'Nach der Stechfrage' : sl.final ? 'Endstand' : 'Nach Runde ' + sl.r.n);
     var title = '<div class="s-big zoom' + (sl.final ? ' red' : '') + '" style="font-size:5cqw;text-align:center">' + (sl.final ? 'Endstand' : 'Zwischenstand') + '</div>';
     if (!rows.length) return head + '<div class="s-center">' + title + '<div class="s-sub">Punkte werden geladen …</div></div>';
     // Von hinten nach vorne aufdecken: der letzte Platz zuerst, Platz 1 zum Schluss.
     return head + '<div class="s-stand">' + title + '<ol class="s-rows' + (rows.length > 7 ? ' two" style="grid-template-rows:repeat(' + Math.ceil(rows.length / 2) + ',auto)' : '') + '">' + rows.map(function (r, i) {
+      if (sl.tb) {
+        return '<li data-id="' + esc(r.id) + '" class="p' + r.rank + '"><b>' + r.rank + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
+      }
       if (sl.final) {
         var n = rows.length - i; // letzter Platz = Klick 1, Sieger = letzter Klick
         return '<li data-step="' + n + '" class="p' + r.rank + (n <= (st || 0) ? ' on' : '') + '"><b>' + r.rank + '</b><span>' + esc(r.name) + '</span><i>' + r.total + '</i></li>';
@@ -511,6 +519,22 @@
     window.onYouTubeIframeAPIReady = function () { ytReady = true; cb(); };
     var s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s);
   }
+  // Zeilen gleiten von ihrer alten an die neue Position (FLIP), statt neu aufzubauen.
+  function flipStand(stage, html) {
+    var old = stage.querySelector('.s-rows');
+    if (!old) { stage.innerHTML = html; return; }
+    var first = {};
+    [].forEach.call(old.children, function (li) { var b = li.getBoundingClientRect(); first[li.getAttribute('data-id')] = [b.left, b.top]; });
+    var tmp = document.createElement('div'); tmp.innerHTML = html;
+    var neu = tmp.querySelector('.s-rows'); old.parentNode.replaceChild(neu, old);
+    [].forEach.call(neu.children, function (li) {
+      var f = first[li.getAttribute('data-id')], b = li.getBoundingClientRect();
+      if (!f) return;
+      li.style.transition = 'none'; li.style.transform = 'translate(' + (f[0] - b.left) + 'px,' + (f[1] - b.top) + 'px)';
+    });
+    void neu.offsetHeight;
+    [].forEach.call(neu.children, function (li) { li.style.transition = 'transform 1.6s cubic-bezier(.3,.9,.3,1)'; li.style.transform = ''; });
+  }
   function applyStep(box, st) {
     [].forEach.call(box.querySelectorAll('[data-step]'), function (e) { e.classList.toggle('on', Number(e.getAttribute('data-step')) <= st); });
   }
@@ -560,7 +584,8 @@
           stage.innerHTML = render(deck[idx], false, step);
           mountVideo(deck[idx]);
         } else if ((msg.step || 0) !== step) {
-          step = msg.step || 0; applyStep(stage, step);
+          step = msg.step || 0;
+          if (deck[idx].tb && deck[idx].k === 'stand') flipStand(stage, render(deck[idx], false, step)); else applyStep(stage, step);
         }
         tick();
       } else if (msg.t === 'media') mediaCmd(msg.cmd, player, vEl, deck[idx].q && deck[idx].q.media);
@@ -698,8 +723,15 @@
     if (!LIVE) return '<div class="mute">Punkte werden geladen …</div>';
     var anyIn = Object.keys(LIVE.checkin).length > 0;
     var ts = LIVE.teams.filter(function (t) { return !anyIn || LIVE.checkin[t.id]; });
+    if (ri === 'tb') {
+      var rows = WQD.table(LIVE, D.rounds.length - 1 + (D.master ? 1 : 0)), tied = {};
+      rows.forEach(function (r) { if (r.rank <= 3 && rows.filter(function (o) { return o.rank === r.rank; }).length > 1) tied[r.id] = 1; });
+      ts = ts.filter(function (t) { return tied[t.id]; });
+      if (!ts.length) return '<div class="mute">Kein Gleichstand am Podest – Stechfrage nicht nötig.</div>';
+    }
     var have = ts.filter(function (t) { return ((LIVE.scores[t.id] || {})[ri]) != null; }).length;
-    return '<a class="btn red big" href="live.html?r=' + ri + '#punkte" target="_blank">✍️ Punkte eintragen (' + (ri >= D.rounds.length ? 'Masterfrage' : 'Runde ' + (ri + 1)) + ')</a>'
+    return '<a class="btn red big" href="live.html?r=' + ri + '#punkte" target="_blank">✍️ ' + (ri === 'tb' ? 'Tipps eintragen (Stechfrage)'
+      : 'Punkte eintragen (' + (ri >= D.rounds.length ? 'Masterfrage' : 'Runde ' + (ri + 1)) + ')') + '</a>'
       + '<div class="cl-head' + (have === ts.length ? ' ok' : '') + '">' + (have === ts.length ? '✓ Alle ' + ts.length + ' Teams eingetragen — bereit für die Auflösung'
         : have + ' von ' + ts.length + ' Teams eingetragen') + '</div>'
       + '<ul class="cl">' + ts.map(function (t) {
@@ -723,7 +755,7 @@
         + '<button class="btn" data-timer="restart">⟲ Neu</button></div>'
         + '<div class="row"><span class="mute" style="align-self:center">Diese Pause neu starten mit:</span>'
         + [5, 10, 15, 20].map(function (m) { return '<button class="btn" data-timer="set:' + m + '">' + m + ' min</button>'; }).join('') + '</div>'
-        + checklist(sl.master ? D.rounds.length : sl.r.n - 1) + '</div>';
+        + checklist(sl.tb ? 'tb' : sl.master ? D.rounds.length : sl.r.n - 1) + '</div>';
     }
     if (sl.k === 'mhint') {
       var mp = sl.q.payload || {};
