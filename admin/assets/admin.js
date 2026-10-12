@@ -196,15 +196,34 @@
         + '<div class="team-list">' + cancelled.map(teamCard).join('') + '</div></details>';
     }
     $app.innerHTML = html;
+    ROWS = {}; d.rows.forEach(function (r) { ROWS[r.id] = r; });
 
     document.getElementById('reload').onclick = viewRegistrations;
+    [].forEach.call($app.querySelectorAll('[data-edit]'), function (b) {
+      b.onclick = function () { openEdit(ROWS[b.getAttribute('data-edit')]); };
+    });
     [].forEach.call($app.querySelectorAll('[data-cancel]'), function (b) {
       b.onclick = function () { cancelTeam(b.getAttribute('data-cancel'), b.getAttribute('data-name')); };
     });
     bindManualForm();
   }
 
-  // ---- manual signup (phone number on the flyer) ------------------------------
+  // ---- manual signup (phone number on the flyer) + editing a team ------------
+  var ROWS = {}, EDIT_ID = '';
+  function openEdit(r) {
+    var form = document.getElementById('manual-form');
+    EDIT_ID = r.id;
+    ['teamName', 'captainName', 'phone', 'email', 'note'].forEach(function (k) { document.getElementById('mt-' + k).value = r[k] || ''; });
+    document.getElementById('mt-size').value = String(r.size);
+    document.getElementById('mt-looking').checked = !!r.lookingForPlayers;
+    document.getElementById('mt-title').textContent = 'Team bearbeiten: ' + r.teamName;
+    form.querySelector('[type=submit]').textContent = 'Speichern';
+    [].forEach.call(form.querySelectorAll('.create-only'), function (e) { e.hidden = true; });
+    [].forEach.call(form.querySelectorAll('[data-err]'), function (p) { p.textContent = ''; });
+    form.hidden = false;
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('mt-teamName').focus();
+  }
   function manualForm() {
     var heard = ['telefon', 'flyer', 'plakat', 'freunde', 'schwarzesbrett', 'facebook', 'instagram', 'zeitung', 'wirt', 'sonstiges'];
     function fld(id, label, input) {
@@ -212,20 +231,20 @@
         + '<p class="fld-err" data-err="' + id + '"></p></div>';
     }
     return '<form class="ed manual" id="manual-form" hidden novalidate><div class="ed-card">'
-      + '<h3>Team händisch eintragen</h3>'
+      + '<h3 id="mt-title">Team händisch eintragen</h3>'
       + '<div class="ed-grid">'
       + fld('teamName', 'Teamname', '<input class="tm-input" id="mt-teamName" maxlength="60" required>')
       + fld('captainName', 'Kontaktperson', '<input class="tm-input" id="mt-captainName" maxlength="60" required>')
       + fld('phone', 'Telefon', '<input class="tm-input" id="mt-phone" type="tel" maxlength="40">')
       + fld('email', 'E-Mail <span class="tm-text-muted">(optional)</span>', '<input class="tm-input" id="mt-email" type="email" maxlength="120">')
       + fld('size', 'Personen', '<select class="tm-select" id="mt-size"><option>3</option><option>4</option><option selected>5</option></select>')
-      + fld('heardFrom', 'Herkunft', '<select class="tm-select" id="mt-heardFrom">' + heard.map(function (k) {
+      + '<div class="create-only">' + fld('heardFrom', 'Herkunft', '<select class="tm-select" id="mt-heardFrom">' + heard.map(function (k) {
           return '<option value="' + k + '">' + esc(k === 'telefon' ? 'über Telefon angemeldet' : HEARD[k]) + '</option>';
-        }).join('') + '</select>')
+        }).join('') + '</select>') + '</div>'
       + '</div>'
       + fld('note', 'Anmerkung <span class="tm-text-muted">(optional)</span>', '<input class="tm-input" id="mt-note" maxlength="500">')
       + '<label class="chk"><input type="checkbox" id="mt-looking"> Sucht noch Mitspieler</label>'
-      + '<label class="chk"><input type="checkbox" id="mt-mail"> Bestätigungsmail schicken <span class="tm-text-muted">(nur mit E-Mail)</span></label>'
+      + '<label class="chk create-only"><input type="checkbox" id="mt-mail"> Bestätigungsmail schicken <span class="tm-text-muted">(nur mit E-Mail)</span></label>'
       + '<div class="btn-row"><button class="tm-btn tm-btn--primary btn-sm" type="submit">Eintragen</button>'
       + '<button class="tm-btn tm-btn--ghost btn-sm" type="button" id="manual-close">Abbrechen</button></div>'
       + '</div></form>';
@@ -235,10 +254,14 @@
     var form = document.getElementById('manual-form');
     var val = function (id) { return document.getElementById('mt-' + id).value.trim(); };
     document.getElementById('add-team-btn').onclick = function () {
+      if (EDIT_ID) { EDIT_ID = ''; form.reset(); form.hidden = true; }
+      document.getElementById('mt-title').textContent = 'Team händisch eintragen';
+      form.querySelector('[type=submit]').textContent = 'Eintragen';
+      [].forEach.call(form.querySelectorAll('.create-only'), function (e) { e.hidden = false; });
       form.hidden = !form.hidden;
       if (!form.hidden) document.getElementById('mt-teamName').focus();
     };
-    document.getElementById('manual-close').onclick = function () { form.hidden = true; };
+    document.getElementById('manual-close').onclick = function () { form.hidden = true; EDIT_ID = ''; };
     document.getElementById('mt-email').oninput = function () {
       document.getElementById('mt-mail').checked = this.value.trim() !== '';
     };
@@ -247,10 +270,10 @@
       [].forEach.call(form.querySelectorAll('[data-err]'), function (p) { p.textContent = ''; });
       var btn = form.querySelector('[type=submit]'); btn.disabled = true;
       var body = {
-        action: 'create', teamName: val('teamName'), captainName: val('captainName'), phone: val('phone'),
+        action: EDIT_ID ? 'update' : 'create', id: EDIT_ID, teamName: val('teamName'), captainName: val('captainName'), phone: val('phone'),
         email: val('email'), size: +val('size'), heardFrom: val('heardFrom'), note: val('note'),
         lookingForPlayers: document.getElementById('mt-looking').checked,
-        sendMail: document.getElementById('mt-mail').checked
+        sendMail: !EDIT_ID && document.getElementById('mt-mail').checked
       };
       fetch('../api/admin/registrations.php', {
         method: 'POST', credentials: 'same-origin',
@@ -258,6 +281,9 @@
       }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { r: r, j: j }; }); })
         .then(function (x) {
           btn.disabled = false;
+          if (x.r.ok && x.j.ok !== false && body.action === 'update') {
+            toast('„' + x.j.teamName + '" gespeichert.'); EDIT_ID = ''; viewRegistrations(); return;
+          }
           if (x.r.ok && x.j.ok !== false) {
             toast('„' + x.j.teamName + '" eingetragen' + (x.j.slot === 'WAITLIST' ? ' — auf der Warteliste.' : '.')
               + (body.sendMail ? (x.j.mailSent ? ' Mail ist raus.' : ' Mail ging NICHT raus.') : ''), body.sendMail && !x.j.mailSent);
@@ -340,6 +366,7 @@
       + (r.note ? '<p class="team__note">' + esc(r.note) + '</p>' : '')
       + '<div class="team__meta">' + meta + '</div></div>'
       + '<div class="team__actions">'
+      + (cancelled ? '' : '<button class="tm-btn tm-btn--ghost btn-sm" type="button" data-edit="' + esc(r.id) + '">Bearbeiten</button>')
       + (cancelled ? '' : '<button class="tm-btn tm-btn--ghost btn-sm btn-danger" type="button" data-cancel="'
         + esc(r.id) + '" data-name="' + esc(r.teamName) + '">Absagen</button>')
       + '</div></article>';

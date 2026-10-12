@@ -6,6 +6,7 @@
  *   GET ?format=csv      -> the same list as CSV (Excel-friendly: ; and BOM)
  *   POST {action:"cancel", id} -> cancel a team (waitlist moves up by itself)
  *   POST {action:"create", …}  -> enter a team by hand (phone signups)
+ *   POST {action:"update", id, …} -> fix a team: name, contact, size, note (e.g. two pairs merged into one team)
  */
 require_once __DIR__ . '/../auth.php';
 
@@ -13,17 +14,9 @@ $me  = require_role('EDITOR');
 $cfg = wq_config();
 $sessionId = $cfg['session_id'];
 
-/**
- * A team entered by hand, typically after a phone call to the number on the flyer.
- * Unlike the public form: e-mail is optional (phone or e-mail is enough), no consent
- * checkbox (the caller agreed on the phone), no rate limit and no hard stop at the
- * waitlist limit — whoever types it in knows what they are doing. The confirmation
- * mail only goes out when asked for and an address exists.
- */
-function create_manual($in, $cfg, $me)
+/** Shared checks for creating and editing a team by hand. Fails with 422 on bad input. */
+function team_fields($in, $cfg)
 {
-    require_once __DIR__ . '/../mail_templates.php';
-
     $errors = [];
     $teamName = clean_str(isset($in['teamName']) ? $in['teamName'] : '', 60);
     if (mb_strlen($teamName) < 2) {
@@ -50,36 +43,91 @@ function create_manual($in, $cfg, $me)
     if ($size < (int)$cfg['team_min'] || $size > (int)$cfg['team_max']) {
         $errors['size'] = 'Ein Team hat ' . (int)$cfg['team_min'] . ' bis ' . (int)$cfg['team_max'] . ' Personen.';
     }
+    if (count($errors) > 0) {
+        fail(422, 'Bitte die markierten Felder prüfen.', ['fields' => $errors]);
+    }
+    return [
+        'teamName' => $teamName, 'captainName' => $captainName, 'email' => $email, 'phone' => $phone, 'size' => $size,
+        'note' => clean_str(isset($in['note']) ? $in['note'] : '', 500), 'lookingForPlayers' => !empty($in['lookingForPlayers']),
+    ];
+}
+
+/** Name or e-mail already taken by another active team? Returns the error text or null. */
+function team_clash($list, $fields, $exceptId)
+{
+    foreach ($list as $r) {
+        if ((isset($r['status']) ? $r['status'] : 'ACTIVE') === 'CANCELLED' || (isset($r['id']) ? $r['id'] : '') === $exceptId) {
+            continue;
+        }
+        if ($fields['email'] !== '' && norm_key(isset($r['email']) ? $r['email'] : '') === norm_key($fields['email'])) {
+            return 'Mit dieser E-Mail-Adresse ist schon „' . $r['teamName'] . '" angemeldet.';
+        }
+        if (norm_key(isset($r['teamName']) ? $r['teamName'] : '') === norm_key($fields['teamName'])) {
+            return 'Den Teamnamen „' . $fields['teamName'] . '" gibt es schon.';
+        }
+    }
+    return null;
+}
+
+/** Edit an existing team. Origin fields, timestamps and the cancel link stay untouched. */
+function update_team($in, $cfg, $me)
+{
+    $id = clean_str(isset($in['id']) ? $in['id'] : '', 40);
+    $fields = team_fields($in, $cfg);
+    $res = null;
+    with_registrations($cfg['session_id'], function ($list, &$res) use ($id, $fields, $me) {
+        $clash = team_clash($list, $fields, $id);
+        if ($clash !== null) {
+            $res = ['error' => $clash];
+            return null;
+        }
+        foreach ($list as $i => $r) {
+            if ((isset($r['id']) ? $r['id'] : '') !== $id) {
+                continue;
+            }
+            $list[$i] = array_merge($r, $fields, ['updatedAt' => now_iso(), 'updatedBy' => $me['email']]);
+            $res = ['teamName' => $fields['teamName']];
+            return $list;
+        }
+        $res = ['error' => 'Anmeldung nicht gefunden'];
+        return null;
+    }, $res);
+    if (isset($res['error'])) {
+        fail(409, $res['error']);
+    }
+    ok($res);
+}
+
+/**
+ * A team entered by hand, typically after a phone call to the number on the flyer.
+ * Unlike the public form: e-mail is optional (phone or e-mail is enough), no consent
+ * checkbox (the caller agreed on the phone), no rate limit and no hard stop at the
+ * waitlist limit — whoever types it in knows what they are doing. The confirmation
+ * mail only goes out when asked for and an address exists.
+ */
+function create_manual($in, $cfg, $me)
+{
+    require_once __DIR__ . '/../mail_templates.php';
+
+    $f = team_fields($in, $cfg);
+    $teamName = $f['teamName']; $captainName = $f['captainName']; $email = $f['email'];
+    $phone = $f['phone']; $size = $f['size']; $note = $f['note']; $looking = $f['lookingForPlayers'];
     $heardAllowed = ['telefon', 'freunde', 'facebook', 'instagram', 'schwarzesbrett', 'plakat',
                      'flyer', 'zeitung', 'wirt', 'sonstiges'];
     $heardFrom = clean_str(isset($in['heardFrom']) ? $in['heardFrom'] : '', 20);
     if (!in_array($heardFrom, $heardAllowed, true)) {
         $heardFrom = 'telefon';
     }
-    $note = clean_str(isset($in['note']) ? $in['note'] : '', 500);
-    $looking = !empty($in['lookingForPlayers']);
     $sendMail = !empty($in['sendMail']) && $email !== '';
-
-    if (count($errors) > 0) {
-        fail(422, 'Bitte die markierten Felder prüfen.', ['fields' => $errors]);
-    }
 
     $res = null;
     with_registrations($cfg['session_id'], function ($list, &$res) use (
-        $cfg, $me, $teamName, $captainName, $email, $phone, $size, $note, $looking, $heardFrom
+        $cfg, $me, $f, $teamName, $captainName, $email, $phone, $size, $note, $looking, $heardFrom
     ) {
-        foreach ($list as $r) {
-            if ((isset($r['status']) ? $r['status'] : 'ACTIVE') === 'CANCELLED') {
-                continue;
-            }
-            if ($email !== '' && norm_key(isset($r['email']) ? $r['email'] : '') === norm_key($email)) {
-                $res = ['error' => 'Mit dieser E-Mail-Adresse ist schon „' . $r['teamName'] . '" angemeldet.'];
-                return null;
-            }
-            if (norm_key(isset($r['teamName']) ? $r['teamName'] : '') === norm_key($teamName)) {
-                $res = ['error' => 'Den Teamnamen „' . $teamName . '" gibt es schon.'];
-                return null;
-            }
+        $clash = team_clash($list, $f, '');
+        if ($clash !== null) {
+            $res = ['error' => $clash];
+            return null;
         }
         $reg = [
             'id'                => gen_id('reg_'),
@@ -139,6 +187,9 @@ if ($method === 'POST') {
 
     if ($action === 'create') {
         create_manual($in, $cfg, $me);
+    }
+    if ($action === 'update') {
+        update_team($in, $cfg, $me);
     }
     if ($action !== 'cancel' || $id === '') {
         fail(400, 'Unbekannte Aktion');
