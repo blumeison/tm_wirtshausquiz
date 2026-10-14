@@ -51,13 +51,24 @@
   }
   function roundPoints(r) { return r.questions.reduce(function (s, rq) { return s + eff(rq, r); }, 0); }
 
-  /** Rough running time: 1.5 min per question + 10 min answers per round, plus the fixed blocks. */
+  /**
+   * Running time, same plan as the beamer control (planRound/plans in beamer.html – keep in sync):
+   * per question 1¾ min + clip length, then collect 2, break (10 after round 1, else 15),
+   * answers 1¼ per question, standings 1½; welcome 8, finale 27 (master hints, break, standings, prizes).
+   */
+  function clipMin(q) {
+    if (!q || (q.type !== 'AUDIO' && q.type !== 'VIDEO')) return 0;
+    var p = q.payload || {};
+    return p.clipSeconds ? p.clipSeconds / 60 : 2;
+  }
   function minutes() {
-    var m = 10; // welcome and rules
-    S.rounds.forEach(function (r) { m += (r.kind === 'HANDOUT' ? 0 : r.questions.length * 1.5) + 10; });
-    m += 30;    // break after round 2 + short break before the finale
-    if (S.finale.masterId) m += 15;
-    m += 15;    // final standings, tie-break, prizes
+    var m = 8;
+    S.rounds.forEach(function (r, i) {
+      var n = r.questions.length;
+      if (r.kind !== 'HANDOUT') m += r.questions.reduce(function (s, rq) { return s + 1.75 + clipMin(BY_ID[rq.questionId]); }, 0);
+      m += 2 + (i === 0 ? 10 : 15) + n * 1.25 + 1.5;
+    });
+    if (S.finale.masterId) m += 12 + 5 + 10;
     return Math.round(m);
   }
   function dur(m) { return Math.floor(m / 60) + ':' + pad(m % 60) + ' h'; }
