@@ -177,7 +177,9 @@
       + (c.teamsWaitlist ? ' · ' + c.teamsWaitlist + ' auf der Warteliste' : '') + '</p></div>'
       + '<div class="btn-row"><button class="tm-btn tm-btn--ghost btn-sm" type="button" id="reload">Aktualisieren</button>'
       + '<a class="tm-btn tm-btn--ghost btn-sm" href="../api/admin/registrations.php?format=csv">CSV-Export</a>'
+      + '<button class="tm-btn tm-btn--ghost btn-sm" type="button" id="mail-btn">✉️ Rundmail an alle</button>'
       + '<button class="tm-btn tm-btn--primary btn-sm" type="button" id="add-team-btn">+ Team eintragen</button></div></div>'
+      + '<div id="mail-box"></div>'
       + manualForm()
       + '<div class="kpi-grid">'
       + kpi(c.teamsTotal, 'Teams') + kpi(c.peopleConfirmed, 'Personen fix')
@@ -199,6 +201,7 @@
     ROWS = {}; d.rows.forEach(function (r) { ROWS[r.id] = r; });
 
     document.getElementById('reload').onclick = viewRegistrations;
+    document.getElementById('mail-btn').onclick = openMail;
     [].forEach.call($app.querySelectorAll('[data-edit]'), function (b) {
       b.onclick = function () { openEdit(ROWS[b.getAttribute('data-edit')]); };
     });
@@ -206,6 +209,58 @@
       b.onclick = function () { cancelTeam(b.getAttribute('data-cancel'), b.getAttribute('data-name')); };
     });
     bindManualForm();
+  }
+
+  // ---- Rundmail an alle Teams (über quiz@team-michelhausen.at) ---------------
+  var MAIL_DRAFT = {
+    subject: 'Wirtshausquiz am Freitag – ihr dürft schon ab 17:00 Uhr kommen!',
+    body: 'Liebe Quizteams,\n\n'
+      + 'wir sind ehrlich gesagt ein bisschen überwältigt: So viele Anmeldungen hätten wir uns für unser erstes Wirtshausquiz nicht zu träumen gewagt. Danke, dass ihr dabei seid! 🙌\n\n'
+      + 'Weil es jetzt doch einige Leute werden, eine kleine Änderung: **Ihr dürft schon ab 17:00 Uhr ins Gasthaus Burchhart kommen.** '
+      + 'So habt ihr genug Zeit, in Ruhe zu essen, falls ihr vor dem Quiz noch etwas bestellen wollt. Mit vollem Magen rät es sich sowieso besser.\n\n'
+      + 'Kurz zusammengefasst:\n📅 **Freitag, 16. Oktober**\n📍 **Gasthaus Burchhart**, Liechtensteingasse 2, 3451 Atzelsdorf\n'
+      + '🍽️ **ab 17:00 Uhr** Ankommen und essen\n❓ **18:30 Uhr** Quizstart\n\n'
+      + 'Wir freuen uns schon riesig auf einen lustigen Abend mit euch!\n\nBis Freitag\nEuer Team Michelhausen'
+  };
+  function openMail() {
+    var box = document.getElementById('mail-box');
+    if (box.innerHTML) { box.innerHTML = ''; return; }
+    box.innerHTML = '<div class="spin"></div>';
+    api('admin/broadcast.php').then(function (d) {
+      var draft = MAIL_DRAFT;
+      try { draft = JSON.parse(localStorage.getItem('wq-mail-draft')) || MAIL_DRAFT; } catch (x) {}
+      box.innerHTML = '<div class="ed manual"><div class="ed-card"><h3>✉️ Rundmail an alle Teams</h3>'
+        + '<p class="tm-text-muted">Absender: <b>' + esc(d.from) + '</b> · jede Adresse bekommt eine eigene Mail (niemand sieht die anderen). '
+        + 'Leerzeile = neuer Absatz, <b>**so**</b> = fett.</p>'
+        + '<div class="tm-field"><label class="tm-label" for="bm-subject">Betreff</label><input class="tm-input" id="bm-subject" maxlength="150" value="' + esc(draft.subject) + '"></div>'
+        + '<div class="tm-field"><label class="tm-label" for="bm-body">Text</label><textarea class="tm-input" id="bm-body" rows="16" style="font:inherit;resize:vertical">' + esc(draft.body) + '</textarea></div>'
+        + '<details><summary>' + d.recipients.length + ' Empfänger</summary><ul>' + d.recipients.map(function (r) {
+            return '<li>' + esc(r.team) + ' – ' + esc(r.email) + '</li>'; }).join('') + '</ul></details>'
+        + (d.sent.length ? '<p class="tm-text-muted">Schon verschickt: ' + d.sent.map(function (s) {
+            return '„' + esc(s.subject) + '“ am ' + esc(s.at.slice(0, 16).replace('T', ' ')) + ' (' + s.results.filter(function (x) { return x.ok; }).length + ' ok)'; }).join(' · ') + '</p>' : '')
+        + '<p id="bm-msg"></p>'
+        + '<div class="btn-row"><button class="tm-btn tm-btn--ghost btn-sm" type="button" id="bm-test">Testmail an mich (' + esc(d.me) + ')</button>'
+        + '<button class="tm-btn tm-btn--primary btn-sm" type="button" id="bm-send">An alle ' + d.recipients.length + ' Adressen senden</button></div>'
+        + '</div></div>';
+      var msg = document.getElementById('bm-msg');
+      function val() { return { subject: document.getElementById('bm-subject').value.trim(), body: document.getElementById('bm-body').value }; }
+      function save() { try { localStorage.setItem('wq-mail-draft', JSON.stringify(val())); } catch (x) {} }
+      box.addEventListener('input', save);
+      function send(test) {
+        var v = val(), b = document.getElementById(test ? 'bm-test' : 'bm-send');
+        if (!test && !confirm('Rundmail „' + v.subject + '“ jetzt an alle ' + d.recipients.length + ' Adressen schicken?')) return;
+        b.disabled = true; msg.textContent = test ? 'Schicke Testmail …' : 'Verschicke … (kann eine halbe Minute dauern)';
+        api('admin/broadcast.php', { method: 'POST', body: { subject: v.subject, body: v.body, test: test } }).then(function (r) {
+          b.disabled = false;
+          if (test) { msg.textContent = '✓ Testmail an ' + r.to + ' unterwegs – schau kurz rein, ob alles passt.'; return; }
+          var bad = r.results.filter(function (x) { return !x.ok; });
+          msg.innerHTML = '✓ ' + (r.results.length - bad.length) + ' von ' + r.results.length + ' verschickt.'
+            + (bad.length ? ' <b>Nicht zugestellt:</b> ' + bad.map(function (x) { return esc(x.team + ' (' + x.email + ')'); }).join(', ') : '');
+        }).catch(function (e) { b.disabled = false; msg.textContent = '✗ ' + errText(e); });
+      }
+      document.getElementById('bm-test').onclick = function () { send(true); };
+      document.getElementById('bm-send').onclick = function () { send(false); };
+    }).catch(function (e) { box.innerHTML = '<div class="empty">' + esc(errText(e)) + '</div>'; });
   }
 
   // ---- manual signup (phone number on the flyer) + editing a team ------------
