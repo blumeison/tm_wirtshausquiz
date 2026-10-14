@@ -19,7 +19,13 @@ function wq_mail_shell($headline, $bodyHtml)
 
       . '<tr><td style="height:5px;background:' . $red . ';font-size:0;line-height:0;">&nbsp;</td></tr>'
 
-      . '<tr><td style="padding:32px 32px 8px 32px;">'
+      // Logo als absolute URL (Mailprogramme laden keine relativen Pfade); manche blenden Bilder erst
+      // auf Klick ein – dann bleibt der Alt-Text stehen.
+      . '<tr><td style="padding:26px 32px 0 32px;">'
+      . '<img src="https://quiz.team-michelhausen.at/mail-logo.png" width="150" height="73" alt="SPÖ &amp; Unabhängige – Team Michelhausen" '
+      . 'style="display:block;border:0;width:150px;height:auto;font:600 13px Rubik,Arial,sans-serif;color:' . $ink . ';">'
+      . '</td></tr>'
+      . '<tr><td style="padding:18px 32px 8px 32px;">'
       . '<p style="margin:0 0 6px 0;font:600 12px/1.4 Rubik,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:' . $red . ';">Wirtshausquiz</p>'
       . '<h1 style="margin:0;font:400 26px/1.2 Georgia,serif;color:' . $ink . ';">' . $headline . '</h1>'
       . '</td></tr>'
