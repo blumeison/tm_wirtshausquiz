@@ -27,6 +27,15 @@
   .chk { min-width: 108px; min-height: 44px; border-radius: 99px; border: 2px solid var(--green); background: #fff; color: var(--green); font: 600 15px Rubik, sans-serif; cursor: pointer; }
   .chk.on { background: var(--green); color: #fff; }
   .ak { min-width: 52px; min-height: 44px; border-radius: 99px; border: 2px solid var(--line); background: #fff; color: var(--soft); font: 600 14px Rubik, sans-serif; cursor: pointer; }
+  .sol { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; margin-bottom: 12px; }
+  .sol summary { cursor: pointer; font-weight: 600; color: var(--green); }
+  .sol ol { list-style: none; margin-top: 6px; }
+  .sol li { display: flex; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .sol li:first-child { border-top: 0; }
+  .sol .n { min-width: 22px; font: 400 18px/1.3 'Patua One', serif; color: var(--red); }
+  .sol li > div { min-width: 0; font-weight: 600; }
+  .sol small { display: block; font-weight: 400; color: var(--soft); font-size: 13px; }
+  .sol .mc { display: inline-grid; place-items: center; width: 24px; height: 24px; border: 2px solid var(--red); border-radius: 50%; color: var(--red); margin-right: 8px; font-size: 13px; }
   .reset { margin-top: 28px; } .reset summary { cursor: pointer; color: var(--soft); font-size: 14px; }
   .reset .pm { padding: 0 14px; border-color: var(--red); color: var(--red); margin-top: 6px; }
   .ak.on { border-color: var(--ink); background: var(--ink); color: #fff; }
@@ -86,6 +95,22 @@
     var t = WQD.tiedPodium(WQD.table(L, lastScore()));
     return playing().filter(function (x) { return t[x.id]; });
   }
+  // Lösungen der gewählten Runde direkt über der Eingabe – ersetzt den gedruckten Spickzettel.
+  function answersHtml(key) {
+    function li(n, q, extra) {
+      var p = q.payload || {}, ok = '';
+      if (q.type === 'MULTIPLE_CHOICE') ok = '<b class="mc">' + 'ABCDEFGH'[p.correctIndex] + '</b>';
+      var alt = (p.acceptedAnswers || []).filter(function (a) { return a.toLowerCase() !== String(q.answer).toLowerCase(); });
+      var sub = q.type === 'ESTIMATE' && key !== 'tb' ? WQD.estimateRule(q) : alt.length ? 'Gilt auch: ' + alt.join(' · ') : '';
+      return '<li><span class="n">' + n + '</span><div>' + ok + esc(q.answer) + (sub ? '<small>' + esc(sub) + '</small>' : '') + (extra || '') + '</div></li>';
+    }
+    var items = '';
+    if (key === 'tb') { if (D.tiebreak) items = li('⚖️', D.tiebreak, '<small>Näher dran = besserer Platz, Zahl vom Kärtchen eintragen</small>'); }
+    else if (key === D.rounds.length) {
+      if (D.master) items = li('👑', D.master, '<small>Punkte nach Stufe: ' + ((D.master.payload || {}).ladder || []).map(function (v, i) { return (i + 1) + ' → ' + v; }).join(' · ') + ' · falsch = 0</small>');
+    } else if (D.rounds[key]) items = D.rounds[key].questions.map(function (q, i) { return li(i + 1, q); }).join('');
+    return items ? '<details class="sol" open><summary>Lösungen</summary><ol>' + items + '</ol></details>' : '';
+  }
   function lastScore() { return D.rounds.length - 1 + (D.master ? 1 : 0); }
   function tbValue() { return D.tiebreak && D.tiebreak.payload ? D.tiebreak.payload.value : null; }
 
@@ -116,6 +141,7 @@
         + '<p class="sum">' + esc(cur.title) + (round === 'tb'
           ? (tied().length ? ' — die Zahl vom Kärtchen eintragen, so wie sie draufsteht. Die Reihung rechnet das System.' : ' — derzeit kein Gleichstand am Podest, Stechfrage nicht nötig.')
           : ' — Summe vom Zettel eintragen, wird sofort gespeichert.') + '</p>'
+        + answersHtml(round)
         + (round === 'tb' ? tied() : playing()).map(function (t) {
           var v = (L.scores[t.id] || {})[round];
           var pm = round === 'tb' ? ['', ''] : ['<button class="pm" data-add="-10" data-id="' + esc(t.id) + '">−10</button>',
