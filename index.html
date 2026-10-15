@@ -458,7 +458,7 @@
       // Anmeldung zu (registration_open in api/config.php): Formular weg, Knöpfe umbenennen.
       if (!c.open && !c.full) {
         dot.className = 'wq-dot wq-dot--full';
-        txt.textContent = 'Anmeldung geschlossen — ' + c.teamsTotal + ' Teams sind dabei';
+        txt.textContent = 'Anmeldung geschlossen — wir sind voll';
         wrap.classList.remove('is-hidden');
         [].forEach.call(document.querySelectorAll('.wq-cta'), function (a) { a.textContent = 'Anmeldung geschlossen'; });
         $('wq-promo').classList.remove('is-on');
