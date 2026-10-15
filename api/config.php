@@ -28,7 +28,7 @@ return [
     'session_id'   => 's_premiere',
     'event_title'  => 'Wirtshausquiz #1',
     'event_date'   => '2026-10-16',            // Friday
-    'doors_time'   => '17:30',
+    'doors_time'   => '17:00',
     'start_time'   => '18:30',
     'end_time'     => '21:45',
     'venue'        => 'Gasthaus Burchhart „Zur Veste Liechtenstein“',
@@ -38,7 +38,7 @@ return [
     'maps_url'     => 'https://www.google.com/maps/search/?api=1&query=Gasthaus+Burchhart+Liechtensteingasse+2+3451+Atzelsdorf',
 
     // ---- Registration rules -----------------------------------------------
-    'registration_open' => true,
+    'registration_open' => false,   // 15.10.: voll, Anmeldung geschlossen
     'team_min'          => 3,
     'team_max'          => 5,
     'capacity_teams'    => 12,   // teams that get a confirmed spot

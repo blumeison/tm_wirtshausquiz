@@ -160,7 +160,7 @@
           <svg class="tm-ico-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           <svg class="tm-ico-sun"  width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
         </button>
-        <a class="tm-btn tm-btn--primary" href="#anmelden">Team anmelden</a>
+        <a class="tm-btn tm-btn--primary wq-cta" href="#anmelden">Team anmelden</a>
       </div>
     </div>
   </header>
@@ -185,7 +185,7 @@
           <span class="wq-status"><span class="wq-dot" id="wq-dot"></span><span id="wq-status">Plätze werden geladen …</span></span>
         </p>
         <div class="tm-hero__actions">
-          <a class="tm-btn tm-btn--light tm-btn--lg" href="#anmelden">Team anmelden</a>
+          <a class="tm-btn tm-btn--light tm-btn--lg wq-cta" href="#anmelden">Team anmelden</a>
           <a class="tm-btn tm-btn--ghost tm-btn--lg" style="border-color:#fff;color:#fff;" href="#ablauf">Wie läuft das ab?</a>
         </div>
       </div>
@@ -197,7 +197,7 @@
           <div class="wq-fact">
             <dt>Wann</dt>
             <dd>Freitag, 16. Oktober 2026
-              <small>Einlass ab 17:30 Uhr, Quizstart 18:30 Uhr, Ende gegen 21:45 Uhr</small></dd>
+              <small>Einlass ab 17:00 Uhr, Quizstart 18:30 Uhr, Ende gegen 21:45 Uhr</small></dd>
           </div>
           <div class="wq-fact">
             <dt>Wo</dt>
@@ -226,7 +226,7 @@
         <ol class="wq-steps">
           <li>
             <div><strong>Ankommen und essen</strong>
-              Ab 17:30 Uhr ist offen und die Küche hat auf. Kommt früher, esst in Ruhe —
+              Ab 17:00 Uhr ist offen und die Küche hat auf. Kommt früher, esst in Ruhe —
               um 18:30 Uhr geht's los.</div>
           </li>
           <li>
@@ -454,6 +454,21 @@
     function renderCounters(d) {
       var c = d.counters, p = d.promo;
       var wrap = $('wq-status-wrap'), dot = $('wq-dot'), txt = $('wq-status');
+
+      // Anmeldung zu (registration_open in api/config.php): Formular weg, Knöpfe umbenennen.
+      if (!c.open && !c.full) {
+        dot.className = 'wq-dot wq-dot--full';
+        txt.textContent = 'Anmeldung geschlossen — ' + c.teamsTotal + ' Teams sind dabei';
+        wrap.classList.remove('is-hidden');
+        [].forEach.call(document.querySelectorAll('.wq-cta'), function (a) { a.textContent = 'Anmeldung geschlossen'; });
+        $('wq-promo').classList.remove('is-on');
+        $('wq-form-wrap').innerHTML = '<div class="tm-stack"><p class="tm-eyebrow">Anmeldung</p>'
+          + '<h2 class="tm-mt-0">Wir sind voll — danke!</h2>'
+          + '<p class="tm-text-muted">So viele Anmeldungen hätten wir uns fürs erste Wirtshausquiz nicht erträumt. '
+          + 'Die Anmeldung ist geschlossen. Alle angemeldeten Teams sehen wir am Freitag ab 17:00 Uhr im Gasthaus Burchhart, '
+          + 'Quizstart ist um 18:30 Uhr.</p></div>';
+        return;
+      }
 
       // Am Anfang steht hier bewusst NICHT, wie viele Plätze noch frei sind.
       // "9 von 12 frei" liest sich als "da geht keiner hin" und hält Leute ab.
