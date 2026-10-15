@@ -27,6 +27,8 @@
   .chk { min-width: 108px; min-height: 44px; border-radius: 99px; border: 2px solid var(--green); background: #fff; color: var(--green); font: 600 15px Rubik, sans-serif; cursor: pointer; }
   .chk.on { background: var(--green); color: #fff; }
   .ak { min-width: 52px; min-height: 44px; border-radius: 99px; border: 2px solid var(--line); background: #fff; color: var(--soft); font: 600 14px Rubik, sans-serif; cursor: pointer; }
+  .reset { margin-top: 28px; } .reset summary { cursor: pointer; color: var(--soft); font-size: 14px; }
+  .reset .pm { padding: 0 14px; border-color: var(--red); color: var(--red); margin-top: 6px; }
   .ak.on { border-color: var(--ink); background: var(--ink); color: #fff; }
   .rounds { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
   .rounds button { flex: 1; min-width: 70px; padding: 9px 6px; border-radius: 10px; border: 2px solid var(--line); background: #fff; font: 600 15px Rubik, sans-serif; cursor: pointer; }
@@ -131,7 +133,11 @@
             + '<td class="tot">' + r.total + '</td>' + (anyTb ? '<td>' + (r.guess == null ? '' : r.guess) + '</td>' : '') + '</tr>';
         }).join('') + '</tbody></table>'
         + (anyTb ? '<p class="hint">Gleichstand wird über den Stechfrage-Tipp entschieden: näher am richtigen Wert (' + esc(D.tiebreak.answer) + ') liegt vorne.</p>' : '')
-        + '<p class="hint">Am Beamer erscheint der Stand automatisch nach jeder Auflösung.</p>';
+        + '<p class="hint">Am Beamer erscheint der Stand automatisch nach jeder Auflösung.</p>'
+        + '<details class="reset"><summary>Zurücksetzen (nach dem Testen)</summary>'
+        + '<p class="hint">Löscht für alle Teams die Punkte und Stechfrage-Tipps. Nur für Admins.</p>'
+        + '<button class="pm" data-reset="scores">Alle Punkte löschen</button> '
+        + '<button class="pm" data-reset="all">Punkte + Check-in + a.K. löschen</button></details>';
     }
     main.innerHTML = html;
   }
@@ -153,6 +159,13 @@
   main.addEventListener('click', function (e) {
     var b = e.target.closest('[data-in]');
     if (b) { post({ action: 'checkin', id: b.getAttribute('data-in'), on: !b.classList.contains('on') }).then(render, function () {}); return; }
+    var x = e.target.closest('[data-reset]');
+    if (x) {
+      var all = x.getAttribute('data-reset') === 'all';
+      if (!confirm(all ? 'Wirklich ALLES zurücksetzen – Punkte, Tipps, Check-in und a.K. aller Teams?' : 'Wirklich die Punkte und Tipps ALLER Teams löschen?')) return;
+      post({ action: 'reset', what: all ? 'all' : 'scores' }).then(render, function () {});
+      return;
+    }
     var k = e.target.closest('[data-ak]');
     if (k) { post({ action: 'ak', id: k.getAttribute('data-ak'), on: !k.classList.contains('on') }).then(render, function () {}); return; }
     var r = e.target.closest('[data-round]');

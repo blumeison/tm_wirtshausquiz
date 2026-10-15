@@ -8,6 +8,7 @@
  *   GET -> teams (active registrations, signup order) + checkin + scores
  *   POST {action:"checkin", id, on}
  *   POST {action:"ak", id, on}
+ *   POST {action:"reset", what:"scores"|"all"}  (nur ADMIN) – Punkte löschen, bei "all" auch Check-in und a.K.
  *   POST {action:"score", id, round, pts}   pts null/"" clears the cell;
  *        round "tb" = the team's guess for the tie-break estimate, not points
  *
@@ -17,7 +18,7 @@
  */
 require_once __DIR__ . '/auth.php';
 
-require_role('EDITOR');
+$me = require_role('EDITOR');
 $cfg = wq_config();
 $sid = $cfg['session_id'];
 $dir = WQ_DATA_DIR . '/live';
@@ -55,6 +56,29 @@ if (strtoupper(isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 
 }
 
 $in = read_json_body();
+if ((isset($in['action']) ? $in['action'] : '') === 'reset') {
+    if ($me['role'] !== 'ADMIN') {
+        fail(403, 'forbidden');
+    }
+    $fh = fopen($file, 'c+');
+    if ($fh === false || !flock($fh, LOCK_EX)) {
+        fail(500, 'Speicher belegt, bitte nochmal');
+    }
+    $doc = live_read_doc(stream_get_contents($fh));
+    $doc['scores'] = [];
+    if ((isset($in['what']) ? $in['what'] : '') === 'all') {
+        $doc['checkin'] = [];
+        $doc['ak'] = [];
+    }
+    $doc['updatedAt'] = now_iso();
+    ftruncate($fh, 0);
+    rewind($fh);
+    fwrite($fh, json_encode($doc, JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT | JSON_PRETTY_PRINT));
+    fflush($fh);
+    flock($fh, LOCK_UN);
+    fclose($fh);
+    live_out($doc, $teams);
+}
 $id = clean_str(isset($in['id']) ? $in['id'] : '', 40);
 if (!in_array($id, array_column($teams, 'id'), true)) {
     fail(404, 'Team nicht gefunden (abgesagt?)');
